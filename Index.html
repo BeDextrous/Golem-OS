@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <style>
+    :root { --bg: #fdfcf0; --accent: #2d6a4f; --border: #e9edc9; --nav-bg: #064e3b; }
+    body { background-color: var(--bg); background-image: url('https://www.transparenttextures.com/patterns/natural-paper.png'); font-family: 'Inter', sans-serif; min-height: 100vh; margin: 0; padding-bottom: 120px; }
+    .card { background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 1.5rem; transition: 0.2s; }
+    .fab { position: fixed; bottom: 100px; right: 20px; width: 60px; height: 60px; background: var(--accent); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 60; cursor: pointer; }
+    .modal { display: none; position: fixed; inset: 0; background: rgba(6, 78, 59, 0.8); backdrop-filter: blur(5px); z-index: 150; align-items: center; justify-content: center; padding: 20px; }
+    .modal.open { display: flex; }
+    .sidebar { transform: translateX(100%); transition: 0.3s; background: white; border-left: 1px solid var(--border); position: fixed; inset-y: 0; right: 0; width: 100%; max-width: 500px; z-index: 200; }
+    .sidebar.open { transform: translateX(0); }
+    .nav-bar { background: var(--nav-bg); padding: 1.25rem; position: fixed; bottom: 0; width: 100%; z-index: 100; display: flex; justify-content: space-around; }
+    .nav-btn { color: rgba(236, 253, 245, 0.5); border: none; background: none; outline: none; }
+    .nav-btn.active { color: #6ee7b7; transform: scale(1.1); }
+    .input-flat { width: 100%; padding: 12px; background: #f8f9fa; border-radius: 12px; border: 1px solid #eee; outline: none; font-size: 13px; }
+    .pill { font-size: 9px; padding: 2px 8px; border-radius: 20px; text-transform: uppercase; font-weight: 900; background: #e9edc9; color: #2d6a4f; }
+    .progress-bg { height: 6px; background: #e2e8f0; border-radius: 10px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--accent); }
+    .golem-brand { position: fixed; bottom: 95px; left: 20px; font-size: 10px; font-weight: 900; letter-spacing: 0.2em; opacity: 0.2; color: #064e3b; pointer-events: none; }
+    .area-header { font-size: 10px; font-weight: 900; letter-spacing: 0.1em; color: #064e3b; opacity: 0.4; margin-top: 24px; margin-bottom: 8px; margin-left: 8px; text-transform: uppercase; }
+  </style>
+</head>
+<body>
+
+  <header class="p-8 pb-4 flex justify-between items-end">
+    <div>
+      <h1 class="text-3xl font-serif italic text-emerald-900" id="v-title">Dashboard</h1>
+      <p class="text-[10px] opacity-40 uppercase font-black tracking-widest">Sovereign 3.35</p>
+    </div>
+  </header>
+
+  <main id="v-content" class="p-4 space-y-6"></main>
+
+  <div class="fab" onclick="openCapture()"><span class="material-icons text-3xl">add</span></div>
+  <div class="golem-brand">GOLEM OS</div>
+
+  <div id="capture-modal" class="modal">
+    <div class="bg-white w-full max-w-md rounded-[2.5rem] p-8 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center"><h2 class="text-xl font-serif italic font-bold">Universal Ingest</h2><button onclick="closeCapture()"><span class="material-icons opacity-20">close</span></button></div>
+      <select id="u-type" class="input-flat font-bold text-emerald-800" onchange="toggleCaptureFields()">
+        <option value="Tasks">TASK</option><option value="Objectives">OBJECTIVE</option><option value="Link_Inbox">LINK</option><option value="Notes">NOTE</option><option value="Reading_List">BOOK</option>
+      </select>
+      <div id="u-fields" class="space-y-4"></div>
+      <button onclick="saveUniversal()" class="w-full py-4 bg-emerald-900 text-white rounded-2xl font-bold uppercase tracking-widest text-xs">Ingest Data</button>
+    </div>
+  </div>
+
+  <div id="sidebar" class="sidebar p-6 overflow-y-auto">
+    <div class="flex justify-between items-center mb-6"><button onclick="closeSidebar()"><span class="material-icons opacity-30">close</span></button><span id="s-header-type" class="pill">Context</span></div>
+    <div id="s-content" class="space-y-6"></div>
+  </div>
+
+  <nav class="nav-bar">
+    <button onclick="render('Dashboard')" class="nav-btn" id="n-Dashboard"><span class="material-icons">dashboard</span></button>
+    <button onclick="render('Objectives')" class="nav-btn" id="n-Objectives"><span class="material-icons">eco</span></button>
+    <button onclick="render('Tasks')" class="nav-btn" id="n-Tasks"><span class="material-icons">bolt</span></button>
+    <button onclick="render('Link_Inbox')" class="nav-btn" id="n-Link_Inbox"><span class="material-icons">link</span></button>
+    <button onclick="render('Reading_List')" class="nav-btn" id="n-Reading_List"><span class="material-icons">menu_book</span></button>
+  </nav>
+
+  <script>
+    let STATE = <?!= STATE_JSON ?>;
+    let currentView = 'Dashboard';
+    let hideDoneTasks = true;
+    let activeItem = null;
+    let deleteConfirm = false;
+
+    function render(view) {
+      currentView = view;
+      const content = document.getElementById('v-content');
+      content.innerHTML = '';
+      document.getElementById('v-title').innerText = view.replace('_', ' ');
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      const activeNav = document.getElementById('n-'+view);
+      if(activeNav) activeNav.classList.add('active');
+
+      if (view === 'Dashboard') renderDashboard(content);
+      else if (view === 'Objectives') renderObjectives(content);
+      else if (view === 'Tasks') renderTasks(content);
+      else if (view === 'Link_Inbox') renderLinks(content);
+      else if (view === 'Reading_List') renderBooks(content);
+    }
+
+    function renderDashboard(content) {
+      const reading = STATE.Reading_List.find(b => b.Status === 'Reading') || { "Book Title": "None Active" };
+      content.innerHTML = `
+        <div class="grid grid-cols-2 gap-4">
+          <div class="card p-5 text-center cursor-pointer" onclick="render('Tasks')">
+            <p class="text-2xl font-black text-emerald-800">${STATE.Tasks.filter(t=>t.Status !== 'Done').length}</p>
+            <p class="text-[8px] uppercase font-bold opacity-40">Tasks Open</p>
+          </div>
+          <div class="card p-5 text-center cursor-pointer" onclick="render('Objectives')">
+            <p class="text-2xl font-black text-emerald-800">${[...new Set(STATE.Objectives.map(o=>o.Objective))].length}</p>
+            <p class="text-[8px] uppercase font-bold opacity-40">Active Goals</p>
+          </div>
+        </div>
+        <div class="card p-5 flex justify-between items-center cursor-pointer" onclick="render('Reading_List')">
+          <div><p class="text-[9px] font-black opacity-30 uppercase">Current Reading</p><p class="text-xs font-bold">${reading["Book Title"]}</p></div>
+          <span class="material-icons text-emerald-800">auto_stories</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+           <div class="card p-5 space-y-3">
+             <h4 class="text-[10px] font-black uppercase text-emerald-800">Task Pulse</h4>
+             <input type="text" id="q-task" placeholder="Add task..." class="input-flat">
+             <button onclick="quickSave('Tasks', 'q-task')" class="w-full bg-emerald-800 text-white py-2 rounded-xl text-[10px] font-bold uppercase">Commit</button>
+           </div>
+           <div class="card p-5 space-y-3">
+             <h4 class="text-[10px] font-black uppercase text-emerald-800">Intel Capture</h4>
+             <input type="text" id="q-note" placeholder="Quick note..." class="input-flat">
+             <button onclick="quickSave('Notes', 'q-note')" class="w-full bg-emerald-100 text-emerald-900 py-2 rounded-xl text-[10px] font-bold uppercase">Save</button>
+           </div>
+           <div class="card p-5 space-y-3">
+             <h4 class="text-[10px] font-black uppercase text-emerald-800">Link Saver</h4>
+             <input type="text" id="q-link" placeholder="Paste URL..." class="input-flat">
+             <button onclick="quickSave('Link_Inbox', 'q-link')" class="w-full bg-slate-700 text-white py-2 rounded-xl text-[10px] font-bold uppercase">Collect</button>
+           </div>
+           <div class="card p-5 space-y-3">
+             <h4 class="text-[10px] font-black uppercase text-emerald-800">New Goal</h4>
+             <input type="text" id="q-obj" placeholder="Add Objective..." class="input-flat">
+             <button onclick="quickSave('Objectives', 'q-obj')" class="w-full border border-emerald-800 text-emerald-800 py-2 rounded-xl text-[10px] font-bold uppercase">Initiate</button>
+           </div>
+        </div>
+      `;
+    }
+
+    function quickSave(target, inputId) {
+      const val = document.getElementById(inputId).value;
+      if(!val) return;
+      let data = { _rowIndex: Date.now(), Status: 'To Do', Area: 'LIFE' };
+      if(target === 'Tasks') data.Task = val;
+      else if(target === 'Notes') { data.Title = val; data.Content = ""; }
+      else if(target === 'Link_Inbox') data.URL = val;
+      else if(target === 'Objectives') data.Objective = val;
+      STATE[target].push(data);
+      google.script.run.syncAction('ADD', target, null, data);
+      document.getElementById(inputId).value = '';
+      render(target === 'Notes' ? 'Dashboard' : target);
+    }
+
+    function openCapture() { document.getElementById('capture-modal').classList.add('open'); toggleCaptureFields(); }
+    function closeCapture() { document.getElementById('capture-modal').classList.remove('open'); }
+    
+    function toggleCaptureFields() {
+      const type = document.getElementById('u-type').value;
+      const cont = document.getElementById('u-fields');
+      if (type === 'Tasks') cont.innerHTML = `<input id="f1" placeholder="What needs doing?" class="input-flat"><select id="f2" class="input-flat">${[...new Set(STATE.Objectives.map(o=>o.Objective))].map(o=>`<option>${o}</option>`).join('')}</select>`;
+      else if (type === 'Link_Inbox') cont.innerHTML = `<input id="f1" placeholder="URL..." class="input-flat"><input id="f2" placeholder="Title..." class="input-flat">`;
+      else if (type === 'Reading_List') cont.innerHTML = `<input id="f1" placeholder="Book Title..." class="input-flat"><input id="f2" placeholder="Author..." class="input-flat">`;
+      else cont.innerHTML = `<input id="f1" placeholder="Title..." class="input-flat"><textarea id="f2" placeholder="Content..." class="input-flat h-24"></textarea>`;
+    }
+
+    function saveUniversal() {
+      const type = document.getElementById('u-type').value;
+      const val1 = document.getElementById('f1').value;
+      const val2 = document.getElementById('f2').value;
+      if (!val1) return;
+      let data = { _rowIndex: Date.now(), Area: 'LIFE', Status: 'To Do' };
+      if (type === 'Tasks') { data.Task = val1; data.Objective = val2; }
+      else if (type === 'Link_Inbox') { data.URL = val1; data["Custom Title"] = val2; }
+      else if (type === 'Reading_List') { data["Book Title"] = val1; data.Author = val2; }
+      else if (type === 'Objectives') { data.Objective = val1; data.Area = val2; }
+      else { data.Title = val1; data.Content = val2; }
+      STATE[type].push(data);
+      google.script.run.syncAction('ADD', type, null, data);
+      closeCapture();
+      render(type);
+    }
+
+    function renderTasks(content) {
+      const filtered = hideDoneTasks ? STATE.Tasks.filter(t => t.Status !== 'Done') : STATE.Tasks;
+      content.innerHTML = `<div class="flex justify-end mb-4"><button onclick="toggleTaskFilter()" class="text-[10px] uppercase font-black opacity-40">${hideDoneTasks ? 'Show Done' : 'Hide Done'}</button></div>`;
+      
+      // Grouping Logic
+      const areas = {};
+      filtered.forEach(t => {
+        const areaName = t.Area || 'Uncategorized';
+        if (!areas[areaName]) areas[areaName] = [];
+        areas[areaName].push(t);
+      });
+
+      for (let area in areas) {
+        content.innerHTML += `<div class="area-header">${area}</div>`;
+        areas[area].forEach(t => {
+          const taskName = t.Task || t["Task Name"] || "Untitled Task";
+          content.innerHTML += `<div onclick="openSidebar(${t._rowIndex}, 'Tasks')" class="card p-5 mb-2 flex justify-between items-center cursor-pointer ${t.Status === 'Done' ? 'opacity-40' : ''}"><div><p class="font-bold text-sm">${taskName}</p><p class="text-[9px] text-emerald-700 italic">${t.Objective || ''}</p></div><span class="pill">${t.Status}</span></div>`;
+        });
+      }
+    }
+
+    function toggleTaskFilter() { hideDoneTasks = !hideDoneTasks; render('Tasks'); }
+
+    function renderObjectives(content) {
+      const groups = {}; STATE.Objectives.forEach(o => { if(!groups[o.Objective]) groups[o.Objective] = []; groups[o.Objective].push(o); });
+      for (let name in groups) {
+        let card = document.createElement('div'); card.className = 'card p-6 mb-4 cursor-pointer'; card.onclick = () => openSidebar(groups[name][0]._rowIndex, 'Objectives');
+        let krs = groups[name].map(i => { 
+          let p = (parseFloat(i.Current)/parseFloat(i.Target))*100 || 0; 
+          return `<div class="mt-3"><div class="flex justify-between text-[10px] mb-1"><span>${i["Key Result"] || 'Target'}</span><span>${Math.round(p)}%</span></div><div class="progress-bg"><div class="progress-fill" style="width:${p}%"></div></div></div>`; 
+        }).join('');
+        card.innerHTML = `<p class="pill mb-1">${groups[name][0].Area || 'General'}</p><h3 class="text-xl font-serif font-bold italic">${name}</h3>${krs}`;
+        content.appendChild(card);
+      }
+    }
+
+    function renderLinks(content) { STATE.Link_Inbox.slice().reverse().forEach(l => { content.innerHTML += `<div class="card p-5 mb-2 flex justify-between items-center cursor-pointer" onclick="openSidebar(${l._rowIndex}, 'Link_Inbox')"><p class="text-sm font-bold truncate">${l["Custom Title"] || l.URL || 'Untitled Link'}</p><span class="pill">Edit</span></div>`; }); }
+    function renderBooks(content) { STATE.Reading_List.forEach(b => { content.innerHTML += `<div class="card p-5 mb-2 flex justify-between items-center cursor-pointer" onclick="openSidebar(${b._rowIndex}, 'Reading_List')"><div><p class="font-bold text-sm">${b["Book Title"] || 'Untitled'}</p><p class="text-[10px] opacity-40">${b.Author || 'Unknown'}</p></div><span class="pill">${b.Status}</span></div>`; }); }
+
+    function openSidebar(row, view) {
+      activeItem = STATE[view].find(i => i._rowIndex === row);
+      deleteConfirm = false;
+      document.getElementById('sidebar').classList.add('open');
+      document.getElementById('s-header-type').innerText = view;
+      let html = `<div class="space-y-4">`;
+      Object.keys(activeItem).filter(f => !f.startsWith('_')).forEach(f => {
+        html += `<div class="space-y-1"><label class="text-[9px] font-black opacity-30 uppercase">${f}</label><textarea class="input-flat" onchange="updateValue('${f}', this.value)">${activeItem[f] || ''}</textarea></div>`;
+      });
+      html += `<div class="pt-8 space-y-3"><button onclick="closeSidebar()" class="w-full py-4 bg-emerald-900 text-white rounded-2xl font-bold uppercase text-xs tracking-widest">Save & Close</button>
+               <button id="del-btn" onclick="handleDelete()" class="w-full py-3 border border-red-200 text-red-400 rounded-2xl text-[10px] font-black tracking-widest uppercase">Delete Item</button></div></div>`;
+      document.getElementById('s-content').innerHTML = html;
+    }
+
+    function handleDelete() {
+      const btn = document.getElementById('del-btn');
+      if (!deleteConfirm) {
+        deleteConfirm = true;
+        btn.innerText = "Are you sure? Tap again";
+        btn.style.backgroundColor = "#ef4444";
+        btn.style.color = "white";
+        return;
+      }
+      google.script.run.withSuccessHandler(() => {
+        STATE[activeItem._view] = STATE[activeItem._view].filter(i => i._rowIndex !== activeItem._rowIndex);
+        closeSidebar();
+      }).syncAction('DELETE', activeItem._view, activeItem._rowIndex, null);
+    }
+
+    function updateValue(field, val) { 
+      if(!activeItem) return;
+      activeItem[field] = val; 
+      google.script.run.syncAction('UPDATE', activeItem._view, activeItem._rowIndex, activeItem); 
+    }
+
+    function closeSidebar() { 
+      document.getElementById('sidebar').classList.remove('open'); 
+      render(currentView); 
+    }
+
+    window.onload = () => render('Dashboard');
+  </script>
+</body>
+</html>
