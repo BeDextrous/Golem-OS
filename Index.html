@@ -29,7 +29,7 @@
   <header class="p-8 pb-4 flex justify-between items-end">
     <div>
       <h1 class="text-3xl font-serif italic text-emerald-900" id="v-title">Dashboard</h1>
-      <p class="text-[10px] opacity-40 uppercase font-black tracking-widest">Sovereign 3.42</p>
+      <p class="text-[10px] opacity-40 uppercase font-black tracking-widest">Sovereign 3.43</p>
     </div>
   </header>
   <main id="v-content" class="p-4 space-y-6"></main>
@@ -218,7 +218,20 @@
       }
     }
 
-    function renderLinks(content) { STATE.Link_Inbox.slice().reverse().forEach(l => { content.innerHTML += `<div class="card p-5 mb-2 flex justify-between items-center cursor-pointer" onclick="openSidebar(${l._rowIndex}, 'Link_Inbox')"><p class="text-sm font-bold truncate">${l["Custom Title"] || l.URL || 'Untitled Link'}</p><span class="pill">Link</span></div>`; }); }
+    function renderLinks(content) {
+      STATE.Link_Inbox.slice().reverse().forEach(l => {
+        const url = l.URL || '#';
+        content.innerHTML += `
+          <div class="card p-5 mb-2 flex justify-between items-center cursor-pointer" onclick="openSidebar(${l._rowIndex}, 'Link_Inbox')">
+            <div class="truncate pr-4">
+              <p class="text-sm font-bold truncate">${l["Custom Title"] || l.URL || 'Untitled Link'}</p>
+              <a href="${url}" target="_blank" onclick="event.stopPropagation();" class="text-[10px] text-emerald-700 font-bold underline">OPEN SOURCE</a>
+            </div>
+            <span class="material-icons opacity-20">open_in_new</span>
+          </div>`;
+      });
+    }
+
     function renderBooks(content) { STATE.Reading_List.forEach(b => { content.innerHTML += `<div class="card p-5 mb-2 flex justify-between items-center cursor-pointer" onclick="openSidebar(${b._rowIndex}, 'Reading_List')"><div><p class="font-bold text-sm">${b["Book Title"] || 'Untitled'}</p><p class="text-[10px] opacity-40">${b.Author || 'Unknown'}</p></div><span class="pill">${b.Status}</span></div>`; }); }
 
     function openSidebar(row, view) {
