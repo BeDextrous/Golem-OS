@@ -8,17 +8,20 @@
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <style>
     :root { --bg: #fdfcf0; --accent: #2d6a4f; --border: #e9edc9; --nav-bg: #064e3b; }
-    body { background-color: var(--bg); background-image: url('https://www.transparenttextures.com/patterns/natural-paper.png'); font-family: 'Inter', sans-serif; min-height: 100vh; margin: 0; padding-bottom: 120px; }
+    body { background-color: var(--bg); background-image: url('https://www.transparenttextures.com/patterns/natural-paper.png'); font-family: 'Inter', sans-serif; min-height: 100vh; margin: 0; padding-bottom: 120px; overflow-x: hidden; }
     .card { background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 1.5rem; transition: 0.2s; }
     .fab { position: fixed; bottom: 100px; right: 20px; width: 60px; height: 60px; background: var(--accent); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 60; cursor: pointer; }
     .modal { display: none; position: fixed; inset: 0; background: rgba(6, 78, 59, 0.8); backdrop-filter: blur(5px); z-index: 150; align-items: center; justify-content: center; padding: 20px; }
     .modal.open { display: flex; }
-    .sidebar { transform: translateX(100%); transition: 0.3s; background: white; border-left: 1px solid var(--border); position: fixed; inset-y: 0; right: 0; width: 100%; max-width: 500px; z-index: 200; }
+    
+    /* FIX: SIDEBAR POSITIONING */
+    .sidebar { transform: translateX(100%); transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); background: white; position: fixed; inset: 0; width: 100%; height: 100%; z-index: 300; display: flex; flex-direction: column; }
     .sidebar.open { transform: translateX(0); }
-    .nav-bar { background: var(--nav-bg); padding: 1.25rem; position: fixed; bottom: 0; width: 100%; z-index: 100; display: flex; justify-content: space-around; }
+    
+    .nav-bar { background: var(--nav-bg); padding: 1.25rem; position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; display: flex; justify-content: space-around; }
     .nav-btn { color: rgba(236, 253, 245, 0.5); border: none; background: none; outline: none; }
     .nav-btn.active { color: #6ee7b7; transform: scale(1.1); }
-    .input-flat { width: 100%; padding: 12px; background: #f8f9fa; border-radius: 12px; border: 1px solid #eee; outline: none; font-size: 13px; }
+    .input-flat { width: 100%; padding: 14px; background: #f8f9fa; border-radius: 12px; border: 1px solid #eee; outline: none; font-size: 14px; }
     .pill { font-size: 9px; padding: 2px 8px; border-radius: 20px; text-transform: uppercase; font-weight: 900; background: #e9edc9; color: #2d6a4f; }
     .progress-bg { height: 6px; background: #e2e8f0; border-radius: 10px; overflow: hidden; }
     .progress-fill { height: 100%; background: var(--accent); }
@@ -29,11 +32,13 @@
   <header class="p-8 pb-4 flex justify-between items-end">
     <div>
       <h1 class="text-3xl font-serif italic text-emerald-900" id="v-title">Dashboard</h1>
-      <p class="text-[10px] opacity-40 uppercase font-black tracking-widest">Sovereign 3.40</p>
+      <p class="text-[10px] opacity-40 uppercase font-black tracking-widest">Sovereign 3.41</p>
     </div>
   </header>
   <main id="v-content" class="p-4 space-y-6"></main>
+  
   <div class="fab" onclick="openCapture()"><span class="material-icons text-3xl">add</span></div>
+
   <div id="capture-modal" class="modal">
     <div class="bg-white w-full max-w-md rounded-[2.5rem] p-8 space-y-4 shadow-2xl">
       <div class="flex justify-between items-center"><h2 class="text-xl font-serif italic font-bold">Universal Ingest</h2><button onclick="closeCapture()"><span class="material-icons opacity-20">close</span></button></div>
@@ -44,10 +49,19 @@
       <button onclick="saveUniversal()" class="w-full py-4 bg-emerald-900 text-white rounded-2xl font-bold uppercase tracking-widest text-xs">Ingest Data</button>
     </div>
   </div>
-  <div id="sidebar" class="sidebar p-6 overflow-y-auto">
-    <div class="flex justify-between items-center mb-6"><button onclick="closeSidebar()"><span class="material-icons opacity-30">close</span></button><span id="s-header-type" class="pill">Context</span></div>
-    <div id="s-content" class="space-y-6"></div>
+
+  <div id="sidebar" class="sidebar">
+    <div class="p-6 border-b flex justify-between items-center">
+      <button onclick="closeSidebar()"><span class="material-icons opacity-30 text-3xl">close</span></button>
+      <span id="s-header-type" class="pill">Context</span>
+      <div class="w-8"></div>
+    </div>
+    <div id="s-content" class="p-6 overflow-y-auto space-y-6 flex-grow"></div>
+    <div class="p-6 bg-gray-50 border-t">
+       <button onclick="closeSidebar()" class="w-full py-5 bg-emerald-900 text-white rounded-2xl font-bold uppercase text-xs tracking-widest">Update & Close</button>
+    </div>
   </div>
+
   <nav class="nav-bar">
     <button onclick="render('Dashboard')" class="nav-btn" id="n-Dashboard"><span class="material-icons">dashboard</span></button>
     <button onclick="render('Objectives')" class="nav-btn" id="n-Objectives"><span class="material-icons">eco</span></button>
@@ -99,7 +113,7 @@
           <h4 class="text-[10px] font-black uppercase text-emerald-800 tracking-widest opacity-40">Command Center</h4>
           <div class="space-y-3">
             <input type="text" id="q-task" placeholder="Quick Task..." class="input-flat">
-            <button onclick="quickSave('Tasks', 'q-task')" class="w-full bg-emerald-900 text-white py-3 rounded-xl text-[10px] font-bold uppercase">Commit Task</button>
+            <button onclick="quickSave('Tasks', 'q-task')" class="w-full bg-emerald-900 text-white py-3 rounded-xl text-[10px] font-bold uppercase tracking-tighter">Commit Task</button>
           </div>
           <div class="grid grid-cols-2 gap-3 pt-2">
             <div class="space-y-2">
@@ -146,7 +160,7 @@
             const div = document.createElement('div');
             div.className = 'card p-5 flex justify-between items-center cursor-move';
             div.innerHTML = `<div><p class="font-bold text-sm">${t.Task || t["Task Name"] || 'Untitled'}</p><p class="text-[9px] text-emerald-700 italic">${t.Objective || ''}</p></div><span class="pill">${t.Status}</span>`;
-            div.onclick = (e) => { if(e.target === div || div.contains(e.target)) openSidebar(t._rowIndex, 'Tasks'); };
+            div.onclick = (e) => { if(!div.classList.contains('sortable-chosen')) openSidebar(t._rowIndex, 'Tasks'); };
             container.appendChild(div);
           });
           new Sortable(container, { animation: 150, ghostClass: 'opacity-20', delay: 150, delayOnTouchOnly: true });
@@ -176,11 +190,11 @@
       if(!activeItem) return;
       document.getElementById('sidebar').classList.add('open');
       document.getElementById('s-header-type').innerText = view;
-      let html = `<div class="space-y-4">`;
+      let html = `<div class="space-y-4 pb-20">`;
       Object.keys(activeItem).filter(f => !f.startsWith('_')).forEach(f => {
         html += `<div class="space-y-1"><label class="text-[9px] font-black opacity-30 uppercase">${f}</label><textarea class="input-flat" onchange="updateValue('${f}', this.value)">${activeItem[f] || ''}</textarea></div>`;
       });
-      html += `<button onclick="closeSidebar()" class="w-full py-4 bg-emerald-900 text-white rounded-2xl font-bold uppercase text-xs">Save & Close</button></div>`;
+      html += `</div>`;
       document.getElementById('s-content').innerHTML = html;
     }
 
