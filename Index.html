@@ -29,7 +29,7 @@
   <header class="p-8 pb-4 flex justify-between items-end">
     <div>
       <h1 class="text-3xl font-serif italic text-emerald-900" id="v-title">Dashboard</h1>
-      <p class="text-[10px] opacity-40 uppercase font-black tracking-widest">Sovereign 3.39</p>
+      <p class="text-[10px] opacity-40 uppercase font-black tracking-widest">Sovereign 3.40</p>
     </div>
   </header>
   <main id="v-content" class="p-4 space-y-6"></main>
@@ -95,24 +95,22 @@
           <div><p class="text-[9px] font-black opacity-30 uppercase">Current Reading</p><p class="text-xs font-bold">${reading["Book Title"]}</p></div>
           <span class="material-icons text-emerald-800">auto_stories</span>
         </div>
-        <div class="grid grid-cols-1 gap-4">
-           <div class="card p-5 space-y-3">
-             <h4 class="text-[10px] font-black uppercase text-emerald-800 tracking-widest opacity-40">Quick Commit</h4>
-             <input type="text" id="q-task" placeholder="New task..." class="input-flat">
-             <button onclick="quickSave('Tasks', 'q-task')" class="w-full bg-emerald-900 text-white py-3 rounded-xl text-[10px] font-bold uppercase">Add to Inbox</button>
-           </div>
-           <div class="grid grid-cols-2 gap-4">
-             <div class="card p-5 space-y-2">
-               <h4 class="text-[9px] font-black uppercase opacity-40">Intel</h4>
-               <input type="text" id="q-note" placeholder="Note..." class="input-flat text-[11px]">
-               <button onclick="quickSave('Notes', 'q-note')" class="w-full bg-emerald-100 text-emerald-900 py-2 rounded-lg text-[9px] font-bold uppercase">Save</button>
-             </div>
-             <div class="card p-5 space-y-2">
-               <h4 class="text-[9px] font-black uppercase opacity-40">Links</h4>
-               <input type="text" id="q-link" placeholder="URL..." class="input-flat text-[11px]">
-               <button onclick="quickSave('Link_Inbox', 'q-link')" class="w-full bg-slate-200 text-slate-800 py-2 rounded-lg text-[9px] font-bold uppercase">Collect</button>
-             </div>
-           </div>
+        <div class="card p-5 space-y-4">
+          <h4 class="text-[10px] font-black uppercase text-emerald-800 tracking-widest opacity-40">Command Center</h4>
+          <div class="space-y-3">
+            <input type="text" id="q-task" placeholder="Quick Task..." class="input-flat">
+            <button onclick="quickSave('Tasks', 'q-task')" class="w-full bg-emerald-900 text-white py-3 rounded-xl text-[10px] font-bold uppercase">Commit Task</button>
+          </div>
+          <div class="grid grid-cols-2 gap-3 pt-2">
+            <div class="space-y-2">
+              <input type="text" id="q-note" placeholder="Intel..." class="input-flat text-[11px]">
+              <button onclick="quickSave('Notes', 'q-note')" class="w-full bg-emerald-100 text-emerald-900 py-2 rounded-lg text-[9px] font-bold uppercase">Save Note</button>
+            </div>
+            <div class="space-y-2">
+              <input type="text" id="q-link" placeholder="URL..." class="input-flat text-[11px]">
+              <button onclick="quickSave('Link_Inbox', 'q-link')" class="w-full bg-slate-200 text-slate-800 py-2 rounded-lg text-[9px] font-bold uppercase">Collect Link</button>
+            </div>
+          </div>
         </div>
       `;
     }
