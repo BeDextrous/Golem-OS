@@ -11,13 +11,10 @@
     body { background-color: var(--bg); background-image: url('https://www.transparenttextures.com/patterns/natural-paper.png'); font-family: 'Inter', sans-serif; min-height: 100vh; margin: 0; padding-bottom: 120px; overflow-x: hidden; }
     .card { background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 1.5rem; transition: 0.2s; }
     .fab { position: fixed; bottom: 100px; right: 20px; width: 60px; height: 60px; background: var(--accent); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 60; cursor: pointer; }
-    .modal { display: none; position: fixed; inset: 0; background: rgba(6, 78, 59, 0.8); backdrop-filter: blur(5px); z-index: 150; align-items: center; justify-content: center; padding: 20px; }
+    .modal { display: none; position: fixed; inset: 0; background: rgba(6, 78, 59, 0.8); backdrop-filter: blur(5px); z-index: 400; align-items: center; justify-content: center; padding: 20px; }
     .modal.open { display: flex; }
-    
-    /* FIX: SIDEBAR POSITIONING */
     .sidebar { transform: translateX(100%); transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); background: white; position: fixed; inset: 0; width: 100%; height: 100%; z-index: 300; display: flex; flex-direction: column; }
     .sidebar.open { transform: translateX(0); }
-    
     .nav-bar { background: var(--nav-bg); padding: 1.25rem; position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; display: flex; justify-content: space-around; }
     .nav-btn { color: rgba(236, 253, 245, 0.5); border: none; background: none; outline: none; }
     .nav-btn.active { color: #6ee7b7; transform: scale(1.1); }
@@ -32,7 +29,7 @@
   <header class="p-8 pb-4 flex justify-between items-end">
     <div>
       <h1 class="text-3xl font-serif italic text-emerald-900" id="v-title">Dashboard</h1>
-      <p class="text-[10px] opacity-40 uppercase font-black tracking-widest">Sovereign 3.41</p>
+      <p class="text-[10px] opacity-40 uppercase font-black tracking-widest">Sovereign 3.42</p>
     </div>
   </header>
   <main id="v-content" class="p-4 space-y-6"></main>
@@ -40,13 +37,18 @@
   <div class="fab" onclick="openCapture()"><span class="material-icons text-3xl">add</span></div>
 
   <div id="capture-modal" class="modal">
-    <div class="bg-white w-full max-w-md rounded-[2.5rem] p-8 space-y-4 shadow-2xl">
-      <div class="flex justify-between items-center"><h2 class="text-xl font-serif italic font-bold">Universal Ingest</h2><button onclick="closeCapture()"><span class="material-icons opacity-20">close</span></button></div>
+    <div class="bg-white w-full max-w-md rounded-[2.5rem] p-8 space-y-4 shadow-2xl overflow-y-auto max-h-[90vh]">
+      <div class="flex justify-between items-center"><h2 class="text-xl font-serif italic font-bold text-emerald-900">Universal Ingest</h2><button onclick="closeCapture()"><span class="material-icons opacity-20">close</span></button></div>
       <select id="u-type" class="input-flat font-bold text-emerald-800" onchange="toggleCaptureFields()">
-        <option value="Tasks">TASK</option><option value="Objectives">OBJECTIVE</option><option value="Link_Inbox">LINK</option><option value="Notes">NOTE</option><option value="Reading_List">BOOK</option>
+        <option value="">SELECT TYPE...</option>
+        <option value="Tasks">TASK</option>
+        <option value="Objectives">OBJECTIVE</option>
+        <option value="Link_Inbox">LINK</option>
+        <option value="Notes">NOTE</option>
+        <option value="Reading_List">BOOK</option>
       </select>
       <div id="u-fields" class="space-y-4"></div>
-      <button onclick="saveUniversal()" class="w-full py-4 bg-emerald-900 text-white rounded-2xl font-bold uppercase tracking-widest text-xs">Ingest Data</button>
+      <button onclick="saveUniversal()" id="ingest-btn" class="hidden w-full py-4 bg-emerald-900 text-white rounded-2xl font-bold uppercase tracking-widest text-xs">Commit to OS</button>
     </div>
   </div>
 
@@ -129,6 +131,40 @@
       `;
     }
 
+    function toggleCaptureFields() {
+      const type = document.getElementById('u-type').value;
+      const fieldContainer = document.getElementById('u-fields');
+      const btn = document.getElementById('ingest-btn');
+      fieldContainer.innerHTML = '';
+      if (!type) { btn.classList.add('hidden'); return; }
+      btn.classList.remove('hidden');
+
+      let fields = [];
+      if (type === 'Tasks') fields = ['Task', 'Objective', 'Area'];
+      else if (type === 'Objectives') fields = ['Objective', 'Key Result', 'Target', 'Current', 'Area'];
+      else if (type === 'Link_Inbox') fields = ['URL', 'Custom Title', 'Notes'];
+      else if (type === 'Notes') fields = ['Title', 'Content', 'Tags'];
+      else if (type === 'Reading_List') fields = ['Book Title', 'Author', 'Status'];
+
+      fields.forEach(f => {
+        fieldContainer.innerHTML += `<div class="space-y-1"><label class="text-[9px] font-black opacity-30 uppercase">${f}</label><input type="text" id="u-${f.replace(' ','_')}" class="input-flat" placeholder="Enter ${f}..."></div>`;
+      });
+    }
+
+    function saveUniversal() {
+      const type = document.getElementById('u-type').value;
+      let data = { _rowIndex: Date.now(), _view: type, Status: 'To Do' };
+      const inputs = document.querySelectorAll('#u-fields input');
+      inputs.forEach(input => {
+        const fieldName = input.id.replace('u-', '').replace('_', ' ');
+        data[fieldName] = input.value;
+      });
+      STATE[type].push(data);
+      google.script.run.syncAction('ADD', type, null, data);
+      closeCapture();
+      render(currentView);
+    }
+
     function quickSave(target, inputId) {
       const val = document.getElementById(inputId).value;
       if(!val) return;
@@ -202,7 +238,7 @@
     function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); render(currentView); }
     function toggleTaskFilter() { hideDoneTasks = !hideDoneTasks; render('Tasks'); }
     function openCapture() { document.getElementById('capture-modal').classList.add('open'); }
-    function closeCapture() { document.getElementById('capture-modal').classList.remove('open'); }
+    function closeCapture() { document.getElementById('capture-modal').classList.remove('open'); document.getElementById('u-type').value = ''; document.getElementById('u-fields').innerHTML = ''; }
     window.onload = () => render('Dashboard');
   </script>
 </body>
