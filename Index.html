@@ -7,354 +7,277 @@
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <style>
-    :root { --bg: #fdfcf0; --accent: #2d6a4f; --border: #e9edc9; --nav-bg: #064e3b; }
-    body { background-color: var(--bg); background-image: url('https://www.transparenttextures.com/patterns/natural-paper.png'); font-family: 'Inter', sans-serif; min-height: 100vh; margin: 0; padding-bottom: 120px; overflow-x: hidden; }
-    .card { background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 1.5rem; transition: 0.2s; }
-    .fab { position: fixed; bottom: 100px; right: 20px; width: 60px; height: 60px; background: var(--accent); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 60; cursor: pointer; }
-    .modal { display: none; position: fixed; inset: 0; background: rgba(6, 78, 59, 0.8); backdrop-filter: blur(5px); z-index: 400; align-items: center; justify-content: center; padding: 20px; }
-    .modal.open { display: flex; }
-    .sidebar { transform: translateX(100%); transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); background: white; position: fixed; inset: 0; width: 100%; height: 100%; z-index: 300; display: flex; flex-direction: column; }
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;700;800&family=Space+Grotesk:wght@300;500;700&display=swap');
+    
+    :root { 
+      --bg: #0b0f10; 
+      --card-bg: rgba(25, 32, 35, 0.7);
+      --accent: #10b981; 
+      --text: #e2e8f0;
+      --border: rgba(255, 255, 255, 0.08);
+    }
+    
+    body { 
+      background: var(--bg);
+      background-image: radial-gradient(circle at 50% 0%, #142822 0%, #0b0f10 100%);
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: 100vh;
+      padding-bottom: 140px;
+    }
+
+    .glass {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+    }
+
+    .card { 
+      border-radius: 20px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .card:active { transform: scale(0.98); background: rgba(255,255,255,0.05); }
+
+    .fab { 
+      position: fixed; bottom: 110px; right: 24px; width: 64px; height: 64px; 
+      background: var(--accent); color: #000; border-radius: 18px; 
+      display: flex; align-items: center; justify-content: center; 
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); z-index: 60; 
+    }
+
+    .sidebar { 
+      transform: translateX(100%); transition: 0.5s cubic-bezier(0.16, 1, 0.3, 1); 
+      background: #0f1416; position: fixed; inset: 0; width: 100%; z-index: 300; 
+    }
     .sidebar.open { transform: translateX(0); }
-    .nav-bar { background: var(--nav-bg); padding: 1.25rem; position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; display: flex; justify-content: space-around; }
-    .nav-btn { color: rgba(236, 253, 245, 0.5); border: none; background: none; outline: none; }
-    .nav-btn.active { color: #6ee7b7; transform: scale(1.1); }
-    .input-flat { width: 100%; padding: 14px; background: #f8f9fa; border-radius: 12px; border: 1px solid #eee; outline: none; font-size: 14px; box-sizing: border-box; }
-    .pill { font-size: 9px; padding: 2px 8px; border-radius: 20px; text-transform: uppercase; font-weight: 900; background: #e9edc9; color: #2d6a4f; }
-    .progress-bg { height: 6px; background: #e2e8f0; border-radius: 10px; overflow: hidden; }
-    .progress-fill { height: 100%; background: var(--accent); }
-    .area-header { font-size: 10px; font-weight: 900; letter-spacing: 0.1em; color: #064e3b; opacity: 0.4; margin-top: 24px; margin-bottom: 8px; margin-left: 8px; text-transform: uppercase; }
-    .spinner-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 50vh; gap: 12px; opacity: 0.4; }
-    .spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .nav-bar { 
+      background: rgba(11, 15, 16, 0.85); backdrop-filter: blur(20px);
+      padding: 1.5rem; position: fixed; bottom: 24px; left: 24px; right: 24px; 
+      border-radius: 24px; border: 1px solid var(--border);
+      z-index: 100; display: flex; justify-content: space-around;
+    }
+
+    .nav-btn { color: rgba(255, 255, 255, 0.3); transition: 0.3s; }
+    .nav-btn.active { color: var(--accent); text-shadow: 0 0 15px rgba(16, 185, 129, 0.6); }
+
+    .input-flat { 
+      width: 100%; padding: 16px; background: rgba(255,255,255,0.03); 
+      border-radius: 14px; border: 1px solid var(--border); 
+      outline: none; color: white; font-size: 15px;
+    }
+
+    .pill { 
+      font-size: 10px; padding: 4px 10px; border-radius: 8px; 
+      text-transform: uppercase; font-weight: 800; letter-spacing: 0.05em;
+      background: rgba(16, 185, 129, 0.15); color: var(--accent); 
+    }
+
+    .area-header { 
+      font-size: 11px; font-weight: 800; letter-spacing: 0.2em; 
+      color: var(--accent); opacity: 0.6; margin: 32px 0 12px 12px; 
+      text-transform: uppercase; font-family: 'Space Grotesk', sans-serif;
+    }
+
+    h1 { font-family: 'Space Grotesk', sans-serif; font-weight: 700; letter-spacing: -0.02em; }
   </style>
 </head>
 <body>
-  <header class="p-8 pb-4 flex justify-between items-end">
-    <div>
-      <h1 class="text-3xl font-serif italic text-emerald-900" id="v-title">Dashboard</h1>
-      <p class="text-[10px] opacity-40 uppercase font-black tracking-widest">Sovereign 3.6 · Live</p>
-    </div>
-    <button onclick="loadData()" style="background:none;border:none;cursor:pointer;opacity:0.3;"><span class="material-icons">refresh</span></button>
+  <header class="p-8 pb-4">
+    <p class="text-[10px] text-emerald-500 font-black tracking-[0.3em] uppercase mb-1">System Active</p>
+    <h1 class="text-4xl text-white" id="v-title">Dashboard</h1>
   </header>
 
-  <main id="v-content" class="p-4 space-y-6">
-    <div class="spinner-wrap"><div class="spinner"></div><p style="font-size:11px;letter-spacing:0.1em;">LOADING</p></div>
-  </main>
+  <main id="v-content" class="p-4 space-y-6"></main>
+  
+  <div class="fab" onclick="openCapture()"><span class="material-icons text-3xl font-bold">add</span></div>
 
-  <div class="fab" onclick="openCapture()"><span class="material-icons text-3xl">add</span></div>
-
-  <!-- Universal Ingest Modal -->
   <div id="capture-modal" class="modal">
-    <div class="bg-white w-full max-w-md rounded-[2.5rem] p-8 space-y-4 shadow-2xl overflow-y-auto max-h-[90vh]">
-      <div class="flex justify-between items-center">
-        <h2 class="text-xl font-serif italic font-bold text-emerald-900">Universal Ingest</h2>
-        <button onclick="closeCapture()"><span class="material-icons opacity-20">close</span></button>
-      </div>
-      <select id="u-type" class="input-flat font-bold text-emerald-800" onchange="toggleCaptureFields()">
+    <div class="glass w-full max-w-md rounded-[32px] p-8 space-y-6">
+      <div class="flex justify-between items-center"><h2 class="text-2xl font-bold text-white">Ingest</h2><button onclick="closeCapture()"><span class="material-icons text-white opacity-40">close</span></button></div>
+      <select id="u-type" class="input-flat font-bold text-emerald-400" onchange="toggleCaptureFields()">
         <option value="">SELECT TYPE...</option>
         <option value="Tasks">TASK</option>
         <option value="Objectives">OBJECTIVE</option>
         <option value="Link_Inbox">LINK</option>
-        <option value="Reading List">BOOK</option>
+        <option value="Notes">NOTE</option>
       </select>
       <div id="u-fields" class="space-y-4"></div>
-      <button onclick="saveUniversal()" id="ingest-btn" class="hidden w-full py-4 bg-emerald-900 text-white rounded-2xl font-bold uppercase tracking-widest text-xs">Commit to OS</button>
+      <button onclick="saveUniversal()" id="ingest-btn" class="hidden w-full py-5 bg-emerald-500 text-black rounded-2xl font-bold uppercase text-xs tracking-widest shadow-lg shadow-emerald-500/20">Execute</button>
     </div>
   </div>
 
-  <!-- Sidebar -->
-  <div id="sidebar" class="sidebar">
-    <div class="p-6 border-b flex justify-between items-center">
-      <button onclick="closeSidebar()"><span class="material-icons opacity-30 text-3xl">close</span></button>
+  <div id="sidebar" class="sidebar flex flex-col">
+    <div class="p-8 flex justify-between items-center border-b border-white/5">
+      <button onclick="closeSidebar()"><span class="material-icons text-white opacity-40 text-3xl">west</span></button>
       <span id="s-header-type" class="pill">Context</span>
       <div class="w-8"></div>
     </div>
-    <div id="s-content" class="p-6 overflow-y-auto space-y-6 flex-grow"></div>
-    <div class="p-6 bg-gray-50 border-t space-y-3">
-      <button onclick="saveAndClose()" class="w-full py-5 bg-emerald-900 text-white rounded-2xl font-bold uppercase text-xs tracking-widest">Update & Close</button>
-      <button onclick="archiveItem()" class="w-full py-3 text-rose-500 text-xs font-bold uppercase tracking-widest">Archive</button>
+    <div id="s-content" class="p-8 overflow-y-auto space-y-8 flex-grow"></div>
+    <div class="p-8 bg-black/40 backdrop-blur-xl border-t border-white/5">
+       <button onclick="closeSidebar()" class="w-full py-5 bg-emerald-500 text-black rounded-2xl font-bold uppercase text-xs tracking-widest">Update State</button>
     </div>
   </div>
 
   <nav class="nav-bar">
-    <button onclick="render('Dashboard')" class="nav-btn active" id="n-Dashboard"><span class="material-icons">dashboard</span></button>
-    <button onclick="render('Objectives')" class="nav-btn" id="n-Objectives"><span class="material-icons">eco</span></button>
+    <button onclick="render('Dashboard')" class="nav-btn" id="n-Dashboard"><span class="material-icons">grid_view</span></button>
+    <button onclick="render('Objectives')" class="nav-btn" id="n-Objectives"><span class="material-icons">track_changes</span></button>
     <button onclick="render('Tasks')" class="nav-btn" id="n-Tasks"><span class="material-icons">bolt</span></button>
-    <button onclick="render('Link_Inbox')" class="nav-btn" id="n-Link_Inbox"><span class="material-icons">link</span></button>
-    <button onclick="render('Reading List')" class="nav-btn" id="n-Reading List"><span class="material-icons">menu_book</span></button>
+    <button onclick="render('Link_Inbox')" class="nav-btn" id="n-Link_Inbox"><span class="material-icons">auto_awesome_motion</span></button>
+    <button onclick="render('Reading_List')" class="nav-btn" id="n-Reading_List"><span class="material-icons">book</span></button>
   </nav>
 
   <script>
-    let STATE = { Objectives: [], Tasks: [], 'Reading List': [], Link_Inbox: [] };
+    let STATE = <?!= STATE_JSON ?>;
     let currentView = 'Dashboard';
     let hideDoneTasks = true;
     let activeItem = null;
 
-    // ─── BOOT ─────────────────────────────────────────────
-    window.onload = () => loadData();
-
-    function loadData() {
-      document.getElementById('v-content').innerHTML =
-        '<div class="spinner-wrap"><div class="spinner"></div><p style="font-size:11px;letter-spacing:0.1em;">LOADING</p></div>';
-      google.script.run
-        .withSuccessHandler(data => { STATE = data; render(currentView); })
-        .withFailureHandler(err => {
-          document.getElementById('v-content').innerHTML =
-            `<p style="text-align:center;opacity:0.4;margin-top:60px;">Error: ${err.message}</p>`;
-        })
-        .getSheetData();
-    }
-
-    // ─── RENDER ROUTER ────────────────────────────────────
     function render(view) {
       currentView = view;
       const content = document.getElementById('v-content');
       content.innerHTML = '';
       document.getElementById('v-title').innerText = view.replace('_', ' ');
       document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-      const nb = document.getElementById('n-' + view);
-      if (nb) nb.classList.add('active');
-
+      const activeNav = document.getElementById('n-'+view);
+      if(activeNav) activeNav.classList.add('active');
+      
       if (view === 'Dashboard') renderDashboard(content);
       else if (view === 'Objectives') renderObjectives(content);
       else if (view === 'Tasks') renderTasks(content);
       else if (view === 'Link_Inbox') renderLinks(content);
-      else if (view === 'Reading List') renderBooks(content);
+      else if (view === 'Reading_List') renderBooks(content);
     }
 
-    // ─── DASHBOARD ────────────────────────────────────────
     function renderDashboard(content) {
-      const tasks = STATE.Tasks || [];
-      const objectives = STATE.Objectives || [];
-      const reading = (STATE['Reading List'] || []).find(b => b.Status === 'Reading') || { 'Book Title': 'None Active' };
-
       content.innerHTML = `
         <div class="grid grid-cols-2 gap-4">
-          <div class="card p-5 text-center cursor-pointer" onclick="render('Tasks')">
-            <p class="text-2xl font-black text-emerald-800">${tasks.filter(t => t.Status !== 'Done').length}</p>
-            <p class="text-[8px] uppercase font-bold opacity-40">Tasks Open</p>
+          <div class="glass card p-6 cursor-pointer" onclick="render('Tasks')">
+            <p class="text-3xl font-bold text-emerald-400">${STATE.Tasks.filter(t=>t.Status !== 'Done').length}</p>
+            <p class="text-[9px] uppercase font-bold opacity-40 tracking-wider">Active Tasks</p>
           </div>
-          <div class="card p-5 text-center cursor-pointer" onclick="render('Objectives')">
-            <p class="text-2xl font-black text-emerald-800">${[...new Set(objectives.map(o => o.Objective))].length}</p>
-            <p class="text-[8px] uppercase font-bold opacity-40">Active Goals</p>
+          <div class="glass card p-6 cursor-pointer" onclick="render('Objectives')">
+            <p class="text-3xl font-bold text-emerald-400">${[...new Set(STATE.Objectives.map(o=>o.Objective))].length}</p>
+            <p class="text-[9px] uppercase font-bold opacity-40 tracking-wider">Strategic Goals</p>
           </div>
         </div>
-        <div class="card p-5 flex justify-between items-center cursor-pointer" onclick="render('Reading List')">
-          <div>
-            <p class="text-[9px] font-black opacity-30 uppercase">Current Reading</p>
-            <p class="text-xs font-bold">${reading['Book Title']}</p>
+        <div class="glass card p-6 space-y-6">
+          <h4 class="text-[10px] font-bold uppercase text-emerald-500 tracking-[0.2em]">Quick Ingest</h4>
+          <div class="space-y-4">
+            <input type="text" id="q-task" placeholder="Task description..." class="input-flat">
+            <button onclick="quickSave('Tasks', 'q-task')" class="w-full bg-emerald-500 text-black py-4 rounded-xl text-[10px] font-black uppercase tracking-widest">Commit to Inbox</button>
           </div>
-          <span class="material-icons text-emerald-800">auto_stories</span>
         </div>
-        <div class="card p-5 space-y-4">
-          <h4 class="text-[10px] font-black uppercase text-emerald-800 tracking-widest opacity-40">Command Center</h4>
-          <div class="space-y-3">
-            <input type="text" id="q-task" placeholder="Quick Task..." class="input-flat">
-            <button onclick="quickSave('Tasks','q-task')" class="w-full bg-emerald-900 text-white py-3 rounded-xl text-[10px] font-bold uppercase tracking-tighter">Commit Task</button>
-          </div>
-          <div class="grid grid-cols-2 gap-3 pt-2">
-            <div class="space-y-2">
-              <input type="text" id="q-link" placeholder="URL..." class="input-flat text-[11px]">
-              <button onclick="quickSave('Link_Inbox','q-link')" class="w-full bg-slate-200 text-slate-800 py-2 rounded-lg text-[9px] font-bold uppercase">Collect Link</button>
-            </div>
-            <div class="space-y-2">
-              <input type="text" id="q-book" placeholder="Book title..." class="input-flat text-[11px]">
-              <button onclick="quickSave('Reading List','q-book')" class="w-full bg-emerald-100 text-emerald-900 py-2 rounded-lg text-[9px] font-bold uppercase">Add Book</button>
-            </div>
-          </div>
-        </div>`;
+      `;
     }
 
-    // ─── TASKS ────────────────────────────────────────────
     function renderTasks(content) {
-      const filtered = hideDoneTasks
-        ? (STATE.Tasks || []).filter(t => t.Status !== 'Done')
-        : (STATE.Tasks || []);
-
-      content.innerHTML = `<div class="flex justify-end mb-4">
-        <button onclick="toggleTaskFilter()" class="text-[10px] uppercase font-black opacity-40">
-          ${hideDoneTasks ? 'Show Done' : 'Hide Done'}
-        </button></div>`;
-
+      const filtered = hideDoneTasks ? STATE.Tasks.filter(t => t.Status !== 'Done') : STATE.Tasks;
+      content.innerHTML = `<div class="flex justify-end mb-4"><button onclick="toggleTaskFilter()" class="text-[10px] uppercase font-black opacity-30 tracking-widest">${hideDoneTasks ? 'Show Completed' : 'Hide Completed'}</button></div>`;
       const areas = {};
       filtered.forEach(t => {
-        const a = t.Area || 'Uncategorized';
-        if (!areas[a]) areas[a] = [];
-        areas[a].push(t);
+        const areaName = t.Area || 'Uncategorized';
+        if (!areas[areaName]) areas[areaName] = [];
+        areas[areaName].push(t);
       });
-
       for (let area in areas) {
         const safeId = `group-${area.replace(/\s+/g, '-')}`;
-        content.innerHTML += `<div class="area-header">${area}</div><div id="${safeId}" class="space-y-2 min-h-[40px]"></div>`;
+        content.innerHTML += `<div class="area-header">${area}</div><div id="${safeId}" class="space-y-3 min-h-[40px]"></div>`;
         setTimeout(() => {
           const container = document.getElementById(safeId);
-          if (!container) return;
           areas[area].forEach(t => {
             const div = document.createElement('div');
-            div.className = 'card p-5 flex justify-between items-center cursor-pointer';
-            div.innerHTML = `<div><p class="font-bold text-sm">${t.Task || 'Untitled'}</p><p class="text-[9px] text-emerald-700 italic">${t.Objective || ''}</p></div><span class="pill">${t.Status || ''}</span>`;
-            div.onclick = () => { if (!div.classList.contains('sortable-chosen')) openSidebar(t._rowIndex, 'Tasks'); };
+            div.className = 'glass card p-6 flex justify-between items-center cursor-move';
+            div.innerHTML = `<div><p class="font-bold text-white text-md">${t.Task || t["Task Name"] || 'Untitled'}</p><p class="text-[10px] text-emerald-500/60 font-medium">${t.Objective || ''}</p></div><span class="pill">${t.Status}</span>`;
+            div.onclick = (e) => { if(!div.classList.contains('sortable-chosen')) openSidebar(t._rowIndex, 'Tasks'); };
             container.appendChild(div);
           });
-          new Sortable(container, { animation: 150, ghostClass: 'opacity-20', delay: 150, delayOnTouchOnly: true });
+          new Sortable(container, { animation: 200, ghostClass: 'opacity-10', delay: 150, delayOnTouchOnly: true });
         }, 0);
       }
     }
 
-    // ─── OBJECTIVES ───────────────────────────────────────
     function renderObjectives(content) {
-      const groups = {};
-      (STATE.Objectives || []).forEach(o => {
-        if (!groups[o.Objective]) groups[o.Objective] = [];
-        groups[o.Objective].push(o);
-      });
+      const groups = {}; STATE.Objectives.forEach(o => { if(!groups[o.Objective]) groups[o.Objective] = []; groups[o.Objective].push(o); });
       for (let name in groups) {
-        const card = document.createElement('div');
-        card.className = 'card p-6 mb-4 cursor-pointer';
+        let card = document.createElement('div'); card.className = 'glass card p-6 mb-4 cursor-pointer'; 
         card.onclick = () => openSidebar(groups[name][0]._rowIndex, 'Objectives');
-        const krs = groups[name].map(i => {
-          const p = Math.round(parseFloat(i['Progress %']) * 100) || 0;
-          return `<div class="mt-3">
-            <div class="flex justify-between text-[10px] mb-1"><span>${i['Key Result'] || 'Target'}</span><span>${p}%</span></div>
-            <div class="progress-bg"><div class="progress-fill" style="width:${p}%"></div></div>
-          </div>`;
+        let krs = groups[name].map(i => { 
+          let p = (parseFloat(i.Current)/parseFloat(i.Target))*100 || 0; 
+          return `<div class="mt-4"><div class="flex justify-between text-[10px] mb-2 font-bold opacity-60"><span>${i["Key Result"] || 'Target'}</span><span>${Math.round(p)}%</span></div><div class="progress-bg bg-white/5"><div class="progress-fill shadow-[0_0_10px_rgba(16,185,129,0.3)]" style="width:${p}%"></div></div></div>`; 
         }).join('');
-        card.innerHTML = `<p class="pill mb-1">${groups[name][0].Area || 'General'}</p>
-          <h3 class="text-xl font-serif font-bold italic">${name}</h3>${krs}`;
+        card.innerHTML = `<p class="pill mb-2">Goal</p><h3 class="text-xl font-bold text-white">${name}</h3>${krs}`;
         content.appendChild(card);
       }
     }
 
-    // ─── LINKS ────────────────────────────────────────────
     function renderLinks(content) {
-      (STATE.Link_Inbox || []).slice().reverse().forEach(l => {
-        const url = l.URL && l.URL !== 'https://...' ? l.URL : null;
-        content.innerHTML += `<div class="card p-5 mb-2 flex justify-between items-center cursor-pointer" onclick="openSidebar(${l._rowIndex}, 'Link_Inbox')">
-          <div style="flex:1;min-width:0;">
-            <p class="text-sm font-bold truncate">${l['Custom Title'] || l.URL || 'Untitled Link'}</p>
-            <p class="text-[9px] opacity-40">${l.Website || ''} ${l.Category ? '· ' + l.Category : ''}</p>
-          </div>
-          ${url ? `<a href="${url}" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent);margin-left:8px;"><span class="material-icons" style="font-size:18px;">open_in_new</span></a>` : ''}
-        </div>`;
-      });
-    }
-
-    // ─── BOOKS ────────────────────────────────────────────
-    function renderBooks(content) {
-      ['Reading', 'To Read', 'Finished'].forEach(status => {
-        const group = (STATE['Reading List'] || []).filter(b => b.Status === status);
-        if (!group.length) return;
-        content.innerHTML += `<div class="area-header">${status}</div>`;
-        group.forEach(b => {
-          content.innerHTML += `<div class="card p-5 mb-2 flex justify-between items-center cursor-pointer" onclick="openSidebar(${b._rowIndex}, 'Reading List')">
-            <div><p class="font-bold text-sm">${b['Book Title'] || 'Untitled'}</p><p class="text-[10px] opacity-40">${b.Author || ''}</p></div>
-            <span class="pill">${b.Status}</span>
+      STATE.Link_Inbox.slice().reverse().forEach(l => {
+        content.innerHTML += `
+          <div class="glass card p-6 mb-3 flex justify-between items-center cursor-pointer" onclick="openSidebar(${l._rowIndex}, 'Link_Inbox')">
+            <div class="truncate pr-4">
+              <p class="text-white font-bold truncate">${l["Custom Title"] || l.URL || 'Untitled'}</p>
+              <a href="${l.URL}" target="_blank" onclick="event.stopPropagation();" class="text-[10px] text-emerald-400 font-bold uppercase tracking-widest mt-2 inline-block underline">Launch Intel</a>
+            </div>
+            <span class="material-icons text-emerald-500 opacity-40">arrow_forward</span>
           </div>`;
-        });
       });
     }
 
-    // ─── SIDEBAR ─────────────────────────────────────────
-    function openSidebar(rowIndex, view) {
-      activeItem = (STATE[view] || []).find(i => i._rowIndex === rowIndex);
-      if (!activeItem) return;
-      activeItem._view = view;
-      document.getElementById('s-header-type').innerText = view.replace('_', ' ');
-      let html = '';
-      Object.keys(activeItem).filter(f => !f.startsWith('_')).forEach(f => {
-        html += `<div class="space-y-1">
-          <label class="text-[9px] font-black opacity-30 uppercase">${f}</label>
-          <textarea class="input-flat" rows="1" onchange="activeItem['${f}']=this.value">${activeItem[f] ?? ''}</textarea>
-        </div>`;
-      });
-      document.getElementById('s-content').innerHTML = html;
+    function openSidebar(row, view) {
+      activeItem = STATE[view].find(i => i._rowIndex === row);
+      if(!activeItem) return;
       document.getElementById('sidebar').classList.add('open');
+      document.getElementById('s-header-type').innerText = view;
+      let html = `<div class="space-y-6 pb-24">`;
+      Object.keys(activeItem).filter(f => !f.startsWith('_')).forEach(f => {
+        html += `<div class="space-y-2"><label class="text-[10px] font-black text-emerald-500 uppercase tracking-widest">${f}</label><textarea class="input-flat focus:border-emerald-500/50 transition-colors" onchange="updateValue('${f}', this.value)">${activeItem[f] || ''}</textarea></div>`;
+      });
+      html += `</div>`;
+      document.getElementById('s-content').innerHTML = html;
     }
 
-    function saveAndClose() {
-      if (!activeItem) return closeSidebar();
-      const v = activeItem._view;
-      const idx = (STATE[v] || []).findIndex(i => i._rowIndex === activeItem._rowIndex);
-      if (idx > -1) STATE[v][idx] = { ...activeItem };
-      google.script.run
-        .withSuccessHandler(() => { closeSidebar(); render(currentView); })
-        .withFailureHandler(err => alert('Save failed: ' + err.message))
-        .syncAction('UPDATE', v, activeItem._rowIndex, activeItem);
-    }
-
-    function archiveItem() {
-      if (!activeItem || !confirm('Archive this item?')) return;
-      const v = activeItem._view;
-      STATE[v] = (STATE[v] || []).filter(i => i._rowIndex !== activeItem._rowIndex);
-      google.script.run
-        .withSuccessHandler(() => { closeSidebar(); render(currentView); })
-        .withFailureHandler(err => alert('Archive failed: ' + err.message))
-        .syncAction('DELETE', v, activeItem._rowIndex, {});
-    }
-
-    function closeSidebar() {
-      document.getElementById('sidebar').classList.remove('open');
-    }
-
-    // ─── UNIVERSAL INGEST ─────────────────────────────────
+    function updateValue(f, v) { activeItem[f] = v; google.script.run.syncAction('UPDATE', activeItem._view, activeItem._rowIndex, activeItem); }
+    function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); render(currentView); }
+    function toggleTaskFilter() { hideDoneTasks = !hideDoneTasks; render('Tasks'); }
+    function openCapture() { document.getElementById('capture-modal').classList.add('open'); }
+    function closeCapture() { document.getElementById('capture-modal').classList.remove('open'); }
     function toggleCaptureFields() {
       const type = document.getElementById('u-type').value;
-      const fc = document.getElementById('u-fields');
+      const fieldContainer = document.getElementById('u-fields');
       const btn = document.getElementById('ingest-btn');
-      fc.innerHTML = '';
+      fieldContainer.innerHTML = '';
       if (!type) { btn.classList.add('hidden'); return; }
       btn.classList.remove('hidden');
-
-      const fieldMap = {
-        'Tasks':        ['Task', 'Objective', 'Area', 'Priority'],
-        'Objectives':   ['Objective', 'Key Result', 'Progress %', 'Area'],
-        'Link_Inbox':   ['URL', 'Custom Title', 'Website', 'Category'],
-        'Reading List': ['Book Title', 'Author', 'Status', 'Genre'],
-      };
-      (fieldMap[type] || []).forEach(f => {
-        fc.innerHTML += `<div class="space-y-1">
-          <label class="text-[9px] font-black opacity-30 uppercase">${f}</label>
-          <input type="text" id="u-${f.replace(/\s/g,'_')}" class="input-flat" placeholder="${f}...">
-        </div>`;
+      const fields = type === 'Tasks' ? ['Task', 'Objective', 'Area'] : 
+                     type === 'Objectives' ? ['Objective', 'Key Result', 'Target', 'Current'] : 
+                     type === 'Link_Inbox' ? ['URL', 'Custom Title'] : ['Title', 'Content'];
+      fields.forEach(f => {
+        fieldContainer.innerHTML += `<div class="space-y-2"><label class="text-[10px] font-bold text-white/40 uppercase tracking-widest">${f}</label><input type="text" id="u-${f.replace(' ','_')}" class="input-flat"></div>`;
       });
     }
-
     function saveUniversal() {
       const type = document.getElementById('u-type').value;
-      if (!type) return;
-      const data = { Status: 'To Do' };
-      document.querySelectorAll('#u-fields input').forEach(inp => {
-        const key = inp.id.replace('u-', '').replace(/_/g, ' ');
-        data[key] = inp.value;
-      });
-      google.script.run
-        .withSuccessHandler(() => { closeCapture(); loadData(); })
-        .withFailureHandler(err => alert('Save failed: ' + err.message))
-        .syncAction('ADD', type, -1, data);
+      let data = { _rowIndex: Date.now(), _view: type, Status: 'To Do' };
+      document.querySelectorAll('#u-fields input').forEach(i => data[i.id.replace('u-', '').replace('_', ' ')] = i.value);
+      STATE[type].push(data);
+      google.script.run.syncAction('ADD', type, null, data);
+      closeCapture();
+      render(currentView);
     }
-
     function quickSave(target, inputId) {
-      const val = document.getElementById(inputId).value.trim();
-      if (!val) return;
-      const data = { Status: 'To Do', Area: 'INBOX' };
-      if (target === 'Tasks') data.Task = val;
-      else if (target === 'Link_Inbox') { data.URL = val; data['Custom Title'] = val; }
-      else if (target === 'Reading List') { data['Book Title'] = val; data.Status = 'To Read'; }
-      google.script.run
-        .withSuccessHandler(() => { document.getElementById(inputId).value = ''; loadData(); })
-        .withFailureHandler(err => alert('Failed: ' + err.message))
-        .syncAction('ADD', target, -1, data);
+      const val = document.getElementById(inputId).value; if(!val) return;
+      let data = { _rowIndex: Date.now(), Status: 'To Do', Area: 'INBOX', _view: target };
+      if(target === 'Tasks') data.Task = val;
+      STATE[target].push(data);
+      google.script.run.syncAction('ADD', target, null, data);
+      document.getElementById(inputId).value = '';
+      render(currentView);
     }
-
-    function openCapture() { document.getElementById('capture-modal').classList.add('open'); }
-    function closeCapture() {
-      document.getElementById('capture-modal').classList.remove('open');
-      document.getElementById('u-type').value = '';
-      document.getElementById('u-fields').innerHTML = '';
-      document.getElementById('ingest-btn').classList.add('hidden');
-    }
-
-    function toggleTaskFilter() { hideDoneTasks = !hideDoneTasks; render('Tasks'); }
+    window.onload = () => render('Dashboard');
   </script>
 </body>
 </html>
