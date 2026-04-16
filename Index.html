@@ -134,6 +134,13 @@
       CRM:        ["Name", "Role", "Company", "Interaction_Log"]
     };
 
+    // Icons per view for tiles
+    const VIEW_ICONS = {
+      Tasks: 'bolt', Goals: 'track_changes', Objectives: 'flag',
+      Reading: 'menu_book', Notes: 'description', Links: 'link',
+      Finances: 'payments', CRM: 'people'
+    };
+
     // Field display hints: which fields get a larger textarea
     const TALL_FIELDS = new Set(["Content", "Interaction_Log", "Notes"]);
 
@@ -164,7 +171,7 @@
       const singular = view.replace(/s$/, '');
       content.innerHTML = `
         <button onclick="openSidebar(null, '${view}', true)"
-          class="w-full glass p-4 rounded-2xl border-dashed border-white/20 text-emerald-500 font-bold mb-4 text-sm tracking-wide">
+          class="w-full glass p-4 rounded-3xl border-dashed border-white/20 text-emerald-500 font-bold mb-4 text-sm tracking-wide active:scale-95 transition-transform">
           + ADD NEW ${singular.toUpperCase()}
         </button>`;
 
@@ -178,10 +185,12 @@
         } else {
           groups.forEach(group => {
             viewHtml += `<div class="group-label">${group}</div>`;
+            viewHtml += `<div class="grid grid-cols-2 gap-4 mb-4">`; // 2-column grid
             data.filter(i => (i.Area || 'Unassigned') === group)
                 .forEach(item => {
                   viewHtml += createCard(item, view, data.indexOf(item));
                 });
+            viewHtml += `</div>`;
           });
         }
       } else if (view === 'Objectives') {
@@ -197,17 +206,21 @@
           groups.forEach(gid => {
             const label = goalMap[gid] || (gid === 'Unlinked' ? 'Unlinked' : `Goal ${gid}`);
             viewHtml += `<div class="group-label">${label}</div>`;
+            viewHtml += `<div class="grid grid-cols-2 gap-4 mb-4">`;
             data.filter(i => (i.GoalID || 'Unlinked') === gid)
                 .forEach(item => {
                   viewHtml += createCard(item, view, data.indexOf(item));
                 });
+            viewHtml += `</div>`;
           });
         }
       } else {
         if (displayMode === 'table') {
           viewHtml += renderTableView(view, data, null, null);
         } else {
+          viewHtml += `<div class="grid grid-cols-2 gap-4 mb-4">`;
           data.forEach((item, i) => viewHtml += createCard(item, view, i));
+          viewHtml += `</div>`;
         }
       }
       
@@ -258,9 +271,10 @@
       return html;
     }
 
-    // ─── CARD VIEW ────────────────────────────────────────────────────────────
+    // ─── TILE CARD VIEW ──────────────────────────────────────────────────────────
     function createCard(item, view, index) {
-      // Pick the right title field per module
+      const icon = VIEW_ICONS[view] || 'star';
+      
       const titleField = {
         Tasks: "Task Name", Goals: "Title", Objectives: "Title",
         Reading: "Book Title", Notes: "Title", Links: "Title",
@@ -269,30 +283,28 @@
 
       const title = item[titleField] || 'Untitled';
 
-      // Build a meaningful subtitle per module
       let sub = '';
-      if (view === 'Tasks')      sub = [item.Area, item.Priority, item.Status].filter(Boolean).join(' · ');
-      else if (view === 'Goals') sub = [item.Area, item.Status].filter(Boolean).join(' · ');
-      else if (view === 'Objectives') sub = item.Deadline ? `Due ${item.Deadline}` : '';
-      else if (view === 'Reading')    sub = [item.Author, item.Status, item.Progress_Pct ? item.Progress_Pct + '%' : ''].filter(Boolean).join(' · ');
+      if (view === 'Tasks')      sub = [item.Priority, item.Status].filter(Boolean).join(' · ');
+      else if (view === 'Goals') sub = [item.Status].filter(Boolean).join(' · ');
+      else if (view === 'Objectives') sub = item.Deadline || '';
+      else if (view === 'Reading')    sub = item.Author || '';
       else if (view === 'Notes')      sub = item.Tags || '';
-      else if (view === 'Links')      sub = item.Website || item.URL || '';
-      else if (view === 'Finances')   sub = [item.Date, item.Category, item.Amount ? '$' + item.Amount : ''].filter(Boolean).join(' · ');
-      else if (view === 'CRM')        sub = [item.Role, item.Company].filter(Boolean).join(' · ');
+      else if (view === 'Links')      sub = item.Website || '';
+      else if (view === 'Finances')   sub = item.Amount ? '$' + item.Amount : '';
+      else if (view === 'CRM')        sub = item.Company || '';
 
-      // Status pill coloring
-      const statusPill = item.Status ? `<span class="status-pill ${pillClass(item.Status)}">${item.Status}</span>` : '';
+      const statusPill = item.Status ? `<span class="status-pill ${pillClass(item.Status)} scale-75 origin-top-right">${item.Status}</span>` : '';
 
       return `
         <div onclick="openSidebar(${index}, '${view}')"
-          class="glass p-5 rounded-2xl mb-2 flex justify-between items-center cursor-pointer">
-          <div class="flex-1 min-w-0 pr-3">
-            <p class="font-bold text-white truncate">${title}</p>
-            <p class="text-[10px] opacity-40 uppercase mt-0.5 truncate">${sub}</p>
-          </div>
-          <div class="flex items-center gap-2 flex-shrink-0">
+          class="glass h-40 p-5 rounded-3xl flex flex-col justify-between cursor-pointer active:scale-95 transition-all">
+          <div class="flex justify-between items-start">
+            <span class="material-icons text-emerald-500/40 text-2xl">${icon}</span>
             ${statusPill}
-            <span class="material-icons opacity-20 text-xl">chevron_right</span>
+          </div>
+          <div class="min-w-0">
+            <p class="font-bold text-white text-sm line-clamp-2 leading-tight">${title}</p>
+            <p class="text-[9px] opacity-40 uppercase tracking-wider mt-1 truncate font-black">${sub}</p>
           </div>
         </div>`;
     }
@@ -317,9 +329,9 @@
         { key: 'CRM',        icon: 'people',        label: 'CRM' },
       ];
 
-      content.innerHTML = `<div class="grid grid-cols-2 gap-3">` +
+      let html = `<div class="grid grid-cols-2 gap-3">` +
         modules.map(m => `
-          <div class="glass p-6 rounded-3xl cursor-pointer" onclick="navigate('${m.key}')">
+          <div class="glass p-6 rounded-3xl cursor-pointer active:scale-95 transition-transform" onclick="navigate('${m.key}')">
             <div class="flex items-center justify-between mb-3">
               <span class="material-icons text-emerald-500 text-xl">${m.icon}</span>
             </div>
@@ -327,6 +339,50 @@
             <p class="text-[10px] font-bold opacity-30 uppercase tracking-widest mt-1">${m.label}</p>
           </div>`).join('') +
         `</div>`;
+
+      // Calendar Widget
+      html += `
+        <div class="glass p-6 rounded-[32px] space-y-4">
+          <div class="flex justify-between items-center">
+            <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">Upcoming Schedule</h3>
+            <span class="material-icons text-white/20 text-sm">calendar_month</span>
+          </div>
+          <div id="cal-events" class="space-y-3">
+             <div class="animate-pulse flex space-x-4">
+               <div class="flex-1 space-y-2 py-1">
+                 <div class="h-2 bg-white/5 rounded"></div>
+                 <div class="h-2 bg-white/5 rounded w-5/6"></div>
+               </div>
+             </div>
+          </div>
+        </div>`;
+
+      content.innerHTML = html;
+      loadCalendar();
+    }
+
+    function loadCalendar() {
+      google.script.run
+        .withSuccessHandler(events => {
+          const container = document.getElementById('cal-events');
+          if (!events || events.length === 0) {
+            container.innerHTML = `<p class="text-[10px] text-white/30 italic">No upcoming events</p>`;
+            return;
+          }
+          container.innerHTML = events.slice(0, 5).map(e => `
+            <div class="flex gap-4 items-center">
+              <div class="flex-shrink-0 w-12 text-center">
+                <p class="text-[8px] font-black text-emerald-500 uppercase">${e.start.split(',')[0]}</p>
+                <p class="text-xs font-bold text-white">${e.start.split(' ')[2]}</p>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-xs font-bold text-white truncate">${e.title}</p>
+                <p class="text-[9px] opacity-30 font-bold">${e.start.split(' ').slice(3).join(' ')} ${e.isAllDay ? 'All Day' : '— ' + e.end}</p>
+              </div>
+            </div>
+          `).join('');
+        })
+        .getCalendarEvents();
     }
 
     // ─── SIDEBAR (EDITOR) ─────────────────────────────────────────────────────
@@ -348,7 +404,6 @@
           </div>`;
       });
 
-      // Show read-only ID if editing
       if (!isNew && item.ID) {
         html = `<div class="text-[10px] opacity-30 font-mono">ID: ${item.ID}</div>` + html;
       }

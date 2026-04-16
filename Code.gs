@@ -43,6 +43,24 @@ function getInitialState() {
   return state;
 }
 
+/**
+ * Fetches calendar events for the next 7 days from the primary calendar.
+ */
+function getCalendarEvents() {
+  const now = new Date();
+  const weekFromNow = new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000));
+  const events = CalendarApp.getDefaultCalendar().getEvents(now, weekFromNow);
+  
+  return events.map(e => ({
+    title: e.getTitle(),
+    start: Utilities.formatDate(e.getStartTime(), Session.getScriptTimeZone(), "EEE, MMM d HH:mm"),
+    end: Utilities.formatDate(e.getEndTime(), Session.getScriptTimeZone(), "HH:mm"),
+    description: e.getDescription(),
+    location: e.getLocation(),
+    isAllDay: e.isAllDayEvent()
+  }));
+}
+
 // ─── SYNC (ADD or UPDATE) ─────────────────────────────────────────────────────
 /**
  * @param {string} view   - Sheet tab name (e.g. "Tasks")
