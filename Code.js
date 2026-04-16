@@ -28,21 +28,14 @@ function getInitialState() {
   return state;
 }
 
-/**
- * Universal Sync Function
- * Handles ADD and UPDATE logic for all 8 modules
- */
 function syncItem(view, rowIndex, payload) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(view);
   const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
   const rowValues = headers.map(h => payload[h] || "");
-
   if (rowIndex) {
-    // UPDATE existing row
     sheet.getRange(rowIndex, 1, 1, headers.length).setValues([rowValues]);
   } else {
-    // APPEND new row
     sheet.appendRow(rowValues);
   }
   return getInitialState();

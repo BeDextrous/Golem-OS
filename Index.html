@@ -10,8 +10,14 @@
     :root { --bg: #0b0f10; --accent: #10b981; --border: rgba(255, 255, 255, 0.08); }
     body { background: var(--bg); color: #e2e8f0; font-family: 'Plus Jakarta Sans', sans-serif; min-height: 100vh; padding-bottom: 120px; }
     .glass { background: rgba(25, 32, 35, 0.7); backdrop-filter: blur(20px); border: 1px solid var(--border); }
+    
+    /* Sidebars / Drawers */
     .sidebar { transform: translateX(100%); transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); background: #0f1416; position: fixed; inset: 0; z-index: 500; display: flex; flex-direction: column; }
     .sidebar.open { transform: translateX(0); }
+    
+    .drawer { transform: translateX(-100%); transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); background: #0f1416; position: fixed; inset: 0; z-index: 500; display: flex; flex-direction: column; }
+    .drawer.open { transform: translateX(0); }
+
     .nav-bar { background: rgba(11, 15, 16, 0.9); backdrop-filter: blur(20px); position: fixed; bottom: 20px; left: 15px; right: 15px; border-radius: 28px; border: 1px solid var(--border); z-index: 100; display: flex; justify-content: space-around; padding: 12px; }
     .nav-btn { color: rgba(255, 255, 255, 0.2); }
     .nav-btn.active { color: var(--accent); }
@@ -26,6 +32,11 @@
     .pill-active { background: rgba(16,185,129,0.15); color: #10b981; }
     .pill-done { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.3); }
     .pill-paused { background: rgba(234,179,8,0.15); color: #eab308; }
+
+    /* Custom scrollbar for tables */
+    .table-container::-webkit-scrollbar { height: 6px; }
+    .table-container::-webkit-scrollbar-thumb { background-color: var(--accent); border-radius: 4px; }
+    .table-container::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
   </style>
 </head>
 <body>
@@ -48,9 +59,14 @@
 
   <header class="p-6 flex justify-between items-center">
     <button onclick="toggleMenu()" class="glass p-3 rounded-2xl">
-      <span class="material-icons text-emerald-500">widgets</span>
+      <span class="material-icons text-emerald-500">menu</span>
     </button>
-    <h1 class="text-xl font-bold" id="v-title">Dashboard</h1>
+    <div class="flex items-center gap-3">
+      <h1 class="text-xl font-bold" id="v-title">Dashboard</h1>
+      <button onclick="toggleDisplayMode()" class="glass p-2 rounded-xl hidden" id="display-toggle">
+        <span class="material-icons text-emerald-500 text-sm" id="display-toggle-icon">table_view</span>
+      </button>
+    </div>
     <button onclick="location.reload()" class="glass p-3 rounded-2xl">
       <span class="material-icons text-emerald-500">sync</span>
     </button>
@@ -59,12 +75,31 @@
   <main id="v-content" class="p-4 space-y-4"></main>
 
   <nav class="nav-bar">
-    <button onclick="render('Dashboard')" class="nav-btn" id="n-Dashboard"><span class="material-icons text-3xl">grid_view</span></button>
-    <button onclick="render('Goals')" class="nav-btn" id="n-Goals"><span class="material-icons text-3xl">track_changes</span></button>
-    <button onclick="render('Tasks')" class="nav-btn" id="n-Tasks"><span class="material-icons text-3xl">bolt</span></button>
-    <button onclick="render('Finances')" class="nav-btn" id="n-Finances"><span class="material-icons text-3xl">payments</span></button>
-    <button onclick="render('Notes')" class="nav-btn" id="n-Notes"><span class="material-icons text-3xl">description</span></button>
+    <button onclick="navigate('Dashboard')" class="nav-btn" id="n-Dashboard"><span class="material-icons text-3xl">grid_view</span></button>
+    <button onclick="navigate('Goals')" class="nav-btn" id="n-Goals"><span class="material-icons text-3xl">track_changes</span></button>
+    <button onclick="navigate('Tasks')" class="nav-btn" id="n-Tasks"><span class="material-icons text-3xl">bolt</span></button>
+    <button onclick="navigate('Finances')" class="nav-btn" id="n-Finances"><span class="material-icons text-3xl">payments</span></button>
+    <button onclick="navigate('Notes')" class="nav-btn" id="n-Notes"><span class="material-icons text-3xl">description</span></button>
   </nav>
+
+  <!-- Navigation Menu Drawer -->
+  <div id="nav-drawer" class="drawer">
+    <div class="p-6 flex justify-between items-center border-b border-white/5">
+      <span class="text-[10px] font-black uppercase tracking-widest text-emerald-500">Navigation</span>
+      <button onclick="closeMenu()"><span class="material-icons text-white/60">close</span></button>
+    </div>
+    <div class="p-6 flex flex-col gap-2 overflow-y-auto">
+      <button onclick="navigate('Dashboard')" class="w-full text-left p-4 rounded-xl hover:bg-white/5 glass flex items-center gap-4"><span class="material-icons text-emerald-500">grid_view</span> <span class="font-bold text-white tracking-wide">Dashboard</span></button>
+      <button onclick="navigate('Tasks')" class="w-full text-left p-4 rounded-xl hover:bg-white/5 glass flex items-center gap-4"><span class="material-icons text-emerald-500">bolt</span> <span class="font-bold text-white tracking-wide">Tasks</span></button>
+      <button onclick="navigate('Goals')" class="w-full text-left p-4 rounded-xl hover:bg-white/5 glass flex items-center gap-4"><span class="material-icons text-emerald-500">track_changes</span> <span class="font-bold text-white tracking-wide">Goals</span></button>
+      <button onclick="navigate('Objectives')" class="w-full text-left p-4 rounded-xl hover:bg-white/5 glass flex items-center gap-4"><span class="material-icons text-emerald-500">flag</span> <span class="font-bold text-white tracking-wide">Objectives</span></button>
+      <button onclick="navigate('Finances')" class="w-full text-left p-4 rounded-xl hover:bg-white/5 glass flex items-center gap-4"><span class="material-icons text-emerald-500">payments</span> <span class="font-bold text-white tracking-wide">Finances</span></button>
+      <button onclick="navigate('Notes')" class="w-full text-left p-4 rounded-xl hover:bg-white/5 glass flex items-center gap-4"><span class="material-icons text-emerald-500">description</span> <span class="font-bold text-white tracking-wide">Notes</span></button>
+      <button onclick="navigate('Links')" class="w-full text-left p-4 rounded-xl hover:bg-white/5 glass flex items-center gap-4"><span class="material-icons text-emerald-500">link</span> <span class="font-bold text-white tracking-wide">Links</span></button>
+      <button onclick="navigate('Reading')" class="w-full text-left p-4 rounded-xl hover:bg-white/5 glass flex items-center gap-4"><span class="material-icons text-emerald-500">menu_book</span> <span class="font-bold text-white tracking-wide">Reading</span></button>
+      <button onclick="navigate('CRM')" class="w-full text-left p-4 rounded-xl hover:bg-white/5 glass flex items-center gap-4"><span class="material-icons text-emerald-500">people</span> <span class="font-bold text-white tracking-wide">CRM</span></button>
+    </div>
+  </div>
 
   <div id="sidebar" class="sidebar">
     <div class="p-6 flex justify-between items-center border-b border-white/5">
@@ -85,6 +120,7 @@
     let STATE = <?!= STATE_JSON ?>;
     let activeItem = { index: null, view: null, isNew: false };
     let activeView = 'Dashboard';
+    let displayMode = 'card'; // 'card' or 'table'
 
     // ─── SCHEMAS (ID column always excluded from forms) ───────────────────────
     const SCHEMA = {
@@ -107,6 +143,15 @@
       const content = document.getElementById('v-content');
       content.innerHTML = '';
       document.getElementById('v-title').innerText = view;
+      
+      const displayToggle = document.getElementById('display-toggle');
+      if(view === 'Dashboard') {
+        displayToggle.classList.add('hidden');
+      } else {
+        displayToggle.classList.remove('hidden');
+        document.getElementById('display-toggle-icon').innerText = displayMode === 'card' ? 'table_view' : 'view_agenda';
+      }
+
       document.querySelectorAll('.nav-btn').forEach(btn =>
         btn.classList.toggle('active', btn.id === `n-${view}`)
       );
@@ -124,36 +169,96 @@
         </button>`;
 
       const data = STATE[view] || [];
+      let viewHtml = '';
 
       if (view === 'Tasks' || view === 'Goals') {
         const groups = [...new Set(data.map(item => item.Area || 'Unassigned'))].sort();
-        groups.forEach(group => {
-          content.innerHTML += `<div class="group-label">${group}</div>`;
-          data.filter(i => (i.Area || 'Unassigned') === group)
-              .forEach(item => {
-                content.innerHTML += createCard(item, view, data.indexOf(item));
-              });
-        });
+        if (displayMode === 'table') {
+          viewHtml += renderTableView(view, data, groups, 'Area');
+        } else {
+          groups.forEach(group => {
+            viewHtml += `<div class="group-label">${group}</div>`;
+            data.filter(i => (i.Area || 'Unassigned') === group)
+                .forEach(item => {
+                  viewHtml += createCard(item, view, data.indexOf(item));
+                });
+          });
+        }
       } else if (view === 'Objectives') {
         // Group by linked Goal
         const goals = STATE['Goals'] || [];
         const goalMap = {};
         goals.forEach(g => { goalMap[g.ID] = g.Title; });
         const groups = [...new Set(data.map(item => item.GoalID || 'Unlinked'))];
-        groups.forEach(gid => {
-          const label = goalMap[gid] || (gid === 'Unlinked' ? 'Unlinked' : `Goal ${gid}`);
-          content.innerHTML += `<div class="group-label">${label}</div>`;
-          data.filter(i => (i.GoalID || 'Unlinked') === gid)
-              .forEach(item => {
-                content.innerHTML += createCard(item, view, data.indexOf(item));
-              });
-        });
+        
+        if (displayMode === 'table') {
+          viewHtml += renderTableView(view, data, groups, 'GoalID', goalMap);
+        } else {
+          groups.forEach(gid => {
+            const label = goalMap[gid] || (gid === 'Unlinked' ? 'Unlinked' : `Goal ${gid}`);
+            viewHtml += `<div class="group-label">${label}</div>`;
+            data.filter(i => (i.GoalID || 'Unlinked') === gid)
+                .forEach(item => {
+                  viewHtml += createCard(item, view, data.indexOf(item));
+                });
+          });
+        }
       } else {
-        data.forEach((item, i) => content.innerHTML += createCard(item, view, i));
+        if (displayMode === 'table') {
+          viewHtml += renderTableView(view, data, null, null);
+        } else {
+          data.forEach((item, i) => viewHtml += createCard(item, view, i));
+        }
       }
+      
+      content.innerHTML += viewHtml;
+    }
+    
+    // ─── TABLE VIEW ───────────────────────────────────────────────────────────
+    function renderTableView(view, data, groups, groupKey, groupMap = null) {
+       let html = `<div class="table-container overflow-x-auto pb-8"><table class="w-full text-left border-collapse text-sm glass rounded-xl overflow-hidden">`;
+       const fields = SCHEMA[view] || [];
+       html += `<thead><tr>`;
+       fields.forEach(f => {
+         html += `<th class="p-3 border-b border-white/10 text-emerald-500 uppercase tracking-widest text-[10px] whitespace-nowrap bg-black/40">${f}</th>`;
+       });
+       html += `<th class="p-3 border-b border-white/10 bg-black/40"></th>`;
+       html += `</tr></thead><tbody class="bg-black/20">`;
+
+       if (groups) {
+         groups.forEach(group => {
+           let groupLabel = groupMap ? (groupMap[group] || (group === 'Unlinked' ? 'Unlinked' : `Goal ${group}`)) : group;
+           html += `<tr><td colspan="${fields.length + 1}" class="p-3 group-label text-emerald-500 font-bold bg-white/5 uppercase tracking-widest text-[10px]"><span class="mr-2">❖</span>${groupLabel}</td></tr>`;
+           data.filter(i => (i[groupKey] || 'Unassigned') === group).forEach(item => {
+             html += createTableRow(item, view, data.indexOf(item), fields);
+           });
+         });
+       } else {
+         data.forEach((item, i) => html += createTableRow(item, view, i, fields));
+       }
+       html += `</tbody></table></div>`;
+       return html;
     }
 
-    // ─── CARD ─────────────────────────────────────────────────────────────────
+    function createTableRow(item, view, index, fields) {
+      let html = `<tr class="border-b border-white/5 hover:bg-white/10 cursor-pointer transition-colors" onclick="openSidebar(${index}, '${view}')">`;
+      fields.forEach((f, i) => {
+        let val = item[f] || '';
+        if (f === "Status" && val) {
+          val = `<span class="status-pill ${pillClass(val)}">${val}</span>`;
+        } else if (typeof val === 'string' && val.length > 50) {
+          val = escapeHtml(val.substring(0, 50)) + '...';
+        } else if (typeof val === 'string') {
+          val = escapeHtml(val);
+        }
+        html += `<td class="p-3 whitespace-nowrap text-white/80">${val}</td>`;
+      });
+      html += `<td class="p-3 text-right"><span class="material-icons opacity-30 text-sm hover:opacity-100">edit</span></td>`;
+      html += `</tr>`;
+      return html;
+    }
+
+    // ─── CARD VIEW ────────────────────────────────────────────────────────────
     function createCard(item, view, index) {
       // Pick the right title field per module
       const titleField = {
@@ -214,7 +319,7 @@
 
       content.innerHTML = `<div class="grid grid-cols-2 gap-3">` +
         modules.map(m => `
-          <div class="glass p-6 rounded-3xl cursor-pointer" onclick="render('${m.key}')">
+          <div class="glass p-6 rounded-3xl cursor-pointer" onclick="navigate('${m.key}')">
             <div class="flex items-center justify-between mb-3">
               <span class="material-icons text-emerald-500 text-xl">${m.icon}</span>
             </div>
@@ -224,7 +329,7 @@
         `</div>`;
     }
 
-    // ─── SIDEBAR ──────────────────────────────────────────────────────────────
+    // ─── SIDEBAR (EDITOR) ─────────────────────────────────────────────────────
     function openSidebar(index, view, isNew = false) {
       activeItem = { index, view, isNew };
       document.getElementById('sidebar').classList.add('open');
@@ -312,20 +417,35 @@
         .deleteItem(activeItem.view, item._rowIndex);
     }
 
-    // ─── UTILS ────────────────────────────────────────────────────────────────
+    // ─── UTILS & NAVIGATION ───────────────────────────────────────────────────
     function showLoader() { document.getElementById('loader').classList.remove('fade'); }
     function hideLoader() { document.getElementById('loader').classList.add('fade'); }
 
     function escapeHtml(str) {
+      if (!str) return '';
       return String(str)
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
     }
+    
+    function toggleDisplayMode() {
+      displayMode = displayMode === 'card' ? 'table' : 'card';
+      if(activeView !== 'Dashboard') render(activeView);
+    }
 
     function toggleMenu() {
-      // Reserved for future menu/settings panel
+      document.getElementById('nav-drawer').classList.add('open');
+    }
+    
+    function closeMenu() {
+      document.getElementById('nav-drawer').classList.remove('open');
+    }
+
+    function navigate(view) {
+      closeMenu();
+      render(view);
     }
 
     // ─── INIT ─────────────────────────────────────────────────────────────────
