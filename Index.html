@@ -23,6 +23,10 @@
     .nav-btn.active { color: var(--accent); }
     .input-flat { width: 100%; padding: 14px; background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px solid var(--border); color: white; margin-top: 4px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; resize: vertical; }
     .input-flat:focus { outline: none; border-color: var(--accent); }
+    /* Native select dark styling */
+    select.input-flat { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2310b981' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 40px; cursor: pointer; }
+    select.input-flat option { background: #0f1416; color: white; }
+    select.input-flat optgroup { background: #0b0f10; color: var(--accent); font-weight: 700; }
     .group-label { font-size: 10px; font-weight: 900; color: var(--accent); opacity: 0.5; margin: 20px 0 10px 0; letter-spacing: 0.1em; text-transform: uppercase; }
     .loading-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
     .loading-overlay.fade { opacity: 0; pointer-events: none; }
@@ -144,6 +148,33 @@
     // Field display hints: which fields get a larger textarea
     const TALL_FIELDS = new Set(["Content", "Interaction_Log", "Notes"]);
 
+    // ─── DROPDOWN CONFIGURATION ──────────────────────────────────────────────
+    // Hierarchy link fields: pick from rows in one or more other views.
+    // Values are stored as the target row's ID (for single-source links)
+    // or as "View:ID" (for multi-source links like ParentID).
+    const LINK_FIELDS = {
+      "Objective": { sources: ['Objectives'], labels: { Objectives: 'Title' } },
+      "GoalID":    { sources: ['Goals'],      labels: { Goals: 'Title' } },
+      "ParentID":  { sources: ['Goals', 'Objectives', 'Tasks'],
+                     labels: { Goals: 'Title', Objectives: 'Title', Tasks: 'Task Name' } }
+    };
+
+    // Enum fields: preset options. Either a flat array (applies to all views)
+    // or per-view map { viewName: [options] }.
+    const ENUM_FIELDS = {
+      "Status": {
+        Tasks:   ["Active", "In Progress", "Blocked", "Paused", "Done"],
+        Goals:   ["Active", "Paused", "Done"],
+        Reading: ["Want to Read", "Reading", "Paused", "Read"]
+      },
+      "Priority": ["High", "Medium", "Low"]
+    };
+
+    // Dynamic enum fields: options collected from existing values across a view.
+    const DYNAMIC_ENUM_FIELDS = {
+      "Area": { views: ['Tasks', 'Goals'] }
+    };
+
     // ─── ROUTING ─────────────────────────────────────────────────────────────
     function render(view) {
       activeView = view;
@@ -257,8 +288,12 @@
       let html = `<tr class="border-b border-white/5 hover:bg-white/10 cursor-pointer transition-colors" onclick="openSidebar(${index}, '${view}')">`;
       fields.forEach((f, i) => {
         let val = item[f] || '';
+        // Resolve hierarchy links to their display titles
+        if (LINK_FIELDS[f] && val) {
+          val = resolveLinkLabel(f, val);
+        }
         if (f === "Status" && val) {
-          val = `<span class="status-pill ${pillClass(val)}">${val}</span>`;
+          val = `<span class="status-pill ${pillClass(val)}">${escapeHtml(val)}</span>`;
         } else if (typeof val === 'string' && val.length > 50) {
           val = escapeHtml(val.substring(0, 50)) + '...';
         } else if (typeof val === 'string') {
@@ -385,6 +420,155 @@
         .getCalendarEvents();
     }
 
+    // ─── FIELD RENDERING ──────────────────────────────────────────────────────
+    const FIELD_LABEL = (f) =>
+      `<label class="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">${f}</label>`;
+
+    function renderField(view, f, rawValue) {
+      const value = rawValue == null ? '' : String(rawValue);
+
+      // 1) Hierarchy link → <select> of rows from linked view(s)
+      if (LINK_FIELDS[f]) {
+        return renderLinkField(view, f, value, LINK_FIELDS[f]);
+      }
+
+      // 2) Preset enum → <select> of fixed values
+      if (ENUM_FIELDS[f]) {
+        const rawCfg = ENUM_FIELDS[f];
+        const opts = Array.isArray(rawCfg) ? rawCfg : (rawCfg[view] || null);
+        if (opts) return renderEnumField(f, value, opts);
+      }
+
+      // 3) Dynamic enum (Area) → <select> of existing values used across views
+      if (DYNAMIC_ENUM_FIELDS[f]) {
+        const cfg = DYNAMIC_ENUM_FIELDS[f];
+        const opts = collectDynamicOptions(f, cfg.views);
+        return renderEnumField(f, value, opts, /*allowAdd*/ true);
+      }
+
+      // 4) Default → textarea
+      const isTall = TALL_FIELDS.has(f);
+      return `
+        <div>
+          ${FIELD_LABEL(f)}
+          <textarea id="field-${f}" class="input-flat" rows="${isTall ? 5 : 2}">${escapeHtml(value)}</textarea>
+        </div>`;
+    }
+
+    function renderLinkField(view, f, value, cfg) {
+      // Build options grouped by source view. Single-source → flat list,
+      // multi-source → <optgroup> per source and values stored as "View:ID".
+      const multi = cfg.sources.length > 1;
+      let options = `<option value="">— None —</option>`;
+      let matched = false;
+
+      cfg.sources.forEach(src => {
+        const rows = STATE[src] || [];
+        if (!rows.length) return;
+        const labelKey = cfg.labels[src];
+        const sorted = [...rows].sort((a, b) =>
+          String(a[labelKey] || '').localeCompare(String(b[labelKey] || '')));
+
+        const optHtml = sorted.map(row => {
+          const id = row.ID || row._rowIndex;
+          const storeVal = multi ? `${src}:${id}` : String(id);
+          const label = row[labelKey] || `(untitled ${src} ${id})`;
+          const selected = String(storeVal) === String(value);
+          if (selected) matched = true;
+          return `<option value="${escapeHtml(storeVal)}" ${selected ? 'selected' : ''}>${escapeHtml(label)}</option>`;
+        }).join('');
+
+        if (multi) {
+          options += `<optgroup label="${src}">${optHtml}</optgroup>`;
+        } else {
+          options += optHtml;
+        }
+      });
+
+      // Preserve unknown legacy values (e.g. free-text titles from before dropdowns)
+      if (value && !matched) {
+        options += `<option value="${escapeHtml(value)}" selected>⚠ ${escapeHtml(value)} (legacy)</option>`;
+      }
+
+      return `
+        <div>
+          ${FIELD_LABEL(f)}
+          <select id="field-${f}" class="input-flat">${options}</select>
+        </div>`;
+    }
+
+    function renderEnumField(f, value, opts, allowAdd = false) {
+      let optHtml = `<option value="">— None —</option>`;
+      let matched = false;
+      opts.forEach(o => {
+        const selected = String(o).toLowerCase() === String(value).toLowerCase();
+        if (selected) matched = true;
+        optHtml += `<option value="${escapeHtml(o)}" ${selected ? 'selected' : ''}>${escapeHtml(o)}</option>`;
+      });
+      if (value && !matched) {
+        optHtml += `<option value="${escapeHtml(value)}" selected>${escapeHtml(value)}</option>`;
+      }
+      if (allowAdd) {
+        optHtml += `<option value="__ADD_NEW__">+ Add new…</option>`;
+      }
+      const onChange = allowAdd
+        ? `onchange="handleAddNewOption(this, '${f}')"`
+        : '';
+      return `
+        <div>
+          ${FIELD_LABEL(f)}
+          <select id="field-${f}" class="input-flat" ${onChange}>${optHtml}</select>
+        </div>`;
+    }
+
+    function collectDynamicOptions(field, views) {
+      const set = new Set();
+      views.forEach(v => {
+        (STATE[v] || []).forEach(row => {
+          const val = row[field];
+          if (val && String(val).trim()) set.add(String(val).trim());
+        });
+      });
+      return [...set].sort((a, b) => a.localeCompare(b));
+    }
+
+    // When "+ Add new…" is chosen for a dynamic enum (e.g. Area), prompt for
+    // a new value and inject it as a selected <option>.
+    function handleAddNewOption(selectEl, field) {
+      if (selectEl.value !== '__ADD_NEW__') return;
+      const newVal = window.prompt(`New ${field}:`);
+      if (!newVal) { selectEl.value = ''; return; }
+      const opt = document.createElement('option');
+      opt.value = newVal;
+      opt.textContent = newVal;
+      opt.selected = true;
+      // Insert before the trailing "+ Add new…" option.
+      selectEl.insertBefore(opt, selectEl.querySelector('option[value="__ADD_NEW__"]'));
+      selectEl.value = newVal;
+    }
+
+    // Resolve a stored link value ("12" or "Goals:12") back to its display label
+    // — used by card/row rendering so tiles show titles instead of raw IDs.
+    function resolveLinkLabel(field, value) {
+      const cfg = LINK_FIELDS[field];
+      if (!cfg || !value) return value || '';
+      const str = String(value);
+      let src, id;
+      if (cfg.sources.length > 1 && str.includes(':')) {
+        [src, id] = str.split(':');
+      } else {
+        src = cfg.sources[0];
+        id = str;
+      }
+      const rows = STATE[src] || [];
+      const labelKey = cfg.labels[src];
+      const hit = rows.find(r => String(r.ID) === String(id));
+      if (hit && hit[labelKey]) {
+        return cfg.sources.length > 1 ? `${src.replace(/s$/, '')}: ${hit[labelKey]}` : hit[labelKey];
+      }
+      return str; // legacy free-text, show as-is
+    }
+
     // ─── SIDEBAR (EDITOR) ─────────────────────────────────────────────────────
     function openSidebar(index, view, isNew = false) {
       activeItem = { index, view, isNew };
@@ -396,12 +580,7 @@
 
       let html = '';
       fields.forEach(f => {
-        const isTall = TALL_FIELDS.has(f);
-        html += `
-          <div>
-            <label class="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">${f}</label>
-            <textarea id="field-${f}" class="input-flat" rows="${isTall ? 5 : 2}">${escapeHtml(item[f] || '')}</textarea>
-          </div>`;
+        html += renderField(view, f, item[f]);
       });
 
       if (!isNew && item.ID) {
@@ -421,7 +600,11 @@
       const fields = SCHEMA[activeItem.view] || [];
       fields.forEach(f => {
         const el = document.getElementById(`field-${f}`);
-        if (el) payload[f] = el.value;
+        if (!el) return;
+        let v = el.value;
+        // Guard: never persist the "+ Add new…" sentinel
+        if (v === '__ADD_NEW__') v = '';
+        payload[f] = v;
       });
 
       showLoader();
