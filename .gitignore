@@ -1,0 +1,20 @@
+# macOS
+.DS_Store
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Stray root lockfile from accidental npm install in wrong dir
+/package-lock.json
+
+# Secrets
+**/.env
+!**/.env.example
+
+# Migration CSVs (user data)
+supabase/migrate/imports/*.csv
+
+# Editor / IDE
+.vscode/
+.idea/

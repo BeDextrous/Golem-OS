@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Golem OS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;700;800&display=swap');
+    :root { --bg: #0b0f10; --accent: #10b981; --border: rgba(255, 255, 255, 0.08); }
+    body { background: var(--bg); color: #e2e8f0; font-family: 'Plus Jakarta Sans', sans-serif; min-height: 100vh; padding-bottom: 120px; }
+    .glass { background: rgba(25, 32, 35, 0.7); backdrop-filter: blur(20px); border: 1px solid var(--border); }
+
+    /* Sidebars / Drawers */
+    .sidebar { transform: translateX(100%); transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); background: #0f1416; position: fixed; inset: 0; z-index: 500; display: flex; flex-direction: column; }
+    .sidebar.open { transform: translateX(0); }
+    .drawer { transform: translateX(-100%); transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); background: #0f1416; position: fixed; inset: 0; z-index: 500; display: flex; flex-direction: column; }
+    .drawer.open { transform: translateX(0); }
+
+    .nav-bar { background: rgba(11, 15, 16, 0.9); backdrop-filter: blur(20px); position: fixed; bottom: 20px; left: 15px; right: 15px; border-radius: 28px; border: 1px solid var(--border); z-index: 100; display: flex; justify-content: space-around; padding: 12px; }
+    .nav-btn { color: rgba(255, 255, 255, 0.2); }
+    .nav-btn.active { color: var(--accent); }
+    .input-flat { width: 100%; padding: 14px; background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px solid var(--border); color: white; margin-top: 4px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; resize: vertical; }
+    .input-flat:focus { outline: none; border-color: var(--accent); }
+    select.input-flat { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2310b981' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 40px; cursor: pointer; }
+    select.input-flat option { background: #0f1416; color: white; }
+    select.input-flat optgroup { background: #0b0f10; color: var(--accent); font-weight: 700; }
+
+    .group-label { font-size: 10px; font-weight: 900; color: var(--accent); opacity: 0.5; margin: 20px 0 10px 0; letter-spacing: 0.1em; text-transform: uppercase; }
+    .loading-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
+    .loading-overlay.fade { opacity: 0; pointer-events: none; }
+    .confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 600; display: flex; align-items: flex-end; justify-content: center; padding: 20px; }
+    .confirm-overlay.hidden { display: none; }
+    .status-pill { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+    .pill-active { background: rgba(16,185,129,0.15); color: #10b981; }
+    .pill-done   { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.3); }
+    .pill-paused { background: rgba(234,179,8,0.15); color: #eab308; }
+    .table-container::-webkit-scrollbar { height: 6px; }
+    .table-container::-webkit-scrollbar-thumb { background-color: var(--accent); border-radius: 4px; }
+    .table-container::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+
+    /* Auth screen */
+    .auth-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .auth-card { max-width: 380px; width: 100%; padding: 40px 28px; border-radius: 28px; text-align: center; }
+    .auth-card h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px; }
+    .auth-card p  { font-size: 12px; opacity: 0.5; margin-bottom: 28px; }
+    .google-btn { width: 100%; padding: 14px; background: white; color: #0b0f10; border-radius: 14px; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; transition: transform 0.15s; }
+    .google-btn:active { transform: scale(0.97); }
+    .google-btn img { width: 18px; height: 18px; }
+  </style>
+</head>
+<body>
+
+  <!-- Loader -->
+  <div id="loader" class="loading-overlay">
+    <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-emerald-500"></div>
+  </div>
+
+  <!-- Auth screen (hidden until we know there's no session) -->
+  <div id="auth-screen" class="auth-wrap" hidden>
+    <div class="auth-card glass">
+      <h1>Golem OS</h1>
+      <p>Sign in with your bedextrous.com account.</p>
+      <button class="google-btn" onclick="signInWithGoogle()">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="">
+        Continue with Google
+      </button>
+      <p style="margin-top: 20px; font-size: 10px; opacity: 0.25;">Workspace-only access.</p>
+    </div>
+  </div>
+
+  <!-- App shell (hidden until authed) -->
+  <div id="app" hidden>
+    <!-- Delete confirmation -->
+    <div id="confirm-overlay" class="confirm-overlay hidden">
+      <div class="glass rounded-3xl p-6 w-full max-w-sm space-y-4">
+        <p class="font-bold text-white text-center">Delete this item?</p>
+        <p class="text-xs text-center opacity-40">This cannot be undone.</p>
+        <div class="flex gap-3">
+          <button onclick="cancelDelete()" class="flex-1 py-3 rounded-2xl border border-white/10 text-sm font-bold text-white/60">Cancel</button>
+          <button onclick="confirmDelete()" class="flex-1 py-3 rounded-2xl bg-red-500/90 text-white font-bold text-sm">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <header class="p-6 flex justify-between items-center">
+      <button onclick="toggleMenu()" class="glass p-3 rounded-2xl">
+        <span class="material-icons text-emerald-500">menu</span>
+      </button>
+      <div class="flex items-center gap-3">
+        <h1 class="text-xl font-bold" id="v-title">Dashboard</h1>
+        <button onclick="toggleDisplayMode()" class="glass p-2 rounded-xl hidden" id="display-toggle">
+          <span class="material-icons text-emerald-500 text-sm" id="display-toggle-icon">table_view</span>
+        </button>
+      </div>
+      <button onclick="refreshState()" class="glass p-3 rounded-2xl">
+        <span class="material-icons text-emerald-500">sync</span>
+      </button>
+    </header>
+
+    <main id="v-content" class="p-4 space-y-4"></main>
+
+    <nav class="nav-bar">
+      <button onclick="navigate('Dashboard')" class="nav-btn" id="n-Dashboard"><span class="material-icons text-3xl">grid_view</span></button>
+      <button onclick="navigate('Goals')"     class="nav-btn" id="n-Goals"><span class="material-icons text-3xl">track_changes</span></button>
+      <button onclick="navigate('Tasks')"     class="nav-btn" id="n-Tasks"><span class="material-icons text-3xl">bolt</span></button>
+      <button onclick="navigate('Finances')"  class="nav-btn" id="n-Finances"><span class="material-icons text-3xl">payments</span></button>
+      <button onclick="navigate('Notes')"     class="nav-btn" id="n-Notes"><span class="material-icons text-3xl">description</span></button>
+    </nav>
+
+    <div id="nav-drawer" class="drawer">
+      <div class="p-6 flex justify-between items-center border-b border-white/5">
+        <span class="text-[10px] font-black uppercase tracking-widest text-emerald-500">Navigation</span>
+        <button onclick="closeMenu()"><span class="material-icons text-white/60">close</span></button>
+      </div>
+      <div class="p-6 flex flex-col gap-2 overflow-y-auto flex-1">
+        <button onclick="navigate('Dashboard')" class="w-full text-left p-4 rounded-xl hover:bg-white/5 glass flex items-center gap-4"><span class="material-icons text-emerald-500">grid_view</span> <span class="font-bold text-white tracking-wide">Dashboard</span></button>
+        <button onclick="navigate('Tasks')" class="w-full text-left p-4 rounded-xl hover:bg-white/5 glass flex items-center gap-4"><span class="material-icons text-emerald-500">bolt</span> <span class="font-bold text-white tracking-wide">Tasks</span></button>
+        <button onclick="navigate('Goals')" class="w-full text-left p-4 rounded-xl hover:bg-white/5 glass flex items-center gap-4"><span class="material-icons text-emerald-500">track_changes</span> <span class="font-bold text-white tracking-wide">Goals</span></button>
+        <button onclick="navigate('Objectives')" class="w-full text-left p-4 rounded-xl hover:bg-white/5 glass flex items-center gap-4"><span class="material-icons text-emerald-500">flag</span> <span class="font-bold text-white tracking-wide">Objectives</span></button>
+        <button onclick="navigate('Finances')" class="w-full text-left p-4 rounded-xl hover:bg-white/5 glass flex items-center gap-4"><span class="material-icons text-emerald-500">payments</span> <span class="font-bold text-white tracking-wide">Finances</span></button>
+        <button onclick="navigate('Notes')" class="w-full text-left p-4 rounded-xl hover:bg-white/5 glass flex items-center gap-4"><span class="material-icons text-emerald-500">description</span> <span class="font-bold text-white tracking-wide">Notes</span></button>
+        <button onclick="navigate('Links')" class="w-full text-left p-4 rounded-xl hover:bg-white/5 glass flex items-center gap-4"><span class="material-icons text-emerald-500">link</span> <span class="font-bold text-white tracking-wide">Links</span></button>
+        <button onclick="navigate('Reading')" class="w-full text-left p-4 rounded-xl hover:bg-white/5 glass flex items-center gap-4"><span class="material-icons text-emerald-500">menu_book</span> <span class="font-bold text-white tracking-wide">Reading</span></button>
+        <button onclick="navigate('CRM')" class="w-full text-left p-4 rounded-xl hover:bg-white/5 glass flex items-center gap-4"><span class="material-icons text-emerald-500">people</span> <span class="font-bold text-white tracking-wide">CRM</span></button>
+        <button onclick="signOut()" class="mt-auto w-full text-left p-4 rounded-xl hover:bg-white/5 glass flex items-center gap-4 opacity-60"><span class="material-icons text-white/60">logout</span> <span class="font-bold text-white/80 tracking-wide">Sign out</span></button>
+      </div>
+    </div>
+
+    <div id="sidebar" class="sidebar">
+      <div class="p-6 flex justify-between items-center border-b border-white/5">
+        <button onclick="closeSidebar()"><span class="material-icons text-white/60">close</span></button>
+        <span id="s-header-type" class="text-[10px] font-black uppercase tracking-widest text-emerald-500">Editor</span>
+        <button onclick="deleteCurrentItem()" class="text-red-400 opacity-60 hover:opacity-100">
+          <span class="material-icons text-xl">delete</span>
+        </button>
+      </div>
+      <div id="s-content" class="p-6 overflow-y-auto space-y-4 flex-grow"></div>
+      <div class="p-6 bg-black/20 border-t border-white/5">
+        <button onclick="saveChanges()" class="w-full py-4 bg-emerald-500 text-black rounded-2xl font-bold uppercase text-xs tracking-widest">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+    import { SUPABASE_URL, SUPABASE_ANON } from './config.js';
+
+    if (SUPABASE_ANON === 'REPLACE_WITH_ANON_KEY') {
+      alert('config.js is missing the Supabase anon key. See README.');
+    }
+
+    const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+    // Expose for use by non-module handlers declared below.
+    window.__sb = sb;
+
+    // ─── VIEW → TABLE MAPPING ──────────────────────────────────────────────
+    const TABLE = {
+      Tasks: 'tasks', Goals: 'goals', Objectives: 'objectives',
+      Reading: 'reading', Notes: 'notes', Links: 'links',
+      Finances: 'finances', CRM: 'crm'
+    };
+
+    // ─── DB → UI row translation ───────────────────────────────────────────
+    // The UI expects rows keyed by human labels (e.g. "Task Name", "GoalID").
+    // DB uses snake_case. These helpers bridge both directions.
+    function fromDb(view, row) {
+      const base = { _id: row.id, ID: String(row.id) };
+      switch (view) {
+        case 'Tasks': return { ...base,
+          "Task Name": row.name || '',
+          Status:       row.status || '',
+          "Due Date":   row.due_date || '',
+          Objective:    row.objective_id ? String(row.objective_id) : '',
+          Area:         row.area || '',
+          Priority:     row.priority || ''
+        };
+        case 'Goals': return { ...base,
+          Title:  row.title || '',
+          Area:   row.area || '',
+          Status: row.status || '',
+          Notes:  row.notes || ''
+        };
+        case 'Objectives': return { ...base,
+          GoalID:        row.goal_id ? String(row.goal_id) : '',
+          Title:         row.title || '',
+          Target_Value:  row.target_value ?? '',
+          Current_Value: row.current_value ?? '',
+          Metric_Unit:   row.metric_unit || '',
+          Deadline:      row.deadline || ''
+        };
+        case 'Reading': return { ...base,
+          "Book Title":  row.book_title || '',
+          Author:        row.author || '',
+          Status:        row.status || '',
+          Progress_Pct:  row.progress_pct ?? ''
+        };
+        case 'Notes': return { ...base,
+          Title:    row.title || '',
+          Content:  row.content || '',
+          Tags:     row.tags || '',
+          ParentID: parentFromCols(row)
+        };
+        case 'Links': return { ...base,
+          Title:        row.title || '',
+          URL:          row.url || '',
+          Website:      row.website || '',
+          "Date Added": row.date_added || '',
+          ParentID:     parentFromCols(row)
+        };
+        case 'Finances': return { ...base,
+          Date:     row.entry_date || '',
+          Label:    row.label || '',
+          Category: row.category || '',
+          Amount:   row.amount ?? ''
+        };
+        case 'CRM': return { ...base,
+          Name:            row.name || '',
+          Role:            row.role || '',
+          Company:         row.company || '',
+          Interaction_Log: row.interaction_log || ''
+        };
+      }
+      return base;
+    }
+
+    function toDb(view, ui, userId) {
+      const u = (k) => ui[k] === '' ? null : ui[k];
+      const num = (k) => { const v = u(k); return v == null ? null : Number(v); };
+      const int = (k) => { const v = u(k); if (v == null) return null; const n = parseInt(v, 10); return Number.isFinite(n) ? n : null; };
+      const common = { user_id: userId };
+      switch (view) {
+        case 'Tasks': return { ...common,
+          name:         u("Task Name") || '',
+          status:       u("Status"),
+          due_date:     u("Due Date"),
+          objective_id: int("Objective"),
+          area:         u("Area"),
+          priority:     u("Priority")
+        };
+        case 'Goals': return { ...common,
+          title:  u("Title") || '',
+          area:   u("Area"),
+          status: u("Status"),
+          notes:  u("Notes")
+        };
+        case 'Objectives': return { ...common,
+          goal_id:       int("GoalID"),
+          title:         u("Title") || '',
+          target_value:  num("Target_Value"),
+          current_value: num("Current_Value"),
+          metric_unit:   u("Metric_Unit"),
+          deadline:      u("Deadline")
+        };
+        case 'Reading': return { ...common,
+          book_title:   u("Book Title") || '',
+          author:       u("Author"),
+          status:       u("Status"),
+          progress_pct: int("Progress_Pct")
+        };
+        case 'Notes': return { ...common,
+          title:    u("Title"),
+          content:  u("Content"),
+          tags:     u("Tags"),
+          ...parentToCols(ui.ParentID)
+        };
+        case 'Links': return { ...common,
+          title:      u("Title"),
+          url:        u("URL") || '',
+          website:    u("Website"),
+          date_added: u("Date Added"),
+          ...parentToCols(ui.ParentID)
+        };
+        case 'Finances': return { ...common,
+          entry_date: u("Date") || new Date().toISOString().slice(0,10),
+          label:      u("Label"),
+          category:   u("Category"),
+          amount:     num("Amount") ?? 0
+        };
+        case 'CRM': return { ...common,
+          name:            u("Name") || '',
+          role:            u("Role"),
+          company:         u("Company"),
+          interaction_log: u("Interaction_Log")
+        };
+      }
+      return common;
+    }
+
+    function parentFromCols(row) {
+      if (row.parent_goal_id)      return `Goals:${row.parent_goal_id}`;
+      if (row.parent_objective_id) return `Objectives:${row.parent_objective_id}`;
+      if (row.parent_task_id)      return `Tasks:${row.parent_task_id}`;
+      return '';
+    }
+    function parentToCols(str) {
+      const out = { parent_goal_id: null, parent_objective_id: null, parent_task_id: null };
+      const m = /^(Goals|Objectives|Tasks):(\d+)$/i.exec((str || '').trim());
+      if (!m) return out;
+      const id = parseInt(m[2], 10);
+      const t  = m[1].toLowerCase();
+      if (t === 'goals')      out.parent_goal_id = id;
+      if (t === 'objectives') out.parent_objective_id = id;
+      if (t === 'tasks')      out.parent_task_id = id;
+      return out;
+    }
+
+    // ─── Supabase data access ──────────────────────────────────────────────
+    async function loadAll() {
+      const entries = Object.entries(TABLE);
+      const results = await Promise.all(entries.map(([v, t]) =>
+        sb.from(t).select('*').order('id', { ascending: true })
+          .then(r => [v, r])
+      ));
+      const state = {};
+      for (const [view, { data, error }] of results) {
+        if (error) {
+          console.error(`Load ${view} failed:`, error);
+          state[view] = [];
+          continue;
+        }
+        state[view] = data.map(row => fromDb(view, row));
+      }
+      return state;
+    }
+
+    async function upsertRow(view, id, payload) {
+      const { data: { session } } = await sb.auth.getSession();
+      const dbRow = toDb(view, payload, session.user.id);
+      if (id) {
+        const { error } = await sb.from(TABLE[view]).update(dbRow).eq('id', id);
+        if (error) throw error;
+      } else {
+        const { error } = await sb.from(TABLE[view]).insert(dbRow);
+        if (error) throw error;
+      }
+    }
+
+    async function deleteRow(view, id) {
+      const { error } = await sb.from(TABLE[view]).delete().eq('id', id);
+      if (error) throw error;
+    }
+
+    // ─── Auth ──────────────────────────────────────────────────────────────
+    window.signInWithGoogle = async () => {
+      await sb.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin + window.location.pathname,
+          scopes: 'email profile https://www.googleapis.com/auth/calendar.readonly'
+        }
+      });
+    };
+    window.signOut = async () => {
+      await sb.auth.signOut();
+      location.reload();
+    };
+
+    // Expose data helpers to window for non-module handlers
+    window.__golem = { loadAll, upsertRow, deleteRow };
+
+    // ─── Boot ──────────────────────────────────────────────────────────────
+    async function boot() {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) {
+        document.getElementById('loader').classList.add('fade');
+        document.getElementById('auth-screen').hidden = false;
+        return;
+      }
+      // Stash provider token (Google access token) for calendar fetches.
+      window.__providerToken = session.provider_token || null;
+      document.getElementById('app').hidden = false;
+      await window.initApp();
+      document.getElementById('loader').classList.add('fade');
+    }
+    sb.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) window.__providerToken = session.provider_token || null;
+    });
+    boot();
+  </script>
+
+  <!-- Non-module UI script: uses window.__golem for data access. -->
+  <script>
+    // ─── STATE ───────────────────────────────────────────────────────────────
+    let STATE = {};
+    let activeItem = { index: null, view: null, isNew: false };
+    let activeView = 'Dashboard';
+    let displayMode = 'card';
+
+    // ─── SCHEMAS (UI labels; ID column excluded from forms) ──────────────────
+    const SCHEMA = {
+      Tasks:      ["Task Name", "Status", "Due Date", "Objective", "Area", "Priority"],
+      Goals:      ["Title", "Area", "Status", "Notes"],
+      Objectives: ["GoalID", "Title", "Target_Value", "Current_Value", "Metric_Unit", "Deadline"],
+      Reading:    ["Book Title", "Author", "Status", "Progress_Pct"],
+      Notes:      ["Title", "Content", "Tags", "ParentID"],
+      Links:      ["Title", "URL", "Website", "Date Added", "ParentID"],
+      Finances:   ["Date", "Label", "Category", "Amount"],
+      CRM:        ["Name", "Role", "Company", "Interaction_Log"]
+    };
+
+    const VIEW_ICONS = {
+      Tasks: 'bolt', Goals: 'track_changes', Objectives: 'flag',
+      Reading: 'menu_book', Notes: 'description', Links: 'link',
+      Finances: 'payments', CRM: 'people'
+    };
+
+    const TALL_FIELDS = new Set(["Content", "Interaction_Log", "Notes"]);
+
+    const LINK_FIELDS = {
+      "Objective": { sources: ['Objectives'], labels: { Objectives: 'Title' } },
+      "GoalID":    { sources: ['Goals'],      labels: { Goals: 'Title' } },
+      "ParentID":  { sources: ['Goals', 'Objectives', 'Tasks'],
+                     labels: { Goals: 'Title', Objectives: 'Title', Tasks: 'Task Name' } }
+    };
+
+    const ENUM_FIELDS = {
+      "Status": {
+        Tasks:   ["Active", "In Progress", "Blocked", "Paused", "Done"],
+        Goals:   ["Active", "Paused", "Done"],
+        Reading: ["Want to Read", "Reading", "Paused", "Read"]
+      },
+      "Priority": ["High", "Medium", "Low"]
+    };
+
+    const DYNAMIC_ENUM_FIELDS = {
+      "Area": { views: ['Tasks', 'Goals'] }
+    };
+
+    // ─── BOOT (called from auth module) ──────────────────────────────────────
+    window.initApp = async () => {
+      STATE = await window.__golem.loadAll();
+      render('Dashboard');
+    };
+
+    window.refreshState = async () => {
+      showLoader();
+      STATE = await window.__golem.loadAll();
+      render(activeView);
+      hideLoader();
+    };
+
+    // ─── ROUTING ─────────────────────────────────────────────────────────────
+    function render(view) {
+      activeView = view;
+      const content = document.getElementById('v-content');
+      content.innerHTML = '';
+      document.getElementById('v-title').innerText = view;
+
+      const displayToggle = document.getElementById('display-toggle');
+      if (view === 'Dashboard') {
+        displayToggle.classList.add('hidden');
+      } else {
+        displayToggle.classList.remove('hidden');
+        document.getElementById('display-toggle-icon').innerText =
+          displayMode === 'card' ? 'table_view' : 'view_agenda';
+      }
+
+      document.querySelectorAll('.nav-btn').forEach(btn =>
+        btn.classList.toggle('active', btn.id === `n-${view}`)
+      );
+
+      if (view === 'Dashboard') { renderDashboard(content); return; }
+
+      const singular = view.replace(/s$/, '');
+      content.innerHTML = `
+        <button onclick="openSidebar(null, '${view}', true)"
+          class="w-full glass p-4 rounded-3xl border-dashed border-white/20 text-emerald-500 font-bold mb-4 text-sm tracking-wide active:scale-95 transition-transform">
+          + ADD NEW ${singular.toUpperCase()}
+        </button>`;
+
+      const data = STATE[view] || [];
+      let viewHtml = '';
+
+      if (view === 'Tasks' || view === 'Goals') {
+        const groups = [...new Set(data.map(item => item.Area || 'Unassigned'))].sort();
+        if (displayMode === 'table') {
+          viewHtml += renderTableView(view, data, groups, 'Area');
+        } else {
+          groups.forEach(group => {
+            viewHtml += `<div class="group-label">${escapeHtml(group)}</div>`;
+            viewHtml += `<div class="grid grid-cols-2 gap-4 mb-4">`;
+            data.filter(i => (i.Area || 'Unassigned') === group)
+                .forEach(item => { viewHtml += createCard(item, view, data.indexOf(item)); });
+            viewHtml += `</div>`;
+          });
+        }
+      } else if (view === 'Objectives') {
+        const goals = STATE['Goals'] || [];
+        const goalMap = {};
+        goals.forEach(g => { goalMap[g.ID] = g.Title; });
+        const groups = [...new Set(data.map(item => item.GoalID || 'Unlinked'))];
+        if (displayMode === 'table') {
+          viewHtml += renderTableView(view, data, groups, 'GoalID', goalMap);
+        } else {
+          groups.forEach(gid => {
+            const label = goalMap[gid] || (gid === 'Unlinked' ? 'Unlinked' : `Goal ${gid}`);
+            viewHtml += `<div class="group-label">${escapeHtml(label)}</div>`;
+            viewHtml += `<div class="grid grid-cols-2 gap-4 mb-4">`;
+            data.filter(i => (i.GoalID || 'Unlinked') === gid)
+                .forEach(item => { viewHtml += createCard(item, view, data.indexOf(item)); });
+            viewHtml += `</div>`;
+          });
+        }
+      } else {
+        if (displayMode === 'table') {
+          viewHtml += renderTableView(view, data, null, null);
+        } else {
+          viewHtml += `<div class="grid grid-cols-2 gap-4 mb-4">`;
+          data.forEach((item, i) => viewHtml += createCard(item, view, i));
+          viewHtml += `</div>`;
+        }
+      }
+      content.innerHTML += viewHtml;
+    }
+
+    // ─── TABLE VIEW ──────────────────────────────────────────────────────────
+    function renderTableView(view, data, groups, groupKey, groupMap = null) {
+      let html = `<div class="table-container overflow-x-auto pb-8"><table class="w-full text-left border-collapse text-sm glass rounded-xl overflow-hidden">`;
+      const fields = SCHEMA[view] || [];
+      html += `<thead><tr>`;
+      fields.forEach(f => { html += `<th class="p-3 border-b border-white/10 text-emerald-500 uppercase tracking-widest text-[10px] whitespace-nowrap bg-black/40">${escapeHtml(f)}</th>`; });
+      html += `<th class="p-3 border-b border-white/10 bg-black/40"></th>`;
+      html += `</tr></thead><tbody class="bg-black/20">`;
+
+      if (groups) {
+        groups.forEach(group => {
+          let groupLabel = groupMap ? (groupMap[group] || (group === 'Unlinked' ? 'Unlinked' : `Goal ${group}`)) : group;
+          html += `<tr><td colspan="${fields.length + 1}" class="p-3 group-label text-emerald-500 font-bold bg-white/5 uppercase tracking-widest text-[10px]"><span class="mr-2">❖</span>${escapeHtml(groupLabel)}</td></tr>`;
+          data.filter(i => (i[groupKey] || 'Unassigned') === group).forEach(item => {
+            html += createTableRow(item, view, data.indexOf(item), fields);
+          });
+        });
+      } else {
+        data.forEach((item, i) => html += createTableRow(item, view, i, fields));
+      }
+      html += `</tbody></table></div>`;
+      return html;
+    }
+
+    function createTableRow(item, view, index, fields) {
+      let html = `<tr class="border-b border-white/5 hover:bg-white/10 cursor-pointer transition-colors" onclick="openSidebar(${index}, '${view}')">`;
+      fields.forEach(f => {
+        let val = item[f] ?? '';
+        if (LINK_FIELDS[f] && val) val = resolveLinkLabel(f, val);
+        if (f === "Status" && val) {
+          val = `<span class="status-pill ${pillClass(val)}">${escapeHtml(val)}</span>`;
+        } else if (typeof val === 'string' && val.length > 50) {
+          val = escapeHtml(val.substring(0, 50)) + '...';
+        } else {
+          val = escapeHtml(String(val));
+        }
+        html += `<td class="p-3 whitespace-nowrap text-white/80">${val}</td>`;
+      });
+      html += `<td class="p-3 text-right"><span class="material-icons opacity-30 text-sm hover:opacity-100">edit</span></td>`;
+      html += `</tr>`;
+      return html;
+    }
+
+    // ─── TILE CARD VIEW ──────────────────────────────────────────────────────
+    function createCard(item, view, index) {
+      const icon = VIEW_ICONS[view] || 'star';
+      const titleField = {
+        Tasks: "Task Name", Goals: "Title", Objectives: "Title",
+        Reading: "Book Title", Notes: "Title", Links: "Title",
+        Finances: "Label", CRM: "Name"
+      }[view] || "Title";
+      const title = item[titleField] || 'Untitled';
+
+      let sub = '';
+      if      (view === 'Tasks')      sub = [item.Priority, item.Status].filter(Boolean).join(' · ');
+      else if (view === 'Goals')      sub = [item.Status].filter(Boolean).join(' · ');
+      else if (view === 'Objectives') sub = item.Deadline || '';
+      else if (view === 'Reading')    sub = item.Author || '';
+      else if (view === 'Notes')      sub = item.Tags || '';
+      else if (view === 'Links')      sub = item.Website || '';
+      else if (view === 'Finances')   sub = item.Amount !== '' ? '$' + item.Amount : '';
+      else if (view === 'CRM')        sub = item.Company || '';
+
+      const statusPill = item.Status ? `<span class="status-pill ${pillClass(item.Status)} scale-75 origin-top-right">${escapeHtml(item.Status)}</span>` : '';
+      return `
+        <div onclick="openSidebar(${index}, '${view}')"
+          class="glass h-40 p-5 rounded-3xl flex flex-col justify-between cursor-pointer active:scale-95 transition-all">
+          <div class="flex justify-between items-start">
+            <span class="material-icons text-emerald-500/40 text-2xl">${icon}</span>
+            ${statusPill}
+          </div>
+          <div class="min-w-0">
+            <p class="font-bold text-white text-sm line-clamp-2 leading-tight">${escapeHtml(title)}</p>
+            <p class="text-[9px] opacity-40 uppercase tracking-wider mt-1 truncate font-black">${escapeHtml(sub)}</p>
+          </div>
+        </div>`;
+    }
+
+    function pillClass(status) {
+      const s = (status || '').toLowerCase();
+      if (['done', 'complete', 'completed', 'read'].includes(s)) return 'pill-done';
+      if (['paused', 'on hold', 'blocked'].includes(s)) return 'pill-paused';
+      return 'pill-active';
+    }
+
+    // ─── DASHBOARD ───────────────────────────────────────────────────────────
+    function renderDashboard(content) {
+      const modules = [
+        { key: 'Tasks',      icon: 'bolt',          label: 'Tasks' },
+        { key: 'Goals',      icon: 'track_changes', label: 'Goals' },
+        { key: 'Objectives', icon: 'flag',          label: 'Objectives' },
+        { key: 'Finances',   icon: 'payments',      label: 'Finances' },
+        { key: 'Notes',      icon: 'description',   label: 'Notes' },
+        { key: 'Links',      icon: 'link',          label: 'Links' },
+        { key: 'Reading',    icon: 'menu_book',     label: 'Reading' },
+        { key: 'CRM',        icon: 'people',        label: 'CRM' }
+      ];
+      let html = `<div class="grid grid-cols-2 gap-3">` +
+        modules.map(m => `
+          <div class="glass p-6 rounded-3xl cursor-pointer active:scale-95 transition-transform" onclick="navigate('${m.key}')">
+            <div class="flex items-center justify-between mb-3">
+              <span class="material-icons text-emerald-500 text-xl">${m.icon}</span>
+            </div>
+            <p class="text-3xl font-black text-white">${STATE[m.key] ? STATE[m.key].length : 0}</p>
+            <p class="text-[10px] font-bold opacity-30 uppercase tracking-widest mt-1">${m.label}</p>
+          </div>`).join('') + `</div>`;
+
+      html += `
+        <div class="glass p-6 rounded-[32px] space-y-4">
+          <div class="flex justify-between items-center">
+            <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">Upcoming Schedule</h3>
+            <span class="material-icons text-white/20 text-sm">calendar_month</span>
+          </div>
+          <div id="cal-events" class="space-y-3">
+            <div class="animate-pulse flex space-x-4">
+              <div class="flex-1 space-y-2 py-1">
+                <div class="h-2 bg-white/5 rounded"></div>
+                <div class="h-2 bg-white/5 rounded w-5/6"></div>
+              </div>
+            </div>
+          </div>
+        </div>`;
+
+      content.innerHTML = html;
+      loadCalendar();
+    }
+
+    async function loadCalendar() {
+      const container = document.getElementById('cal-events');
+      if (!container) return;
+      const token = window.__providerToken;
+      if (!token) {
+        container.innerHTML = `<p class="text-[10px] text-white/30 italic">Calendar access requires re-signing in. Sign out and back in once to grant access.</p>`;
+        return;
+      }
+      try {
+        const now = new Date();
+        const later = new Date(now.getTime() + 7 * 864e5);
+        const params = new URLSearchParams({
+          timeMin: now.toISOString(),
+          timeMax: later.toISOString(),
+          singleEvents: 'true',
+          orderBy: 'startTime',
+          maxResults: '10'
+        });
+        const res = await fetch(
+          `https://www.googleapis.com/calendar/v3/calendars/primary/events?${params}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (!res.ok) throw new Error(`Calendar API ${res.status}`);
+        const json = await res.json();
+        const items = json.items || [];
+        if (!items.length) {
+          container.innerHTML = `<p class="text-[10px] text-white/30 italic">No upcoming events</p>`;
+          return;
+        }
+        container.innerHTML = items.slice(0, 5).map(e => {
+          const startRaw = e.start?.dateTime || e.start?.date;
+          const endRaw   = e.end?.dateTime   || e.end?.date;
+          const isAllDay = !!e.start?.date;
+          const d = new Date(startRaw);
+          const day   = d.toLocaleDateString(undefined, { weekday: 'short' }).toUpperCase();
+          const date  = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+          const time  = isAllDay ? 'All Day' :
+            d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+          const endTime = endRaw && !isAllDay
+            ? ' — ' + new Date(endRaw).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+            : '';
+          return `
+            <div class="flex gap-4 items-center">
+              <div class="flex-shrink-0 w-12 text-center">
+                <p class="text-[8px] font-black text-emerald-500 uppercase">${day}</p>
+                <p class="text-xs font-bold text-white">${escapeHtml(date)}</p>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-xs font-bold text-white truncate">${escapeHtml(e.summary || '(no title)')}</p>
+                <p class="text-[9px] opacity-30 font-bold">${escapeHtml(time + endTime)}</p>
+              </div>
+            </div>`;
+        }).join('');
+      } catch (err) {
+        console.error('Calendar load failed:', err);
+        container.innerHTML = `<p class="text-[10px] text-white/30 italic">Calendar unavailable.</p>`;
+      }
+    }
+
+    // ─── FIELD RENDERING ─────────────────────────────────────────────────────
+    const FIELD_LABEL = (f) =>
+      `<label class="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">${escapeHtml(f)}</label>`;
+
+    function renderField(view, f, rawValue) {
+      const value = rawValue == null ? '' : String(rawValue);
+      if (LINK_FIELDS[f])         return renderLinkField(view, f, value, LINK_FIELDS[f]);
+      if (ENUM_FIELDS[f]) {
+        const cfg = ENUM_FIELDS[f];
+        const opts = Array.isArray(cfg) ? cfg : (cfg[view] || null);
+        if (opts) return renderEnumField(f, value, opts);
+      }
+      if (DYNAMIC_ENUM_FIELDS[f]) {
+        const cfg = DYNAMIC_ENUM_FIELDS[f];
+        const opts = collectDynamicOptions(f, cfg.views);
+        return renderEnumField(f, value, opts, true);
+      }
+      const isTall = TALL_FIELDS.has(f);
+      return `
+        <div>
+          ${FIELD_LABEL(f)}
+          <textarea id="field-${f}" class="input-flat" rows="${isTall ? 5 : 2}">${escapeHtml(value)}</textarea>
+        </div>`;
+    }
+
+    function renderLinkField(view, f, value, cfg) {
+      const multi = cfg.sources.length > 1;
+      let options = `<option value="">— None —</option>`;
+      let matched = false;
+      cfg.sources.forEach(src => {
+        const rows = STATE[src] || [];
+        if (!rows.length) return;
+        const labelKey = cfg.labels[src];
+        const sorted = [...rows].sort((a, b) =>
+          String(a[labelKey] || '').localeCompare(String(b[labelKey] || '')));
+        const optHtml = sorted.map(row => {
+          const id = row.ID || row._id;
+          const storeVal = multi ? `${src}:${id}` : String(id);
+          const label = row[labelKey] || `(untitled ${src} ${id})`;
+          const selected = String(storeVal) === String(value);
+          if (selected) matched = true;
+          return `<option value="${escapeHtml(storeVal)}" ${selected ? 'selected' : ''}>${escapeHtml(label)}</option>`;
+        }).join('');
+        options += multi ? `<optgroup label="${src}">${optHtml}</optgroup>` : optHtml;
+      });
+      if (value && !matched) {
+        options += `<option value="${escapeHtml(value)}" selected>⚠ ${escapeHtml(value)} (legacy)</option>`;
+      }
+      return `
+        <div>
+          ${FIELD_LABEL(f)}
+          <select id="field-${f}" class="input-flat">${options}</select>
+        </div>`;
+    }
+
+    function renderEnumField(f, value, opts, allowAdd = false) {
+      let optHtml = `<option value="">— None —</option>`;
+      let matched = false;
+      opts.forEach(o => {
+        const selected = String(o).toLowerCase() === String(value).toLowerCase();
+        if (selected) matched = true;
+        optHtml += `<option value="${escapeHtml(o)}" ${selected ? 'selected' : ''}>${escapeHtml(o)}</option>`;
+      });
+      if (value && !matched) {
+        optHtml += `<option value="${escapeHtml(value)}" selected>${escapeHtml(value)}</option>`;
+      }
+      if (allowAdd) optHtml += `<option value="__ADD_NEW__">+ Add new…</option>`;
+      const onChange = allowAdd ? `onchange="handleAddNewOption(this, '${f}')"` : '';
+      return `
+        <div>
+          ${FIELD_LABEL(f)}
+          <select id="field-${f}" class="input-flat" ${onChange}>${optHtml}</select>
+        </div>`;
+    }
+
+    function collectDynamicOptions(field, views) {
+      const set = new Set();
+      views.forEach(v => {
+        (STATE[v] || []).forEach(row => {
+          const val = row[field];
+          if (val && String(val).trim()) set.add(String(val).trim());
+        });
+      });
+      return [...set].sort((a, b) => a.localeCompare(b));
+    }
+
+    function handleAddNewOption(selectEl, field) {
+      if (selectEl.value !== '__ADD_NEW__') return;
+      const newVal = window.prompt(`New ${field}:`);
+      if (!newVal) { selectEl.value = ''; return; }
+      const opt = document.createElement('option');
+      opt.value = newVal; opt.textContent = newVal; opt.selected = true;
+      selectEl.insertBefore(opt, selectEl.querySelector('option[value="__ADD_NEW__"]'));
+      selectEl.value = newVal;
+    }
+
+    function resolveLinkLabel(field, value) {
+      const cfg = LINK_FIELDS[field];
+      if (!cfg || !value) return value || '';
+      const str = String(value);
+      let src, id;
+      if (cfg.sources.length > 1 && str.includes(':')) [src, id] = str.split(':');
+      else { src = cfg.sources[0]; id = str; }
+      const rows = STATE[src] || [];
+      const labelKey = cfg.labels[src];
+      const hit = rows.find(r => String(r.ID) === String(id));
+      if (hit && hit[labelKey])
+        return cfg.sources.length > 1 ? `${src.replace(/s$/, '')}: ${hit[labelKey]}` : hit[labelKey];
+      return str;
+    }
+
+    // ─── SIDEBAR (EDITOR) ────────────────────────────────────────────────────
+    function openSidebar(index, view, isNew = false) {
+      activeItem = { index, view, isNew };
+      document.getElementById('sidebar').classList.add('open');
+      document.getElementById('s-header-type').innerText = isNew ? `New ${view}` : `Edit ${view}`;
+      const fields = SCHEMA[view] || [];
+      const item = isNew ? {} : (STATE[view] || [])[index] || {};
+      let html = '';
+      fields.forEach(f => { html += renderField(view, f, item[f]); });
+      if (!isNew && item.ID) html = `<div class="text-[10px] opacity-30 font-mono">ID: ${item.ID}</div>` + html;
+      document.getElementById('s-content').innerHTML = html;
+    }
+    function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); }
+
+    // ─── SAVE ────────────────────────────────────────────────────────────────
+    async function saveChanges() {
+      const payload = {};
+      const fields = SCHEMA[activeItem.view] || [];
+      fields.forEach(f => {
+        const el = document.getElementById(`field-${f}`);
+        if (!el) return;
+        let v = el.value;
+        if (v === '__ADD_NEW__') v = '';
+        payload[f] = v;
+      });
+      showLoader();
+      try {
+        const current = (STATE[activeItem.view] || [])[activeItem.index];
+        const id = activeItem.isNew ? null : (current ? current._id : null);
+        await window.__golem.upsertRow(activeItem.view, id, payload);
+        STATE = await window.__golem.loadAll();
+        render(activeView);
+        closeSidebar();
+      } catch (err) {
+        console.error(err);
+        alert('Save failed: ' + (err.message || err));
+      } finally {
+        hideLoader();
+      }
+    }
+
+    // ─── DELETE ──────────────────────────────────────────────────────────────
+    function deleteCurrentItem() {
+      if (activeItem.isNew) { closeSidebar(); return; }
+      document.getElementById('confirm-overlay').classList.remove('hidden');
+    }
+    function cancelDelete() { document.getElementById('confirm-overlay').classList.add('hidden'); }
+    async function confirmDelete() {
+      cancelDelete();
+      const item = (STATE[activeItem.view] || [])[activeItem.index];
+      if (!item || !item._id) { closeSidebar(); return; }
+      showLoader();
+      try {
+        await window.__golem.deleteRow(activeItem.view, item._id);
+        STATE = await window.__golem.loadAll();
+        render(activeView);
+        closeSidebar();
+      } catch (err) {
+        console.error(err);
+        alert('Delete failed: ' + (err.message || err));
+      } finally {
+        hideLoader();
+      }
+    }
+
+    // ─── UTILS & NAVIGATION ──────────────────────────────────────────────────
+    function showLoader() { document.getElementById('loader').classList.remove('fade'); }
+    function hideLoader() { document.getElementById('loader').classList.add('fade'); }
+    function escapeHtml(str) {
+      if (str == null) return '';
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function toggleDisplayMode() {
+      displayMode = displayMode === 'card' ? 'table' : 'card';
+      if (activeView !== 'Dashboard') render(activeView);
+    }
+    function toggleMenu() { document.getElementById('nav-drawer').classList.add('open'); }
+    function closeMenu()  { document.getElementById('nav-drawer').classList.remove('open'); }
+    function navigate(view) { closeMenu(); render(view); }
+
+    // Expose UI handlers referenced by inline onclicks.
+    Object.assign(window, {
+      openSidebar, closeSidebar, saveChanges, deleteCurrentItem, confirmDelete, cancelDelete,
+      toggleDisplayMode, toggleMenu, closeMenu, navigate, handleAddNewOption
+    });
+  </script>
+</body>
+</html>
