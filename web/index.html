@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Golem OS</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;700;800&display=swap');
@@ -48,6 +49,10 @@
     .google-btn { width: 100%; padding: 14px; background: white; color: #0b0f10; border-radius: 14px; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; transition: transform 0.15s; }
     .google-btn:active { transform: scale(0.97); }
     .google-btn img { width: 18px; height: 18px; }
+
+    /* Drag-to-reorder feedback */
+    .drag-ghost   { opacity: 0.35; transform: scale(0.97); }
+    .drag-active  { opacity: 0.9; box-shadow: 0 8px 24px rgba(16,185,129,0.25); }
   </style>
 </head>
 <body>
@@ -390,7 +395,7 @@
 
     // ─── SCHEMAS (UI labels; ID column excluded from forms) ──────────────────
     const SCHEMA = {
-      Tasks:      ["Task Name", "Status", "Due Date", "Objective", "Area", "Priority"],
+      Tasks:      ["Task Name", "Status", "Due Date", "Goal", "Objective", "Area", "Priority"],
       Goals:      ["Title", "Area", "Status", "Notes"],
       Objectives: ["GoalID", "Title", "Target_Value", "Current_Value", "Metric_Unit", "Deadline"],
       Reading:    ["Book Title", "Author", "Status", "Progress_Pct"],
@@ -411,6 +416,7 @@
     const LINK_FIELDS = {
       "Objective": { sources: ['Objectives'], labels: { Objectives: 'Title' } },
       "GoalID":    { sources: ['Goals'],      labels: { Goals: 'Title' } },
+      "Goal":      { sources: ['Goals'],      labels: { Goals: 'Title' } },
       "ParentID":  { sources: ['Goals', 'Objectives', 'Tasks'],
                      labels: { Goals: 'Title', Objectives: 'Title', Tasks: 'Task Name' } }
     };
@@ -470,19 +476,33 @@
           + ADD NEW ${singular.toUpperCase()}
         </button>`;
 
-      const data = STATE[view] || [];
+      let data = STATE[view] || [];
+
+      // Enrich Task rows with derived Goal = parent Objective's GoalID (for table + tile subs)
+      if (view === 'Tasks') {
+        data = data.map(item => {
+          if (item.Objective) {
+            const o = (STATE.Objectives || []).find(x => String(x.ID) === String(item.Objective));
+            if (o && o.GoalID) return { ...item, Goal: String(o.GoalID) };
+          }
+          return { ...item, Goal: item.Goal || '' };
+        });
+      }
+
+      // Apply saved drag order for card mode
+      const displayData = displayMode === 'card' ? sortByOrder(data, view) : data;
       let viewHtml = '';
 
       if (view === 'Tasks' || view === 'Goals') {
-        const groups = [...new Set(data.map(item => item.Area || 'Unassigned'))].sort();
+        const groups = [...new Set(displayData.map(item => item.Area || 'Unassigned'))].sort();
         if (displayMode === 'table') {
-          viewHtml += renderTableView(view, data, groups, 'Area');
+          viewHtml += renderTableView(view, displayData, groups, 'Area');
         } else {
           groups.forEach(group => {
             viewHtml += `<div class="group-label">${escapeHtml(group)}</div>`;
-            viewHtml += `<div class="grid grid-cols-2 gap-4 mb-4">`;
-            data.filter(i => (i.Area || 'Unassigned') === group)
-                .forEach(item => { viewHtml += createCard(item, view, data.indexOf(item)); });
+            viewHtml += `<div class="grid grid-cols-2 gap-4 mb-4" data-dragzone data-group="${escapeHtml(group)}">`;
+            displayData.filter(i => (i.Area || 'Unassigned') === group)
+                .forEach(item => { viewHtml += createCard(item, view); });
             viewHtml += `</div>`;
           });
         }
@@ -490,29 +510,31 @@
         const goals = STATE['Goals'] || [];
         const goalMap = {};
         goals.forEach(g => { goalMap[g.ID] = g.Title; });
-        const groups = [...new Set(data.map(item => item.GoalID || 'Unlinked'))];
+        const groups = [...new Set(displayData.map(item => item.GoalID || 'Unlinked'))];
         if (displayMode === 'table') {
-          viewHtml += renderTableView(view, data, groups, 'GoalID', goalMap);
+          viewHtml += renderTableView(view, displayData, groups, 'GoalID', goalMap);
         } else {
           groups.forEach(gid => {
             const label = goalMap[gid] || (gid === 'Unlinked' ? 'Unlinked' : `Goal ${gid}`);
             viewHtml += `<div class="group-label">${escapeHtml(label)}</div>`;
-            viewHtml += `<div class="grid grid-cols-2 gap-4 mb-4">`;
-            data.filter(i => (i.GoalID || 'Unlinked') === gid)
-                .forEach(item => { viewHtml += createCard(item, view, data.indexOf(item)); });
+            viewHtml += `<div class="grid grid-cols-2 gap-4 mb-4" data-dragzone data-group="${escapeHtml(String(gid))}">`;
+            displayData.filter(i => (i.GoalID || 'Unlinked') === gid)
+                .forEach(item => { viewHtml += createCard(item, view); });
             viewHtml += `</div>`;
           });
         }
       } else {
         if (displayMode === 'table') {
-          viewHtml += renderTableView(view, data, null, null);
+          viewHtml += renderTableView(view, displayData, null, null);
         } else {
-          viewHtml += `<div class="grid grid-cols-2 gap-4 mb-4">`;
-          data.forEach((item, i) => viewHtml += createCard(item, view, i));
+          viewHtml += `<div class="grid grid-cols-2 gap-4 mb-4" data-dragzone data-group="__all">`;
+          displayData.forEach(item => viewHtml += createCard(item, view));
           viewHtml += `</div>`;
         }
       }
       content.innerHTML += viewHtml;
+
+      if (displayMode === 'card') wireDragAndDrop();
     }
 
     // ─── TABLE VIEW ──────────────────────────────────────────────────────────
@@ -539,8 +561,9 @@
       return html;
     }
 
-    function createTableRow(item, view, index, fields) {
-      let html = `<tr class="border-b border-white/5 hover:bg-white/10 cursor-pointer transition-colors" onclick="openSidebar(${index}, '${view}')">`;
+    function createTableRow(item, view, _ignoredIndex, fields) {
+      const idAttr = escapeHtml(String(item.ID || ''));
+      let html = `<tr class="border-b border-white/5 hover:bg-white/10 cursor-pointer transition-colors" onclick="openSidebar('${idAttr}', '${view}')">`;
       fields.forEach(f => {
         let val = item[f] ?? '';
         if (LINK_FIELDS[f] && val) val = resolveLinkLabel(f, val);
@@ -559,7 +582,7 @@
     }
 
     // ─── TILE CARD VIEW ──────────────────────────────────────────────────────
-    function createCard(item, view, index) {
+    function createCard(item, view, _ignoredIndex) {
       const icon = VIEW_ICONS[view] || 'star';
       const titleField = {
         Tasks: "Task Name", Goals: "Title", Objectives: "Title",
@@ -569,7 +592,10 @@
       const title = item[titleField] || 'Untitled';
 
       let sub = '';
-      if      (view === 'Tasks')      sub = [item.Priority, item.Status].filter(Boolean).join(' · ');
+      if (view === 'Tasks') {
+        const goalLabel = resolveTaskGoalTitle(item);
+        sub = [item.Priority, goalLabel].filter(Boolean).join(' · ');
+      }
       else if (view === 'Goals')      sub = [item.Status].filter(Boolean).join(' · ');
       else if (view === 'Objectives') sub = item.Deadline || '';
       else if (view === 'Reading')    sub = item.Author || '';
@@ -579,9 +605,11 @@
       else if (view === 'CRM')        sub = item.Company || '';
 
       const statusPill = item.Status ? `<span class="status-pill ${pillClass(item.Status)} scale-75 origin-top-right">${escapeHtml(item.Status)}</span>` : '';
+      const idAttr = escapeHtml(String(item.ID || ''));
       return `
-        <div onclick="openSidebar(${index}, '${view}')"
-          class="glass h-40 p-5 rounded-3xl flex flex-col justify-between cursor-pointer active:scale-95 transition-all">
+        <div draggable="true" data-drag-card data-id="${idAttr}"
+          onclick="openSidebar('${idAttr}', '${view}')"
+          class="glass h-40 p-5 rounded-3xl flex flex-col justify-between cursor-grab active:scale-95 transition-all">
           <div class="flex justify-between items-start">
             <span class="material-icons text-emerald-500/40 text-2xl">${icon}</span>
             ${statusPill}
@@ -707,6 +735,11 @@
 
     function renderField(view, f, rawValue) {
       const value = rawValue == null ? '' : String(rawValue);
+      // Tasks: Objective options are grouped by Goal (and filtered when Goal changes)
+      if (view === 'Tasks' && f === 'Objective') {
+        const html = buildObjectiveOptionsHtml(value, null);
+        return `<div>${FIELD_LABEL(f)}<select id="field-${f}" class="input-flat">${html}</select></div>`;
+      }
       if (LINK_FIELDS[f])         return renderLinkField(view, f, value, LINK_FIELDS[f]);
       if (ENUM_FIELDS[f]) {
         const cfg = ENUM_FIELDS[f];
@@ -812,17 +845,160 @@
       return str;
     }
 
+    // Map a Task's Objective → the owning Goal's title (for tile sub-lines, etc.)
+    function resolveTaskGoalTitle(item) {
+      if (!item || !item.Objective) return '';
+      const o = (STATE.Objectives || []).find(x => String(x.ID) === String(item.Objective));
+      if (!o || !o.GoalID) return '';
+      const g = (STATE.Goals || []).find(x => String(x.ID) === String(o.GoalID));
+      return g ? (g.Title || '') : '';
+    }
+
+    // Build Objective <option>s, optionally filtered to one Goal, optgroup'd by Goal otherwise.
+    function buildObjectiveOptionsHtml(selectedId, filterGoalId) {
+      const goals = STATE.Goals || [];
+      const goalTitle = Object.fromEntries(goals.map(g => [String(g.ID), g.Title || '']));
+      const all = STATE.Objectives || [];
+      const items = filterGoalId
+        ? all.filter(o => String(o.GoalID) === String(filterGoalId))
+        : all;
+
+      let html = `<option value="">— None —</option>`;
+
+      if (filterGoalId) {
+        [...items]
+          .sort((a, b) => String(a.Title || '').localeCompare(String(b.Title || '')))
+          .forEach(o => {
+            const sel = String(o.ID) === String(selectedId) ? 'selected' : '';
+            html += `<option value="${escapeHtml(String(o.ID))}" data-goal="${escapeHtml(String(o.GoalID || ''))}" ${sel}>${escapeHtml(o.Title || '')}</option>`;
+          });
+      } else {
+        const buckets = new Map();
+        items.forEach(o => {
+          const k = String(o.GoalID || '');
+          if (!buckets.has(k)) buckets.set(k, []);
+          buckets.get(k).push(o);
+        });
+        const keys = [...buckets.keys()].sort((a, b) =>
+          (goalTitle[a] || 'Unlinked').localeCompare(goalTitle[b] || 'Unlinked'));
+        keys.forEach(k => {
+          const list = buckets.get(k).sort((a, b) =>
+            String(a.Title || '').localeCompare(String(b.Title || '')));
+          const label = goalTitle[k] || (k ? `Goal ${k}` : 'Unlinked');
+          let inner = '';
+          list.forEach(o => {
+            const sel = String(o.ID) === String(selectedId) ? 'selected' : '';
+            inner += `<option value="${escapeHtml(String(o.ID))}" data-goal="${escapeHtml(String(o.GoalID || ''))}" ${sel}>${escapeHtml(o.Title || '')}</option>`;
+          });
+          html += `<optgroup label="${escapeHtml(label)}">${inner}</optgroup>`;
+        });
+      }
+
+      // Preserve legacy/unknown selection
+      if (selectedId && !items.find(o => String(o.ID) === String(selectedId))) {
+        html += `<option value="${escapeHtml(String(selectedId))}" selected>⚠ ${escapeHtml(String(selectedId))} (legacy)</option>`;
+      }
+      return html;
+    }
+
+    // Wire Task editor: picking Objective auto-fills Goal; picking Goal filters Objectives.
+    function wireTaskCrossField() {
+      const obj  = document.getElementById('field-Objective');
+      const goal = document.getElementById('field-Goal');
+      if (!obj || !goal) return;
+      obj.addEventListener('change', () => {
+        if (!obj.value) return;
+        const o = (STATE.Objectives || []).find(x => String(x.ID) === String(obj.value));
+        if (o && o.GoalID) goal.value = String(o.GoalID);
+      });
+      goal.addEventListener('change', () => {
+        const gid = goal.value;
+        // Preserve current Objective only if it belongs to the new Goal
+        let keepObj = obj.value;
+        if (gid && keepObj) {
+          const o = (STATE.Objectives || []).find(x => String(x.ID) === String(keepObj));
+          if (!o || String(o.GoalID) !== String(gid)) keepObj = '';
+        }
+        obj.innerHTML = buildObjectiveOptionsHtml(keepObj, gid || null);
+      });
+    }
+
+    // ─── TILE ORDER (drag-to-reorder, persisted per view) ───────────────────
+    function getOrder(view) {
+      try { return JSON.parse(localStorage.getItem(`golem:order:${view}`) || '[]') || []; }
+      catch { return []; }
+    }
+    function setOrder(view, ids) {
+      localStorage.setItem(`golem:order:${view}`, JSON.stringify(ids.map(String)));
+    }
+    function sortByOrder(items, view) {
+      const order = getOrder(view);
+      if (!order.length) return items;
+      const rank = new Map(order.map((id, i) => [String(id), i]));
+      return [...items].sort((a, b) => {
+        const ra = rank.has(String(a.ID)) ? rank.get(String(a.ID)) : Infinity;
+        const rb = rank.has(String(b.ID)) ? rank.get(String(b.ID)) : Infinity;
+        if (ra === rb) return 0;
+        return ra - rb;
+      });
+    }
+
+    // Wire SortableJS to every drag zone; handles mouse + touch (long-press on mobile).
+    let __sortables = [];
+    function wireDragAndDrop() {
+      // Destroy previous instances to avoid leaks on re-render
+      __sortables.forEach(s => { try { s.destroy(); } catch {} });
+      __sortables = [];
+      if (typeof Sortable === 'undefined') return;
+      document.querySelectorAll('[data-dragzone]').forEach(zone => {
+        __sortables.push(Sortable.create(zone, {
+          animation: 150,
+          delay: 180,
+          delayOnTouchOnly: true,
+          ghostClass: 'drag-ghost',
+          dragClass: 'drag-active',
+          group: { name: 'golem', pull: false, put: false }, // only reorder within group
+          onEnd: () => persistOrderFromDom()
+        }));
+      });
+    }
+    function persistOrderFromDom() {
+      const view = activeView;
+      const ids = [...document.querySelectorAll('[data-drag-card]')]
+        .map(el => el.getAttribute('data-id'))
+        .filter(Boolean);
+      if (ids.length) setOrder(view, ids);
+    }
+
     // ─── SIDEBAR (EDITOR) ────────────────────────────────────────────────────
-    function openSidebar(index, view, isNew = false) {
+    function openSidebar(idOrIndex, view, isNew = false) {
+      // idOrIndex: may be a string ID (preferred), a numeric index (legacy), or null for new
+      let index = null;
+      if (!isNew && idOrIndex != null && idOrIndex !== '') {
+        const items = STATE[view] || [];
+        index = items.findIndex(x => String(x.ID) === String(idOrIndex));
+        if (index < 0) {
+          const n = parseInt(idOrIndex, 10);
+          if (!isNaN(n) && n >= 0 && n < items.length) index = n;
+          else index = null;
+        }
+      }
       activeItem = { index, view, isNew };
       document.getElementById('sidebar').classList.add('open');
       document.getElementById('s-header-type').innerText = isNew ? `New ${view}` : `Edit ${view}`;
       const fields = SCHEMA[view] || [];
-      const item = isNew ? {} : (STATE[view] || [])[index] || {};
+      const baseItem = (!isNew && index != null) ? (STATE[view] || [])[index] || {} : {};
+      const item = { ...baseItem };
+      // Derive Goal for Tasks from Objective → GoalID
+      if (view === 'Tasks' && item.Objective && !item.Goal) {
+        const o = (STATE.Objectives || []).find(x => String(x.ID) === String(item.Objective));
+        if (o && o.GoalID) item.Goal = String(o.GoalID);
+      }
       let html = '';
       fields.forEach(f => { html += renderField(view, f, item[f]); });
       if (!isNew && item.ID) html = `<div class="text-[10px] opacity-30 font-mono">ID: ${item.ID}</div>` + html;
       document.getElementById('s-content').innerHTML = html;
+      if (view === 'Tasks') wireTaskCrossField();
     }
     function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); }
 
