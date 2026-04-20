@@ -29,6 +29,12 @@
     select.input-flat optgroup { background: #0b0f10; color: var(--accent); font-weight: 700; }
     .filter-select { appearance: none; -webkit-appearance: none; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; color: white; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 26px 6px 10px; font-family: 'Plus Jakarta Sans', sans-serif; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'><path fill='%2310b981' d='M7 10l5 5 5-5z'/></svg>"); background-repeat: no-repeat; background-position: right 8px center; cursor: pointer; }
     .filter-select option { background: #0f1416; color: white; }
+    .kanban-board { display:flex; gap:12px; overflow-x:auto; align-items:flex-start; padding-bottom:80px; }
+    .kanban-col { min-width:160px; flex-shrink:0; display:flex; flex-direction:column; gap:8px; }
+    .kanban-col-header { font-size:10px; font-weight:900; letter-spacing:0.1em; text-transform:uppercase; padding:8px 12px; border-radius:12px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); display:flex; justify-content:space-between; align-items:center; }
+    .kanban-cards { display:flex; flex-direction:column; gap:8px; min-height:60px; padding:4px; border-radius:16px; transition:background 0.2s; }
+    .kanban-card { padding:12px; border-radius:20px; cursor:grab; display:flex; flex-direction:column; gap:6px; transition:transform 0.15s; }
+    .kanban-card:active { transform:scale(0.97); }
 
     .group-label { font-size: 10px; font-weight: 900; color: var(--accent); opacity: 0.5; margin: 20px 0 10px 0; letter-spacing: 0.1em; text-transform: uppercase; }
     .loading-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
@@ -463,8 +469,8 @@
         displayToggle.classList.add('hidden');
       } else {
         displayToggle.classList.remove('hidden');
-        document.getElementById('display-toggle-icon').innerText =
-          displayMode === 'card' ? 'table_view' : 'view_agenda';
+        const modeIcons = { card: 'table_view', table: 'view_column', kanban: 'view_agenda' };
+        document.getElementById('display-toggle-icon').innerText = modeIcons[displayMode] || 'table_view';
       }
 
       const FILTERABLE_VIEWS = {
@@ -520,12 +526,15 @@
       }
 
       // Apply saved drag order for card mode
-      const displayData = displayMode === 'card' ? sortByOrder(data, view) : data;
+      const effectiveMode = (displayMode === 'kanban' && view === 'Tasks') ? 'kanban' : displayMode;
+      const displayData = effectiveMode === 'card' ? sortByOrder(data, view) : data;
       let viewHtml = '';
 
       if (view === 'Tasks' || view === 'Goals') {
         const groups = [...new Set(displayData.map(item => item.Area || 'Unassigned'))].sort();
-        if (displayMode === 'table') {
+        if (effectiveMode === 'kanban') {
+          viewHtml += renderKanbanView(displayData);
+        } else if (effectiveMode === 'table') {
           viewHtml += renderTableView(view, displayData, groups, 'Area');
         } else {
           groups.forEach(group => {
@@ -564,7 +573,7 @@
       }
       content.innerHTML += viewHtml;
 
-      if (displayMode === 'card') wireDragAndDrop();
+      if (displayMode === 'card' || (displayMode === 'kanban' && activeView === 'Tasks')) wireDragAndDrop();
     }
 
     // ─── TABLE VIEW ──────────────────────────────────────────────────────────
@@ -973,6 +982,49 @@
       });
     }
 
+    // ─── KANBAN VIEW ─────────────────────────────────────────────────────────
+    function renderKanbanView(data) {
+      const statuses = ENUM_FIELDS.Status.Tasks;
+      const colColors = {
+        'Active':      '#10b981',
+        'In Progress': '#38bdf8',
+        'Blocked':     '#f87171',
+        'Paused':      '#eab308',
+        'Done':        'rgba(255,255,255,0.25)'
+      };
+      let html = '<div class="kanban-board">';
+      statuses.forEach(status => {
+        const cards = data.filter(item => item.Status === status);
+        const color = colColors[status] || 'white';
+        html += `<div class="kanban-col">`;
+        html += `<div class="kanban-col-header" style="color:${color}">${escapeHtml(status)}<span style="opacity:0.4">${cards.length}</span></div>`;
+        html += `<div class="kanban-cards" data-dragzone data-status="${escapeHtml(status)}">`;
+        cards.forEach(item => { html += createKanbanCard(item); });
+        html += `</div></div>`;
+      });
+      html += '</div>';
+      return html;
+    }
+
+    function createKanbanCard(item) {
+      const idAttr = escapeHtml(String(item.ID || item._id || ''));
+      const title = item['Task Name'] || item.Title || '';
+      const priority = item.Priority || '';
+      const due = item['Due Date'] || '';
+      const priColors = { High: '#f87171', Medium: '#eab308', Low: '#10b981' };
+      const priColor = priColors[priority] || 'rgba(255,255,255,0.3)';
+      const priPart = priority
+        ? `<span style="font-size:9px;font-weight:800;color:${priColor};text-transform:uppercase;letter-spacing:0.08em">${escapeHtml(priority)}</span>`
+        : '';
+      const duePart = due
+        ? `<span style="font-size:9px;opacity:0.4">${escapeHtml(due)}</span>`
+        : '';
+      return `<div class="glass kanban-card" draggable="true" data-drag-card data-id="${idAttr}" onclick="openSidebar('${idAttr}', 'Tasks')">
+        <p style="font-size:12px;font-weight:700;color:white;line-height:1.4;margin:0">${escapeHtml(title)}</p>
+        ${(priPart || duePart) ? `<div style="display:flex;justify-content:space-between;align-items:center">${priPart}${duePart}</div>` : ''}
+      </div>`;
+    }
+
     // Wire SortableJS to every drag zone; handles mouse + touch (long-press on mobile).
     let __sortables = [];
     function wireDragAndDrop() {
@@ -980,6 +1032,7 @@
       __sortables.forEach(s => { try { s.destroy(); } catch {} });
       __sortables = [];
       if (typeof Sortable === 'undefined') return;
+      const isKanban = displayMode === 'kanban' && activeView === 'Tasks';
       document.querySelectorAll('[data-dragzone]').forEach(zone => {
         __sortables.push(Sortable.create(zone, {
           animation: 150,
@@ -987,8 +1040,26 @@
           delayOnTouchOnly: true,
           ghostClass: 'drag-ghost',
           dragClass: 'drag-active',
-          group: { name: 'golem', pull: false, put: false }, // only reorder within group
-          onEnd: () => persistOrderFromDom()
+          group: isKanban
+            ? { name: 'kanban', pull: true, put: true }
+            : { name: 'golem', pull: false, put: false },
+          onEnd: async (evt) => {
+            if (isKanban && evt.from !== evt.to) {
+              const newStatus = evt.to.getAttribute('data-status');
+              const itemId = evt.item.getAttribute('data-id');
+              if (newStatus && itemId) {
+                const task = (STATE['Tasks'] || []).find(t => String(t.ID) === String(itemId));
+                if (task) {
+                  STATE['Tasks'] = STATE['Tasks'].map(t =>
+                    String(t.ID) === String(itemId) ? { ...t, Status: newStatus } : t
+                  );
+                  window.__golem.upsertRow('Tasks', task._id, { ...task, Status: newStatus });
+                }
+              }
+            } else {
+              persistOrderFromDom();
+            }
+          }
         }));
       });
     }
@@ -1091,7 +1162,12 @@
       return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
     function toggleDisplayMode() {
-      displayMode = displayMode === 'card' ? 'table' : 'card';
+      if (activeView === 'Tasks') {
+        const modes = ['card', 'table', 'kanban'];
+        displayMode = modes[(modes.indexOf(displayMode) + 1) % modes.length];
+      } else {
+        displayMode = (displayMode === 'kanban' || displayMode === 'card') ? 'table' : 'card';
+      }
       if (activeView !== 'Dashboard') render(activeView);
     }
     function setStatusFilter(value) {
