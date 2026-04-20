@@ -27,6 +27,8 @@
     select.input-flat { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2310b981' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 40px; cursor: pointer; }
     select.input-flat option { background: #0f1416; color: white; }
     select.input-flat optgroup { background: #0b0f10; color: var(--accent); font-weight: 700; }
+    .filter-select { appearance: none; -webkit-appearance: none; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; color: white; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 26px 6px 10px; font-family: 'Plus Jakarta Sans', sans-serif; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'><path fill='%2310b981' d='M7 10l5 5 5-5z'/></svg>"); background-repeat: no-repeat; background-position: right 8px center; cursor: pointer; }
+    .filter-select option { background: #0f1416; color: white; }
 
     .group-label { font-size: 10px; font-weight: 900; color: var(--accent); opacity: 0.5; margin: 20px 0 10px 0; letter-spacing: 0.1em; text-transform: uppercase; }
     .loading-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
@@ -98,6 +100,7 @@
         <button onclick="toggleDisplayMode()" class="glass p-2 rounded-xl hidden" id="display-toggle">
           <span class="material-icons text-emerald-500 text-sm" id="display-toggle-icon">table_view</span>
         </button>
+        <select id="status-filter" class="filter-select hidden" onchange="setStatusFilter(this.value)"></select>
       </div>
       <button onclick="refreshState()" class="glass p-3 rounded-2xl">
         <span class="material-icons text-emerald-500">sync</span>
@@ -392,6 +395,7 @@
     let activeItem = { index: null, view: null, isNew: false };
     let activeView = 'Dashboard';
     let displayMode = 'card';
+    let viewFilters = JSON.parse(localStorage.getItem('golem-filters') || '{}');
 
     // ─── SCHEMAS (UI labels; ID column excluded from forms) ──────────────────
     const SCHEMA = {
@@ -463,6 +467,24 @@
           displayMode === 'card' ? 'table_view' : 'view_agenda';
       }
 
+      const FILTERABLE_VIEWS = {
+        Tasks:   ['', '__hide_done__', 'Active', 'In Progress', 'Blocked', 'Paused', 'Done'],
+        Goals:   ['', '__hide_done__', 'Active', 'Paused', 'Done'],
+        Reading: ['', '__hide_done__', 'Want to Read', 'Reading', 'Paused', 'Read'],
+      };
+      const filterSelect = document.getElementById('status-filter');
+      const filterOptions = FILTERABLE_VIEWS[view];
+      if (filterOptions) {
+        const FILTER_LABELS = { '': 'All', '__hide_done__': 'Hide Done' };
+        const currentFilter = viewFilters[view] ?? (view === 'Tasks' ? '__hide_done__' : '');
+        filterSelect.innerHTML = filterOptions.map(v =>
+          `<option value="${v}"${v === currentFilter ? ' selected' : ''}>${FILTER_LABELS[v] || v}</option>`
+        ).join('');
+        filterSelect.classList.remove('hidden');
+      } else {
+        filterSelect.classList.add('hidden');
+      }
+
       document.querySelectorAll('.nav-btn').forEach(btn =>
         btn.classList.toggle('active', btn.id === `n-${view}`)
       );
@@ -487,6 +509,14 @@
           }
           return { ...item, Goal: item.Goal || '' };
         });
+      }
+
+      // Apply status filter
+      const activeFilter = viewFilters[view] ?? (view === 'Tasks' ? '__hide_done__' : '');
+      if (activeFilter === '__hide_done__') {
+        data = data.filter(item => item.Status !== 'Done');
+      } else if (activeFilter) {
+        data = data.filter(item => item.Status === activeFilter);
       }
 
       // Apply saved drag order for card mode
@@ -1064,6 +1094,11 @@
       displayMode = displayMode === 'card' ? 'table' : 'card';
       if (activeView !== 'Dashboard') render(activeView);
     }
+    function setStatusFilter(value) {
+      viewFilters[activeView] = value;
+      localStorage.setItem('golem-filters', JSON.stringify(viewFilters));
+      render(activeView);
+    }
     function toggleMenu() { document.getElementById('nav-drawer').classList.add('open'); }
     function closeMenu()  { document.getElementById('nav-drawer').classList.remove('open'); }
     function navigate(view) { closeMenu(); render(view); }
@@ -1071,7 +1106,7 @@
     // Expose UI handlers referenced by inline onclicks.
     Object.assign(window, {
       openSidebar, closeSidebar, saveChanges, deleteCurrentItem, confirmDelete, cancelDelete,
-      toggleDisplayMode, toggleMenu, closeMenu, navigate, handleAddNewOption
+      toggleDisplayMode, setStatusFilter, toggleMenu, closeMenu, navigate, handleAddNewOption
     });
   </script>
 </body>
