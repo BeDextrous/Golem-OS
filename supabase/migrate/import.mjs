@@ -72,9 +72,8 @@ function normStatus(kind, raw) {
   }
   if (kind === 'tasks') {
     if (['done','complete','completed','finished','closed'].includes(lo)) return 'Done';
-    if (['in progress','ongoing','started','wip'].includes(lo))           return 'In Progress';
-    if (['blocked','stuck','waiting'].includes(lo))                       return 'Blocked';
-    if (['paused','on hold','hold'].includes(lo))                         return 'Paused';
+    if (['in progress','ongoing','started','wip'].includes(lo))                       return 'Active';
+    if (['blocked','stuck','waiting','paused','on hold','hold'].includes(lo))         return 'On Hold';
     return 'Active';
   }
   return s;
