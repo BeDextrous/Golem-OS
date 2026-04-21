@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "import": "node import.mjs"
+    "import": "node import.mjs",
+    "migrate-status": "node migrate-status.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
