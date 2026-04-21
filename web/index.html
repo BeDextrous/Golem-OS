@@ -878,6 +878,7 @@
             </div>
           </div>
         </div>
+        ${renderDeadlinesSection()}
         <div class="glass p-6 rounded-[32px] space-y-4">
           <div class="flex justify-between items-center">
             <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">Upcoming Schedule</h3>
@@ -957,6 +958,91 @@
         console.error('Calendar load failed:', err);
         container.innerHTML = `<p class="text-[10px] text-white/30 italic">Calendar unavailable.</p>`;
       }
+    }
+
+    // ─── DEADLINES THIS WEEK ─────────────────────────────────────────────────
+    function renderDeadlinesSection() {
+      const tasks = STATE['Tasks'] || [];
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const weekEnd = new Date(today); weekEnd.setDate(today.getDate() + 7);
+
+      // Parse YYYY-MM-DD safely in local time (avoid UTC shift)
+      function parseLocalDate(str) {
+        if (!str) return null;
+        const [y, m, d] = str.split('-').map(Number);
+        return new Date(y, m - 1, d);
+      }
+
+      function dueDateLabel(d) {
+        const diff = Math.round((d - today) / 864e5);
+        if (diff < 0)  return { text: 'Overdue', cls: 'text-red-400' };
+        if (diff === 0) return { text: 'Today',   cls: 'text-amber-400' };
+        if (diff === 1) return { text: 'Tomorrow', cls: 'text-amber-300' };
+        return {
+          text: d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }),
+          cls: 'text-white/50'
+        };
+      }
+
+      const relevant = tasks
+        .filter(t => {
+          if (!t['Due Date']) return false;
+          const status = (t.Status || '').toLowerCase();
+          if (status === 'done') return false;
+          const d = parseLocalDate(t['Due Date']);
+          if (!d) return false;
+          return d <= weekEnd; // include overdue + up to 7 days out
+        })
+        .sort((a, b) => parseLocalDate(a['Due Date']) - parseLocalDate(b['Due Date']));
+
+      const PRIORITY_CLS = {
+        'high':   'bg-red-500/20 text-red-400',
+        'medium': 'bg-amber-500/20 text-amber-400',
+        'low':    'bg-white/10 text-white/40',
+      };
+
+      const STATUS_CLS = {
+        'active':  'bg-emerald-500/20 text-emerald-400',
+        'to do':   'bg-white/10 text-white/40',
+        'on hold': 'bg-amber-500/20 text-amber-400',
+      };
+
+      let inner = '';
+      if (!relevant.length) {
+        inner = `<p class="text-[10px] text-white/30 italic">No deadlines this week</p>`;
+      } else {
+        inner = relevant.map(t => {
+          const d     = parseLocalDate(t['Due Date']);
+          const label = dueDateLabel(d);
+          const name  = escapeHtml(t['Task Name'] || '(unnamed)');
+          const pri   = (t.Priority || '').toLowerCase();
+          const stat  = (t.Status   || '').toLowerCase();
+          const priCls  = PRIORITY_CLS[pri]  || '';
+          const statCls = STATUS_CLS[stat]   || 'bg-white/10 text-white/40';
+          const priTag  = pri  ? `<span class="text-[8px] px-1.5 py-0.5 rounded font-bold ${priCls}">${escapeHtml(t.Priority)}</span>` : '';
+          const statTag = stat ? `<span class="text-[8px] px-1.5 py-0.5 rounded font-bold ${statCls}">${escapeHtml(t.Status)}</span>` : '';
+
+          return `
+            <div class="flex items-start gap-3 cursor-pointer" onclick="navigate('Tasks')">
+              <div class="flex-shrink-0 text-right w-16">
+                <p class="text-[9px] font-black uppercase ${label.cls}">${label.text}</p>
+              </div>
+              <div class="min-w-0 flex-1 border-l border-white/10 pl-3">
+                <p class="text-xs font-bold text-white truncate">${name}</p>
+                ${priTag || statTag ? `<div class="flex gap-1 mt-1">${priTag}${statTag}</div>` : ''}
+              </div>
+            </div>`;
+        }).join('');
+      }
+
+      return `
+        <div class="glass p-6 rounded-[32px] space-y-3">
+          <div class="flex justify-between items-center">
+            <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">Deadlines This Week</h3>
+            <span class="material-icons text-white/20 text-sm">flag</span>
+          </div>
+          <div class="space-y-3">${inner}</div>
+        </div>`;
     }
 
     // ─── TODAY CALENDAR ──────────────────────────────────────────────────────
