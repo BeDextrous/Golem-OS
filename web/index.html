@@ -423,19 +423,53 @@
 
     const ENUM_FIELDS = {
       "Status": {
-        Tasks:   ["Active", "In Progress", "Blocked", "Paused", "Done"],
+        Tasks:   ["To Do", "Active", "On Hold", "Done"],
         Goals:   ["Active", "Paused", "Done"],
         Reading: ["Want to Read", "Reading", "Paused", "Read"]
       },
       "Priority": ["High", "Medium", "Low"]
     };
 
+    // Legacy-status migration applied on read + to saved filter sets.
+    // Keys are lowercased; values are the current canonical labels.
+    const STATUS_MIGRATION = {
+      Tasks: {
+        "in progress": "To Do",
+        "blocked":     "On Hold",
+        "paused":      "On Hold"
+      }
+    };
+    function migrateStatus(view, value) {
+      if (!value) return value;
+      const map = STATUS_MIGRATION[view];
+      if (!map) return value;
+      return map[String(value).toLowerCase()] || value;
+    }
+
     const DYNAMIC_ENUM_FIELDS = {
       "Area": { views: ['Tasks', 'Goals'] }
     };
 
+    // Apply STATUS_MIGRATION to the loaded state (legacy labels → current).
+    function migrateState(state) {
+      Object.keys(STATUS_MIGRATION).forEach(view => {
+        if (!state[view]) return;
+        state[view] = state[view].map(item => ({
+          ...item,
+          Status: migrateStatus(view, item.Status)
+        }));
+      });
+      return state;
+    }
+
     // ─── BOOT (called from auth module) ──────────────────────────────────────
     window.initApp = async () => {
+      // Wrap loadAll once so every subsequent refresh also normalizes legacy statuses.
+      if (!window.__golem._statusMigrated) {
+        const origLoadAll = window.__golem.loadAll;
+        window.__golem.loadAll = async () => migrateState(await origLoadAll());
+        window.__golem._statusMigrated = true;
+      }
       STATE = await window.__golem.loadAll();
       render('Dashboard');
     };
@@ -1114,7 +1148,10 @@
       }
       try {
         const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed : all.slice();
+        if (!Array.isArray(parsed)) return all.slice();
+        // Normalize any legacy status labels stored from previous versions, then dedupe.
+        const migrated = parsed.map(s => migrateStatus(view, s));
+        return [...new Set(migrated)];
       } catch { return all.slice(); }
     }
     function setActiveStatuses(view, statuses) {
