@@ -1,0 +1,8 @@
+# Supabase CLI project config.
+# Minimal scaffold — `supabase link --project-ref wllsrdfflaudwhfpxzfe` will
+# populate the rest (db password, access token cache) under supabase/.temp/.
+
+project_id = "wllsrdfflaudwhfpxzfe"
+
+[db]
+major_version = 15

@@ -55,7 +55,7 @@ create table if not exists public.tasks (
   objective_id  bigint references public.objectives(id) on delete set null,
   name          text not null,
   status        text default 'Active'
-                check (status in ('Active','In Progress','Blocked','Paused','Done')),
+                check (status in ('To Do','Active','On Hold','Done')),
   due_date      date,
   area          text,
   priority      text check (priority in ('High','Medium','Low')),

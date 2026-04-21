@@ -15,6 +15,10 @@ npm-debug.log*
 # Migration CSVs (user data)
 supabase/migrate/imports/*.csv
 
+# Supabase CLI local state
+supabase/.branches/
+supabase/.temp/
+
 # Editor / IDE
 .vscode/
 .idea/
