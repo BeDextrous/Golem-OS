@@ -454,13 +454,15 @@
       content.innerHTML = '';
       document.getElementById('v-title').innerText = view;
 
+      // Kanban is only meaningful for views with a Status enum; fall back to card otherwise.
+      if (displayMode === 'kanban' && !viewSupportsKanban(view)) displayMode = 'card';
+
       const displayToggle = document.getElementById('display-toggle');
       if (view === 'Dashboard') {
         displayToggle.classList.add('hidden');
       } else {
         displayToggle.classList.remove('hidden');
-        document.getElementById('display-toggle-icon').innerText =
-          displayMode === 'card' ? 'table_view' : 'view_agenda';
+        document.getElementById('display-toggle-icon').innerText = nextModeIcon(view, displayMode);
       }
 
       document.querySelectorAll('.nav-btn').forEach(btn =>
@@ -489,14 +491,22 @@
         });
       }
 
+      // Apply status filter (hides Done by default for Tasks/Goals/Reading)
+      data = applyStatusFilter(view, data);
+
       // Apply saved drag order for card mode
       const displayData = displayMode === 'card' ? sortByOrder(data, view) : data;
       let viewHtml = '';
+
+      // Status filter chips (only for views with a Status enum)
+      viewHtml += renderFilterBar(view);
 
       if (view === 'Tasks' || view === 'Goals') {
         const groups = [...new Set(displayData.map(item => item.Area || 'Unassigned'))].sort();
         if (displayMode === 'table') {
           viewHtml += renderTableView(view, displayData, groups, 'Area');
+        } else if (displayMode === 'kanban' && viewSupportsKanban(view)) {
+          viewHtml += renderKanbanView(view, displayData);
         } else {
           groups.forEach(group => {
             viewHtml += `<div class="group-label">${escapeHtml(group)}</div>`;
@@ -534,7 +544,8 @@
       }
       content.innerHTML += viewHtml;
 
-      if (displayMode === 'card') wireDragAndDrop();
+      if (displayMode === 'card')   wireDragAndDrop();
+      if (displayMode === 'kanban') wireKanbanDragAndDrop(view);
     }
 
     // ─── TABLE VIEW ──────────────────────────────────────────────────────────
@@ -579,6 +590,171 @@
       html += `<td class="p-3 text-right"><span class="material-icons opacity-30 text-sm hover:opacity-100">edit</span></td>`;
       html += `</tr>`;
       return html;
+    }
+
+    // ─── KANBAN VIEW ─────────────────────────────────────────────────────────
+    // Columns are the view's Status enum (filtered by active status chips).
+    // Cards are draggable between columns; dropping into a new column
+    // upserts the row with the new Status.
+    const NO_STATUS_KEY = '__nostatus__';
+
+    function renderKanbanView(view, data) {
+      const statuses = ENUM_FIELDS.Status?.[view] || [];
+      if (!statuses.length) return '';
+
+      // Status filter chips gate which columns appear (case-insensitive).
+      const active = getActiveStatuses(view) || statuses;
+      const activeLower = new Set(active.map(s => String(s).toLowerCase()));
+      const visibleStatuses = statuses.filter(s => activeLower.has(String(s).toLowerCase()));
+
+      // Bucket items; unknown/blank goes into a "No Status" column.
+      const byStatus = Object.fromEntries(visibleStatuses.map(s => [s, []]));
+      const unstatused = [];
+      data.forEach(item => {
+        const s = item.Status || '';
+        const match = visibleStatuses.find(v => String(v).toLowerCase() === String(s).toLowerCase());
+        if (match) byStatus[match].push(item);
+        else if (!s) unstatused.push(item);
+      });
+
+      let html = `<div class="flex gap-3 overflow-x-auto pb-4 -mx-4 px-4" data-kanban-container>`;
+      if (unstatused.length) {
+        html += renderKanbanColumn('No Status', NO_STATUS_KEY, unstatused, view);
+      }
+      visibleStatuses.forEach(status => {
+        html += renderKanbanColumn(status, status, byStatus[status] || [], view);
+      });
+      html += `</div>`;
+      return html;
+    }
+
+    function renderKanbanColumn(label, statusKey, items, view) {
+      const pill = pillClass(label === 'No Status' ? '' : label);
+      const count = items.length;
+      let html = `<div class="flex-shrink-0 w-64 glass rounded-3xl p-3 flex flex-col" style="max-height: 70vh;">`;
+      html += `<div class="flex items-center justify-between px-2 pb-3">`;
+      html += `<span class="status-pill ${pill}">${escapeHtml(label)}</span>`;
+      html += `<span class="text-[10px] font-black opacity-40">${count}</span>`;
+      html += `</div>`;
+      html += `<div class="space-y-2 overflow-y-auto pr-1 flex-1 min-h-[40px]" data-kanban-col data-status="${escapeHtml(statusKey)}">`;
+      items.forEach(item => { html += createKanbanCard(item, view); });
+      html += `</div>`;
+      // Quick-add row scoped to this column's status (creates a task pre-filled with the column's status).
+      const addStatus = statusKey === NO_STATUS_KEY ? '' : statusKey;
+      html += `<button onclick="quickAddKanban('${view}', ${JSON.stringify(addStatus).replace(/"/g, '&quot;')})"
+        class="mt-2 text-[10px] font-bold uppercase tracking-widest text-emerald-500/70 hover:text-emerald-500 p-2 rounded-xl border border-dashed border-white/10 hover:border-emerald-500/40 transition-colors">
+        + Add</button>`;
+      html += `</div>`;
+      return html;
+    }
+
+    function createKanbanCard(item, view) {
+      const titleField = {
+        Tasks: "Task Name", Goals: "Title", Reading: "Book Title"
+      }[view] || "Title";
+      const title = item[titleField] || 'Untitled';
+
+      // Sub-line mirrors the tile card (priority · goal · due).
+      let sub = '';
+      if (view === 'Tasks') {
+        const goalLabel = resolveTaskGoalTitle(item);
+        sub = [item.Priority, goalLabel, item["Due Date"]].filter(Boolean).join(' · ');
+      } else if (view === 'Goals')   sub = item.Area || '';
+      else if (view === 'Reading')   sub = item.Author || '';
+
+      const priorityTag = (view === 'Tasks' && item.Priority)
+        ? `<span class="text-[9px] font-black uppercase tracking-wider ${priorityClass(item.Priority)}">${escapeHtml(item.Priority)}</span>`
+        : '';
+
+      const idAttr = escapeHtml(String(item.ID || ''));
+      return `
+        <div data-kanban-card data-id="${idAttr}"
+          onclick="openSidebar('${idAttr}', '${view}')"
+          class="glass p-3 rounded-2xl cursor-grab active:cursor-grabbing hover:bg-white/5 transition-colors">
+          <div class="flex items-start justify-between gap-2">
+            <p class="font-bold text-white text-sm leading-tight line-clamp-3 flex-1">${escapeHtml(title)}</p>
+            ${priorityTag}
+          </div>
+          ${sub ? `<p class="text-[9px] opacity-40 uppercase tracking-wider mt-2 truncate font-black">${escapeHtml(sub)}</p>` : ''}
+        </div>`;
+    }
+
+    function priorityClass(p) {
+      const s = String(p || '').toLowerCase();
+      if (s === 'high')   return 'text-red-400/80';
+      if (s === 'medium') return 'text-amber-400/80';
+      if (s === 'low')    return 'text-emerald-400/60';
+      return 'text-white/40';
+    }
+
+    function wireKanbanDragAndDrop(view) {
+      // Tear down any prior Sortable instances (from card mode or previous kanban renders).
+      __sortables.forEach(s => { try { s.destroy(); } catch {} });
+      __sortables = [];
+      if (typeof Sortable === 'undefined') return;
+
+      document.querySelectorAll('[data-kanban-col]').forEach(zone => {
+        __sortables.push(Sortable.create(zone, {
+          animation: 150,
+          delay: 180,
+          delayOnTouchOnly: true,
+          ghostClass: 'drag-ghost',
+          dragClass: 'drag-active',
+          group: { name: 'kanban', pull: true, put: true },
+          onEnd: async (evt) => {
+            const card = evt.item;
+            const fromStatus = evt.from.getAttribute('data-status');
+            const toStatus   = evt.to.getAttribute('data-status');
+            const id = card.getAttribute('data-id');
+            if (!id || fromStatus === toStatus) return;
+            const newStatus = toStatus === NO_STATUS_KEY ? '' : toStatus;
+            await updateItemStatus(view, id, newStatus);
+          }
+        }));
+      });
+    }
+
+    async function updateItemStatus(view, id, newStatus) {
+      const items = STATE[view] || [];
+      const item  = items.find(x => String(x.ID) === String(id));
+      if (!item) return;
+
+      // Rebuild the full UI payload from the current row so toDb() has everything it needs.
+      const payload = {};
+      (SCHEMA[view] || []).forEach(f => { payload[f] = item[f] ?? ''; });
+      payload.Status = newStatus;
+
+      showLoader();
+      try {
+        await window.__golem.upsertRow(view, item._id, payload);
+        STATE = await window.__golem.loadAll();
+        render(activeView);
+      } catch (err) {
+        console.error(err);
+        alert('Status update failed: ' + (err.message || err));
+        render(activeView); // snap card back to origin
+      } finally {
+        hideLoader();
+      }
+    }
+
+    async function quickAddKanban(view, status) {
+      // Open the normal "new item" sidebar, then pre-select the column's status.
+      openSidebar(null, view, true);
+      // Defer so the fields are in the DOM.
+      setTimeout(() => {
+        const sel = document.getElementById('field-Status');
+        if (sel && status) {
+          // Try to select the existing option; fall back to inserting it.
+          const opt = [...sel.options].find(o => String(o.value).toLowerCase() === String(status).toLowerCase());
+          if (opt) sel.value = opt.value;
+          else {
+            const n = document.createElement('option');
+            n.value = status; n.textContent = status; n.selected = true;
+            sel.appendChild(n);
+          }
+        }
+      }, 0);
     }
 
     // ─── TILE CARD VIEW ──────────────────────────────────────────────────────
@@ -923,6 +1099,63 @@
       });
     }
 
+    // ─── STATUS FILTERS (per view, persisted in localStorage) ──────────────
+    // Items whose Status matches a value in the active set are shown.
+    // Default hides the "completed" status so Done items disappear automatically.
+    const COMPLETED_STATUS = { Tasks: 'Done', Goals: 'Done', Reading: 'Read' };
+
+    function getActiveStatuses(view) {
+      const all = ENUM_FIELDS.Status?.[view];
+      if (!all) return null;
+      const raw = localStorage.getItem(`golem:filter:${view}`);
+      if (raw == null) {
+        const completed = COMPLETED_STATUS[view];
+        return all.filter(s => s !== completed);
+      }
+      try {
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : all.slice();
+      } catch { return all.slice(); }
+    }
+    function setActiveStatuses(view, statuses) {
+      localStorage.setItem(`golem:filter:${view}`, JSON.stringify(statuses));
+    }
+    function toggleStatusFilter(view, status) {
+      const current = getActiveStatuses(view) || [];
+      const idx = current.findIndex(s => String(s).toLowerCase() === String(status).toLowerCase());
+      if (idx >= 0) current.splice(idx, 1);
+      else current.push(status);
+      setActiveStatuses(view, current);
+      render(view);
+    }
+    function renderFilterBar(view) {
+      const all = ENUM_FIELDS.Status?.[view];
+      if (!all) return '';
+      const active = getActiveStatuses(view) || [];
+      const isOn = s => active.some(a => String(a).toLowerCase() === String(s).toLowerCase());
+      let html = `<div class="flex flex-wrap gap-2 mb-4 items-center">`;
+      html += `<span class="text-[10px] font-bold uppercase tracking-widest opacity-30 mr-1">Show:</span>`;
+      all.forEach(s => {
+        const on = isOn(s);
+        const cls = on ? 'pill-active' : 'pill-done';
+        html += `<button onclick="toggleStatusFilter('${view}', ${JSON.stringify(s).replace(/"/g, '&quot;')})"
+          class="status-pill ${cls} cursor-pointer transition-opacity hover:opacity-100 ${on ? '' : 'opacity-40'}">
+          ${escapeHtml(s)}
+        </button>`;
+      });
+      html += `</div>`;
+      return html;
+    }
+    function applyStatusFilter(view, data) {
+      const all = ENUM_FIELDS.Status?.[view];
+      if (!all) return data;
+      const active = getActiveStatuses(view) || [];
+      return data.filter(item => {
+        if (!item.Status) return true; // items without a status always show
+        return active.some(s => String(s).toLowerCase() === String(item.Status).toLowerCase());
+      });
+    }
+
     // ─── TILE ORDER (drag-to-reorder, persisted per view) ───────────────────
     function getOrder(view) {
       try { return JSON.parse(localStorage.getItem(`golem:order:${view}`) || '[]') || []; }
@@ -1060,9 +1293,29 @@
       if (str == null) return '';
       return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
+    function viewSupportsKanban(view) {
+      // Kanban needs a Status enum to form columns. Currently: Tasks only.
+      return view === 'Tasks';
+    }
+    function nextMode(view, mode) {
+      if (viewSupportsKanban(view)) {
+        if (mode === 'card')   return 'table';
+        if (mode === 'table')  return 'kanban';
+        return 'card'; // from kanban
+      }
+      return mode === 'card' ? 'table' : 'card';
+    }
+    function nextModeIcon(view, mode) {
+      // Icon represents the mode we'll switch TO on click.
+      const next = nextMode(view, mode);
+      if (next === 'table')  return 'table_view';
+      if (next === 'kanban') return 'view_kanban';
+      return 'view_agenda'; // next === 'card'
+    }
     function toggleDisplayMode() {
-      displayMode = displayMode === 'card' ? 'table' : 'card';
-      if (activeView !== 'Dashboard') render(activeView);
+      if (activeView === 'Dashboard') return;
+      displayMode = nextMode(activeView, displayMode);
+      render(activeView);
     }
     function toggleMenu() { document.getElementById('nav-drawer').classList.add('open'); }
     function closeMenu()  { document.getElementById('nav-drawer').classList.remove('open'); }
@@ -1071,7 +1324,8 @@
     // Expose UI handlers referenced by inline onclicks.
     Object.assign(window, {
       openSidebar, closeSidebar, saveChanges, deleteCurrentItem, confirmDelete, cancelDelete,
-      toggleDisplayMode, toggleMenu, closeMenu, navigate, handleAddNewOption
+      toggleDisplayMode, toggleMenu, closeMenu, navigate, handleAddNewOption,
+      toggleStatusFilter, quickAddKanban
     });
   </script>
 </body>
