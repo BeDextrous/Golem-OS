@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LinkedIn Quick-Add · Golem OS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;700;800&display=swap');
+    :root { --bg: #0b0f10; --accent: #10b981; --border: rgba(255,255,255,0.08); }
+    body  { background: var(--bg); color: #e2e8f0; font-family: 'Plus Jakarta Sans', sans-serif; min-height: 100vh; }
+    .glass { background: rgba(25,32,35,0.7); backdrop-filter: blur(20px); border: 1px solid var(--border); }
+    .bm-link {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 14px 24px; background: #10b981; color: #0b0f10;
+      border-radius: 16px; font-weight: 800; font-size: 15px;
+      text-decoration: none; cursor: grab; user-select: none;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 24px rgba(16,185,129,0.35);
+    }
+    .bm-link:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(16,185,129,0.45); }
+    .bm-link:active { cursor: grabbing; transform: scale(0.97); }
+    .step { display: flex; gap: 16px; align-items: flex-start; }
+    .step-num {
+      flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+      background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3);
+      color: #10b981; font-weight: 800; font-size: 12px;
+      display: flex; align-items: center; justify-content: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="max-w-lg mx-auto px-6 py-12 space-y-10">
+
+    <!-- Header -->
+    <div class="space-y-2">
+      <p class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">Golem OS · Career</p>
+      <h1 class="text-2xl font-black text-white leading-tight">LinkedIn Quick-Add</h1>
+      <p class="text-white/40 text-sm leading-relaxed">
+        Save any LinkedIn job to your tracker in one click — without leaving the page.
+      </p>
+    </div>
+
+    <!-- The bookmarklet drag target -->
+    <div class="glass rounded-3xl p-8 space-y-6 text-center">
+      <p class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">Step 1 — Install</p>
+      <p class="text-sm text-white/60">Drag this button to your bookmarks bar:</p>
+
+      <!--
+        BOOKMARKLET HREF
+        Extracts job title + company from a LinkedIn job page using multiple
+        fallback selectors, then opens a small Golem OS popup pre-filled
+        with that data.
+      -->
+      <a class="bm-link" href="javascript:(function(){function g(s){for(var i=0;i<s.length;i++){var e=document.querySelector(s[i]);if(e)return e.innerText.trim().split('\n')[0].trim();}return '';}var r=g(['h1.job-details-jobs-unified-top-card__job-title','.jobs-unified-top-card__job-title h1','h1.t-24.t-bold','h1.t-24','h1']);var c=g(['.job-details-jobs-unified-top-card__company-name a','.job-details-jobs-unified-top-card__company-name','.jobs-unified-top-card__subtitle-primary-grouping a','.topcard__org-name-link','[class*=&quot;company-name&quot;] a']);if(!r||!c){var t=document.title.replace(' | LinkedIn','').split(' at ');if(!r&&t[0])r=t[0].trim();if(!c&&t[1])c=t[1].trim();}var p=new URLSearchParams({quick:'job',role:r,company:c,url:window.location.href});window.open('https://app.bedextrous.com/?'+p.toString(),'golem_quick_add','width=440,height=620,scrollbars=yes,resizable=yes,menubar=no,toolbar=no,location=no');})();">
+        <span class="material-icons" style="font-size:18px">bookmark_add</span>
+        Save to Golem OS
+      </a>
+
+      <p class="text-[10px] text-white/30">
+        Can't drag? Right-click the button → "Bookmark this link"
+      </p>
+    </div>
+
+    <!-- How to use -->
+    <div class="glass rounded-3xl p-8 space-y-6">
+      <p class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">Step 2 — Use it</p>
+      <div class="space-y-5">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div>
+            <p class="text-sm font-bold text-white">Open any LinkedIn job posting</p>
+            <p class="text-[11px] text-white/40 mt-0.5">Works on individual job pages (linkedin.com/jobs/view/…)</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div>
+            <p class="text-sm font-bold text-white">Click "Save to Golem OS" in your bookmarks bar</p>
+            <p class="text-[11px] text-white/40 mt-0.5">A small window opens with the job pre-filled</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div>
+            <p class="text-sm font-bold text-white">Review the details, set a status, hit Save</p>
+            <p class="text-[11px] text-white/40 mt-0.5">The window closes automatically — you're back on LinkedIn</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- What gets captured -->
+    <div class="glass rounded-3xl p-6 space-y-3">
+      <p class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500 mb-1">What gets captured</p>
+      <div class="grid grid-cols-2 gap-2 text-sm">
+        <div class="flex items-center gap-2 text-white/60">
+          <span class="material-icons text-emerald-500/60 text-base">work</span> Job title
+        </div>
+        <div class="flex items-center gap-2 text-white/60">
+          <span class="material-icons text-emerald-500/60 text-base">business</span> Company
+        </div>
+        <div class="flex items-center gap-2 text-white/60">
+          <span class="material-icons text-emerald-500/60 text-base">link</span> Job URL
+        </div>
+        <div class="flex items-center gap-2 text-white/60">
+          <span class="material-icons text-emerald-500/60 text-base">flag</span> Status (Wishlist)
+        </div>
+      </div>
+      <p class="text-[10px] text-white/30 pt-1">You can edit any field in the popup before saving.</p>
+    </div>
+
+    <!-- Back link -->
+    <div class="text-center">
+      <a href="/" class="text-[11px] text-white/30 hover:text-emerald-500 transition-colors font-bold uppercase tracking-widest">
+        ← Back to Golem OS
+      </a>
+    </div>
+
+  </div>
+
+</body>
+</html>
