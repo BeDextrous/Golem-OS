@@ -137,16 +137,56 @@ create index if not exists finances_date_idx on public.finances(entry_date);
 
 -- ─── CRM ─────────────────────────────────────────────────────────────────────
 create table if not exists public.crm (
-  id               bigserial primary key,
-  user_id          uuid not null references auth.users(id) on delete cascade,
-  name             text not null,
-  role             text,
-  company          text,
-  interaction_log  text,
-  created_at       timestamptz not null default now(),
-  updated_at       timestamptz not null default now()
+  id                 bigserial primary key,
+  user_id            uuid not null references auth.users(id) on delete cascade,
+  name               text not null,
+  role               text,
+  company            text,
+  email              text,
+  linkedin_url       text,
+  last_contact_date  date,
+  tags               text,
+  interaction_log    text,
+  created_at         timestamptz not null default now(),
+  updated_at         timestamptz not null default now()
 );
 create index if not exists crm_user_idx on public.crm(user_id);
+
+-- ─── JOB APPLICATIONS ────────────────────────────────────────────────────────
+create table if not exists public.job_applications (
+  id              bigserial primary key,
+  user_id         uuid not null references auth.users(id) on delete cascade,
+  company         text not null,
+  role            text,
+  status          text default 'Wishlist'
+                  check (status in (
+                    'Wishlist','Applied','Phone Screen',
+                    'Interview','Offer','Accepted','Rejected'
+                  )),
+  date_applied    date,
+  job_url         text,
+  salary_range    text,
+  salary_offer    text,
+  notes           text,
+  contact_id      bigint references public.crm(id) on delete set null,
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now()
+);
+create index if not exists job_applications_user_idx on public.job_applications(user_id);
+
+-- ─── TARGET COMPANIES ────────────────────────────────────────────────────────
+create table if not exists public.target_companies (
+  id           bigserial primary key,
+  user_id      uuid not null references auth.users(id) on delete cascade,
+  company_name text not null,
+  industry     text,
+  website      text,
+  notes        text,
+  priority     text check (priority in ('High','Medium','Low')),
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now()
+);
+create index if not exists target_companies_user_idx on public.target_companies(user_id);
 
 -- ─── updated_at triggers ─────────────────────────────────────────────────────
 create or replace function public.set_updated_at()
@@ -159,7 +199,7 @@ end $$;
 do $$
 declare t text;
 begin
-  foreach t in array array['goals','objectives','tasks','reading','notes','links','finances','crm']
+  foreach t in array array['goals','objectives','tasks','reading','notes','links','finances','crm','job_applications','target_companies']
   loop
     execute format('drop trigger if exists %I_set_updated_at on public.%I', t, t);
     execute format(
@@ -173,7 +213,7 @@ end $$;
 do $$
 declare t text;
 begin
-  foreach t in array array['goals','objectives','tasks','reading','notes','links','finances','crm']
+  foreach t in array array['goals','objectives','tasks','reading','notes','links','finances','crm','job_applications','target_companies']
   loop
     execute format('alter table public.%I enable row level security', t);
     execute format('drop policy if exists "owner_select" on public.%I', t);

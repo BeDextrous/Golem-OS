@@ -37,6 +37,7 @@
     .pill-active { background: rgba(16,185,129,0.15); color: #10b981; }
     .pill-done   { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.3); }
     .pill-paused { background: rgba(234,179,8,0.15); color: #eab308; }
+    .pill-offer  { background: rgba(251,191,36,0.18); color: #fbbf24; }
     .table-container::-webkit-scrollbar { height: 6px; }
     .table-container::-webkit-scrollbar-thumb { background-color: var(--accent); border-radius: 4px; }
     .table-container::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
@@ -128,7 +129,7 @@
         <button onclick="navigate('Notes')" class="w-full text-left p-4 rounded-xl hover:bg-white/5 glass flex items-center gap-4"><span class="material-icons text-emerald-500">description</span> <span class="font-bold text-white tracking-wide">Notes</span></button>
         <button onclick="navigate('Links')" class="w-full text-left p-4 rounded-xl hover:bg-white/5 glass flex items-center gap-4"><span class="material-icons text-emerald-500">link</span> <span class="font-bold text-white tracking-wide">Links</span></button>
         <button onclick="navigate('Reading')" class="w-full text-left p-4 rounded-xl hover:bg-white/5 glass flex items-center gap-4"><span class="material-icons text-emerald-500">menu_book</span> <span class="font-bold text-white tracking-wide">Reading</span></button>
-        <button onclick="navigate('CRM')" class="w-full text-left p-4 rounded-xl hover:bg-white/5 glass flex items-center gap-4"><span class="material-icons text-emerald-500">people</span> <span class="font-bold text-white tracking-wide">CRM</span></button>
+        <button onclick="navigate('Career')" class="w-full text-left p-4 rounded-xl hover:bg-white/5 glass flex items-center gap-4"><span class="material-icons text-emerald-500">work</span> <span class="font-bold text-white tracking-wide">Career</span></button>
         <button onclick="signOut()" class="mt-auto w-full text-left p-4 rounded-xl hover:bg-white/5 glass flex items-center gap-4 opacity-60"><span class="material-icons text-white/60">logout</span> <span class="font-bold text-white/80 tracking-wide">Sign out</span></button>
       </div>
     </div>
@@ -164,7 +165,8 @@
     const TABLE = {
       Tasks: 'tasks', Goals: 'goals', Objectives: 'objectives',
       Reading: 'reading', Notes: 'notes', Links: 'links',
-      Finances: 'finances', CRM: 'crm'
+      Finances: 'finances', CRM: 'crm',
+      JobApplications: 'job_applications', TargetCompanies: 'target_companies'
     };
 
     // ─── DB → UI row translation ───────────────────────────────────────────
@@ -221,10 +223,32 @@
           Amount:   row.amount ?? ''
         };
         case 'CRM': return { ...base,
-          Name:            row.name || '',
-          Role:            row.role || '',
-          Company:         row.company || '',
-          Interaction_Log: row.interaction_log || ''
+          Name:             row.name || '',
+          Role:             row.role || '',
+          Company:          row.company || '',
+          Email:            row.email || '',
+          LinkedIn:         row.linkedin_url || '',
+          "Last Contact":   row.last_contact_date || '',
+          Tags:             row.tags || '',
+          Interaction_Log:  row.interaction_log || ''
+        };
+        case 'JobApplications': return { ...base,
+          Company:        row.company || '',
+          Role:           row.role || '',
+          Status:         row.status || '',
+          "Date Applied": row.date_applied || '',
+          "Job URL":      row.job_url || '',
+          "Salary Range": row.salary_range || '',
+          "Salary Offer": row.salary_offer || '',
+          Notes:          row.notes || '',
+          Contact:        row.contact_id ? String(row.contact_id) : ''
+        };
+        case 'TargetCompanies': return { ...base,
+          Company:  row.company_name || '',
+          Industry: row.industry || '',
+          Website:  row.website || '',
+          Priority: row.priority || '',
+          Notes:    row.notes || ''
         };
       }
       return base;
@@ -284,10 +308,32 @@
           amount:     num("Amount") ?? 0
         };
         case 'CRM': return { ...common,
-          name:            u("Name") || '',
-          role:            u("Role"),
-          company:         u("Company"),
-          interaction_log: u("Interaction_Log")
+          name:               u("Name") || '',
+          role:               u("Role"),
+          company:            u("Company"),
+          email:              u("Email"),
+          linkedin_url:       u("LinkedIn"),
+          last_contact_date:  u("Last Contact"),
+          tags:               u("Tags"),
+          interaction_log:    u("Interaction_Log")
+        };
+        case 'JobApplications': return { ...common,
+          company:       u("Company") || '',
+          role:          u("Role"),
+          status:        u("Status"),
+          date_applied:  u("Date Applied"),
+          job_url:       u("Job URL"),
+          salary_range:  u("Salary Range"),
+          salary_offer:  u("Salary Offer"),
+          notes:         u("Notes"),
+          contact_id:    int("Contact")
+        };
+        case 'TargetCompanies': return { ...common,
+          company_name: u("Company") || '',
+          industry:     u("Industry"),
+          website:      u("Website"),
+          priority:     u("Priority"),
+          notes:        u("Notes")
         };
       }
       return common;
@@ -392,6 +438,7 @@
     let activeItem = { index: null, view: null, isNew: false };
     let activeView = 'Dashboard';
     let displayMode = 'card';
+    let careerTab = 'Applications'; // sub-tab within Career view
 
     // ─── SCHEMAS (UI labels; ID column excluded from forms) ──────────────────
     const SCHEMA = {
@@ -401,14 +448,17 @@
       Reading:    ["Book Title", "Author", "Status", "Progress_Pct"],
       Notes:      ["Title", "Content", "Tags", "ParentID"],
       Links:      ["Title", "URL", "Website", "Date Added", "ParentID"],
-      Finances:   ["Date", "Label", "Category", "Amount"],
-      CRM:        ["Name", "Role", "Company", "Interaction_Log"]
+      Finances:         ["Date", "Label", "Category", "Amount"],
+      CRM:              ["Name", "Role", "Company", "Email", "LinkedIn", "Last Contact", "Tags", "Interaction_Log"],
+      JobApplications:  ["Company", "Role", "Status", "Date Applied", "Job URL", "Salary Range", "Salary Offer", "Notes", "Contact"],
+      TargetCompanies:  ["Company", "Industry", "Website", "Priority", "Notes"]
     };
 
     const VIEW_ICONS = {
       Tasks: 'bolt', Goals: 'track_changes', Objectives: 'flag',
       Reading: 'menu_book', Notes: 'description', Links: 'link',
-      Finances: 'payments', CRM: 'people'
+      Finances: 'payments', CRM: 'person',
+      JobApplications: 'work', TargetCompanies: 'business', Career: 'work'
     };
 
     const TALL_FIELDS = new Set(["Content", "Interaction_Log", "Notes"]);
@@ -418,14 +468,16 @@
       "GoalID":    { sources: ['Goals'],      labels: { Goals: 'Title' } },
       "Goal":      { sources: ['Goals'],      labels: { Goals: 'Title' } },
       "ParentID":  { sources: ['Goals', 'Objectives', 'Tasks'],
-                     labels: { Goals: 'Title', Objectives: 'Title', Tasks: 'Task Name' } }
+                     labels: { Goals: 'Title', Objectives: 'Title', Tasks: 'Task Name' } },
+      "Contact":   { sources: ['CRM'],        labels: { CRM: 'Name' } }
     };
 
     const ENUM_FIELDS = {
       "Status": {
-        Tasks:   ["To Do", "Active", "On Hold", "Done"],
-        Goals:   ["Active", "Paused", "Done"],
-        Reading: ["Want to Read", "Reading", "Paused", "Read"]
+        Tasks:           ["To Do", "Active", "On Hold", "Done"],
+        Goals:           ["Active", "Paused", "Done"],
+        Reading:         ["Want to Read", "Reading", "Paused", "Read"],
+        JobApplications: ["Wishlist", "Applied", "Phone Screen", "Interview", "Offer", "Accepted", "Rejected"]
       },
       "Priority": ["High", "Medium", "Low"]
     };
@@ -492,7 +544,7 @@
       if (displayMode === 'kanban' && !viewSupportsKanban(view)) displayMode = 'card';
 
       const displayToggle = document.getElementById('display-toggle');
-      if (view === 'Dashboard') {
+      if (view === 'Dashboard' || view === 'Career') {
         displayToggle.classList.add('hidden');
       } else {
         displayToggle.classList.remove('hidden');
@@ -504,6 +556,7 @@
       );
 
       if (view === 'Dashboard') { renderDashboard(content); return; }
+      if (view === 'Career')    { renderCareer(content);    return; }
 
       const singular = view.replace(/s$/, '');
       content.innerHTML = `
@@ -833,12 +886,280 @@
 
     function pillClass(status) {
       const s = (status || '').toLowerCase();
-      if (['done', 'complete', 'completed', 'read'].includes(s)) return 'pill-done';
-      if (['paused', 'on hold', 'blocked'].includes(s)) return 'pill-paused';
+      if (s === 'offer')                                                   return 'pill-offer';
+      if (['done','complete','completed','read','accepted','rejected'].includes(s)) return 'pill-done';
+      if (['paused','on hold','blocked','wishlist'].includes(s))           return 'pill-paused';
       return 'pill-active';
     }
 
+    // ─── CAREER DASHBOARD ────────────────────────────────────────────────────
+    function renderCareer(content) {
+      const appItems    = STATE.JobApplications || [];
+      const crmItems    = STATE.CRM || [];
+      const targetItems = STATE.TargetCompanies || [];
+      const resources   = (STATE.Links || []).filter(l => l.Website === 'Career');
+
+      const activeApps = appItems.filter(a => !['Accepted','Rejected'].includes(a.Status)).length;
+
+      const tabs = [
+        { key: 'Applications', label: 'Applications', count: activeApps },
+        { key: 'Contacts',     label: 'Contacts',     count: crmItems.length },
+        { key: 'Target Cos',   label: 'Target Cos',   count: targetItems.length },
+        { key: 'Resources',    label: 'Resources',    count: resources.length }
+      ];
+
+      let html = `<div class="flex gap-2 mb-5 overflow-x-auto pb-1">`;
+      tabs.forEach(tab => {
+        const active = careerTab === tab.key;
+        const cls = active
+          ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25'
+          : 'glass text-white/40 hover:text-white/60 border border-transparent';
+        html += `<button onclick="setCareerTab('${tab.key}')"
+          class="flex-shrink-0 px-4 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.1em] transition-all ${cls}">
+          ${escapeHtml(tab.label)}${tab.count ? `<span class="ml-1.5 opacity-50">${tab.count}</span>` : ''}
+        </button>`;
+      });
+      html += `</div>`;
+
+      if (careerTab === 'Applications')  html += renderApplicationsSection();
+      else if (careerTab === 'Contacts') html += renderContactsSection();
+      else if (careerTab === 'Target Cos') html += renderTargetCompaniesSection();
+      else if (careerTab === 'Resources')  html += renderResourcesSection();
+
+      content.innerHTML = html;
+      if (displayMode === 'card') wireDragAndDrop();
+    }
+
+    function setCareerTab(tab) {
+      careerTab = tab;
+      render('Career');
+    }
+
+    function renderApplicationsSection() {
+      let html = `
+        <button onclick="openSidebar(null, 'JobApplications', true)"
+          class="w-full glass p-4 rounded-3xl border-dashed border-white/20 text-emerald-500 font-bold mb-4 text-sm tracking-wide active:scale-95 transition-transform">
+          + ADD APPLICATION
+        </button>`;
+
+      html += renderFilterBar('JobApplications');
+
+      const data = applyStatusFilter('JobApplications',
+        sortByOrder(STATE.JobApplications || [], 'JobApplications'));
+
+      if (!data.length) {
+        html += `<div class="glass p-8 rounded-3xl text-center opacity-40 text-sm">No applications yet. Add your first one above.</div>`;
+        return html;
+      }
+
+      const allStatuses = ENUM_FIELDS.Status.JobApplications;
+      const activeStatuses = getActiveStatuses('JobApplications') || allStatuses;
+
+      allStatuses.filter(s => activeStatuses.some(a => a.toLowerCase() === s.toLowerCase()))
+        .forEach(status => {
+          const items = data.filter(i => (i.Status || '').toLowerCase() === status.toLowerCase());
+          if (!items.length) return;
+          html += `<div class="group-label">${escapeHtml(status)}</div>`;
+          html += `<div class="grid grid-cols-2 gap-4 mb-4" data-dragzone data-group="${escapeHtml(status)}">`;
+          items.forEach(item => { html += createJobAppCard(item); });
+          html += `</div>`;
+        });
+
+      const unstatused = data.filter(i => !i.Status);
+      if (unstatused.length) {
+        html += `<div class="group-label">No Status</div>`;
+        html += `<div class="grid grid-cols-2 gap-4 mb-4" data-dragzone data-group="__nostatus">`;
+        unstatused.forEach(item => { html += createJobAppCard(item); });
+        html += `</div>`;
+      }
+      return html;
+    }
+
+    function renderContactsSection() {
+      let html = `
+        <button onclick="openSidebar(null, 'CRM', true)"
+          class="w-full glass p-4 rounded-3xl border-dashed border-white/20 text-emerald-500 font-bold mb-4 text-sm tracking-wide active:scale-95 transition-transform">
+          + ADD CONTACT
+        </button>`;
+
+      const data = sortByOrder(STATE.CRM || [], 'CRM');
+      if (!data.length) {
+        html += `<div class="glass p-8 rounded-3xl text-center opacity-40 text-sm">No contacts yet.</div>`;
+        return html;
+      }
+      html += `<div class="grid grid-cols-2 gap-4 mb-4" data-dragzone data-group="__all">`;
+      data.forEach(item => { html += createContactCard(item); });
+      html += `</div>`;
+      return html;
+    }
+
+    function renderTargetCompaniesSection() {
+      let html = `
+        <button onclick="openSidebar(null, 'TargetCompanies', true)"
+          class="w-full glass p-4 rounded-3xl border-dashed border-white/20 text-emerald-500 font-bold mb-4 text-sm tracking-wide active:scale-95 transition-transform">
+          + ADD TARGET COMPANY
+        </button>`;
+
+      const data = sortByOrder(STATE.TargetCompanies || [], 'TargetCompanies');
+      if (!data.length) {
+        html += `<div class="glass p-8 rounded-3xl text-center opacity-40 text-sm">No target companies yet.</div>`;
+        return html;
+      }
+
+      ['High', 'Medium', 'Low'].forEach(priority => {
+        const items = data.filter(i => i.Priority === priority);
+        if (!items.length) return;
+        html += `<div class="group-label">${escapeHtml(priority)} Priority</div>`;
+        html += `<div class="grid grid-cols-2 gap-4 mb-4" data-dragzone data-group="${escapeHtml(priority)}">`;
+        items.forEach(item => { html += createTargetCompanyCard(item); });
+        html += `</div>`;
+      });
+
+      const unprioritized = data.filter(i => !i.Priority);
+      if (unprioritized.length) {
+        html += `<div class="group-label">Other</div>`;
+        html += `<div class="grid grid-cols-2 gap-4 mb-4" data-dragzone data-group="__other">`;
+        unprioritized.forEach(item => { html += createTargetCompanyCard(item); });
+        html += `</div>`;
+      }
+      return html;
+    }
+
+    function renderResourcesSection() {
+      const resources = (STATE.Links || []).filter(l => l.Website === 'Career');
+
+      let html = `
+        <button onclick="openCareerResource()"
+          class="w-full glass p-4 rounded-3xl border-dashed border-white/20 text-emerald-500 font-bold mb-4 text-sm tracking-wide active:scale-95 transition-transform">
+          + ADD CAREER RESOURCE
+        </button>`;
+
+      if (!resources.length) {
+        html += `
+          <div class="glass p-8 rounded-3xl space-y-2 opacity-40 text-center">
+            <p class="text-sm font-bold">No resources yet</p>
+            <p class="text-[10px]">Add your resume, cover letters, and other career docs. Paste a Google Drive link and the Website field will be pre-set to "Career".</p>
+          </div>`;
+        return html;
+      }
+
+      html += `<div class="space-y-2">`;
+      resources.forEach(item => {
+        const title  = item.Title || item.URL || 'Resource';
+        const url    = item.URL   || '#';
+        const idAttr = escapeHtml(String(item.ID || ''));
+        html += `
+          <div class="glass p-4 rounded-2xl flex items-center gap-3">
+            <span class="material-icons text-emerald-500/60 flex-shrink-0">insert_drive_file</span>
+            <div class="flex-1 min-w-0">
+              <p class="font-bold text-white text-sm truncate">${escapeHtml(title)}</p>
+              <p class="text-[10px] opacity-30 truncate">${escapeHtml(url)}</p>
+            </div>
+            <div class="flex gap-2 flex-shrink-0">
+              <a href="${escapeHtml(url)}" target="_blank" rel="noopener"
+                class="glass p-2 rounded-xl" onclick="event.stopPropagation()">
+                <span class="material-icons text-emerald-500 text-sm">open_in_new</span>
+              </a>
+              <button onclick="openSidebar('${idAttr}', 'Links')"
+                class="glass p-2 rounded-xl">
+                <span class="material-icons text-white/30 text-sm">edit</span>
+              </button>
+            </div>
+          </div>`;
+      });
+      html += `</div>`;
+      return html;
+    }
+
+    function openCareerResource() {
+      openSidebar(null, 'Links', true);
+      setTimeout(() => {
+        const el = document.getElementById('field-Website');
+        if (el) el.value = 'Career';
+      }, 0);
+    }
+
+    function createJobAppCard(item) {
+      const idAttr  = escapeHtml(String(item.ID || ''));
+      const role    = item.Role    || 'Role TBD';
+      const company = item.Company || 'Unknown Company';
+      const parts = [
+        item["Date Applied"] ? `Applied ${item["Date Applied"]}` : '',
+        item["Salary Range"] ? item["Salary Range"] : ''
+      ].filter(Boolean);
+      const sub = parts.join(' · ');
+      const statusPill = item.Status
+        ? `<span class="status-pill ${pillClass(item.Status)} scale-75 origin-top-right">${escapeHtml(item.Status)}</span>`
+        : '';
+      return `
+        <div draggable="true" data-drag-card data-id="${idAttr}"
+          onclick="openSidebar('${idAttr}', 'JobApplications')"
+          class="glass h-40 p-5 rounded-3xl flex flex-col justify-between cursor-grab active:scale-95 transition-all">
+          <div class="flex justify-between items-start">
+            <span class="material-icons text-emerald-500/40 text-2xl">work</span>
+            ${statusPill}
+          </div>
+          <div class="min-w-0">
+            <p class="font-bold text-white text-sm line-clamp-1 leading-tight">${escapeHtml(role)}</p>
+            <p class="text-[10px] font-bold text-white/50 line-clamp-1 mt-0.5">${escapeHtml(company)}</p>
+            ${sub ? `<p class="text-[9px] opacity-40 uppercase tracking-wider mt-1 truncate font-black">${escapeHtml(sub)}</p>` : ''}
+          </div>
+        </div>`;
+    }
+
+    function createContactCard(item) {
+      const idAttr = escapeHtml(String(item.ID || ''));
+      const name   = item.Name || 'Unknown';
+      const roleCompany = [item.Role, item.Company].filter(Boolean).join(' at ');
+      const sub = item["Last Contact"] ? `Last: ${item["Last Contact"]}` : (item.Tags || '');
+      return `
+        <div draggable="true" data-drag-card data-id="${idAttr}"
+          onclick="openSidebar('${idAttr}', 'CRM')"
+          class="glass h-40 p-5 rounded-3xl flex flex-col justify-between cursor-grab active:scale-95 transition-all">
+          <div class="flex justify-between items-start">
+            <span class="material-icons text-emerald-500/40 text-2xl">person</span>
+          </div>
+          <div class="min-w-0">
+            <p class="font-bold text-white text-sm line-clamp-1 leading-tight">${escapeHtml(name)}</p>
+            <p class="text-[10px] font-bold text-white/50 line-clamp-1 mt-0.5">${escapeHtml(roleCompany)}</p>
+            ${sub ? `<p class="text-[9px] opacity-40 uppercase tracking-wider mt-1 truncate font-black">${escapeHtml(sub)}</p>` : ''}
+          </div>
+        </div>`;
+    }
+
+    function createTargetCompanyCard(item) {
+      const idAttr   = escapeHtml(String(item.ID || ''));
+      const company  = item.Company  || 'Unknown Company';
+      const industry = item.Industry || '';
+      const priority = item.Priority || '';
+      const priTag = priority
+        ? `<span class="text-[9px] font-black uppercase tracking-wider ${priorityClass(priority)}">${escapeHtml(priority)}</span>`
+        : '';
+      return `
+        <div draggable="true" data-drag-card data-id="${idAttr}"
+          onclick="openSidebar('${idAttr}', 'TargetCompanies')"
+          class="glass h-40 p-5 rounded-3xl flex flex-col justify-between cursor-grab active:scale-95 transition-all">
+          <div class="flex justify-between items-start">
+            <span class="material-icons text-emerald-500/40 text-2xl">business</span>
+            ${priTag}
+          </div>
+          <div class="min-w-0">
+            <p class="font-bold text-white text-sm line-clamp-1 leading-tight">${escapeHtml(company)}</p>
+            ${industry ? `<p class="text-[9px] opacity-40 uppercase tracking-wider mt-1 truncate font-black">${escapeHtml(industry)}</p>` : ''}
+          </div>
+        </div>`;
+    }
+
     // ─── DASHBOARD ───────────────────────────────────────────────────────────
+    function getDashboardCount(key) {
+      if (key === 'Career') {
+        return (STATE.JobApplications || []).filter(a =>
+          !['Accepted','Rejected'].includes(a.Status)
+        ).length;
+      }
+      return STATE[key] ? STATE[key].length : 0;
+    }
+
     function renderDashboard(content) {
       const modules = [
         { key: 'Tasks',      icon: 'bolt',          label: 'Tasks' },
@@ -848,7 +1169,7 @@
         { key: 'Notes',      icon: 'description',   label: 'Notes' },
         { key: 'Links',      icon: 'link',          label: 'Links' },
         { key: 'Reading',    icon: 'menu_book',     label: 'Reading' },
-        { key: 'CRM',        icon: 'people',        label: 'CRM' }
+        { key: 'Career',     icon: 'work',          label: 'Career' }
       ];
       let html = `<div class="grid grid-cols-2 gap-3">` +
         modules.map(m => `
@@ -856,7 +1177,7 @@
             <div class="flex items-center justify-between mb-3">
               <span class="material-icons text-emerald-500 text-xl">${m.icon}</span>
             </div>
-            <p class="text-3xl font-black text-white">${STATE[m.key] ? STATE[m.key].length : 0}</p>
+            <p class="text-3xl font-black text-white">${getDashboardCount(m.key)}</p>
             <p class="text-[10px] font-bold opacity-30 uppercase tracking-widest mt-1">${m.label}</p>
           </div>`).join('') + `</div>`;
 
@@ -1359,7 +1680,7 @@
     // ─── STATUS FILTERS (per view, persisted in localStorage) ──────────────
     // Items whose Status matches a value in the active set are shown.
     // Default hides the "completed" status so Done items disappear automatically.
-    const COMPLETED_STATUS = { Tasks: 'Done', Goals: 'Done', Reading: 'Read' };
+    const COMPLETED_STATUS = { Tasks: 'Done', Goals: 'Done', Reading: 'Read', JobApplications: 'Rejected' };
 
     function getActiveStatuses(view) {
       const all = ENUM_FIELDS.Status?.[view];
@@ -1585,7 +1906,8 @@
     Object.assign(window, {
       openSidebar, closeSidebar, saveChanges, deleteCurrentItem, confirmDelete, cancelDelete,
       toggleDisplayMode, toggleMenu, closeMenu, navigate, handleAddNewOption,
-      toggleStatusFilter, quickAddKanban
+      toggleStatusFilter, quickAddKanban,
+      setCareerTab, openCareerResource
     });
   </script>
 </body>
