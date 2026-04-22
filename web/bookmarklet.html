@@ -28,11 +28,33 @@
       color: #10b981; font-weight: 800; font-size: 12px;
       display: flex; align-items: center; justify-content: center;
     }
+    .code-box {
+      width: 100%; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px; padding: 12px; font-family: monospace; font-size: 11px;
+      color: rgba(255,255,255,0.4); resize: none; outline: none;
+      white-space: nowrap; overflow-x: auto; display: block;
+    }
+    .copy-btn {
+      display: flex; align-items: center; gap-6px; padding: 10px 18px;
+      background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3);
+      border-radius: 12px; color: #10b981; font-weight: 800; font-size: 12px;
+      cursor: pointer; transition: background 0.15s; letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .copy-btn:hover { background: rgba(16,185,129,0.25); }
+    .tab-btn {
+      padding: 8px 16px; border-radius: 10px; font-size: 11px; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 0.08em; cursor: pointer;
+      border: 1px solid transparent; transition: all 0.15s;
+    }
+    .tab-btn.active { background: rgba(16,185,129,0.15); color: #10b981; border-color: rgba(16,185,129,0.3); }
+    .tab-btn:not(.active) { color: rgba(255,255,255,0.3); }
+    .tab-btn:not(.active):hover { color: rgba(255,255,255,0.6); }
   </style>
 </head>
 <body>
 
-  <div class="max-w-lg mx-auto px-6 py-12 space-y-10">
+  <div class="max-w-lg mx-auto px-6 py-12 space-y-8">
 
     <!-- Header -->
     <div class="space-y-2">
@@ -43,73 +65,113 @@
       </p>
     </div>
 
-    <!-- The bookmarklet drag target -->
-    <div class="glass rounded-3xl p-8 space-y-6 text-center">
-      <p class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">Step 1 — Install</p>
-      <p class="text-sm text-white/60">Drag this button to your bookmarks bar:</p>
+    <!-- Install tabs -->
+    <div class="glass rounded-3xl p-8 space-y-6">
+      <p class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">Install</p>
 
-      <!--
-        BOOKMARKLET HREF
-        Extracts job title + company from a LinkedIn job page using multiple
-        fallback selectors, then opens a small Golem OS popup pre-filled
-        with that data.
-      -->
-      <a class="bm-link" href="javascript:(function(){function g(s){for(var i=0;i<s.length;i++){var e=document.querySelector(s[i]);if(e)return e.innerText.trim().split('\n')[0].trim();}return '';}var r=g(['h1.job-details-jobs-unified-top-card__job-title','.jobs-unified-top-card__job-title h1','h1.t-24.t-bold','h1.t-24','h1']);var c=g(['.job-details-jobs-unified-top-card__company-name a','.job-details-jobs-unified-top-card__company-name','.jobs-unified-top-card__subtitle-primary-grouping a','.topcard__org-name-link','[class*=&quot;company-name&quot;] a']);if(!r||!c){var t=document.title.replace(' | LinkedIn','').split(' at ');if(!r&&t[0])r=t[0].trim();if(!c&&t[1])c=t[1].trim();}var p=new URLSearchParams({quick:'job',role:r,company:c,url:window.location.href});window.open('https://app.bedextrous.com/?'+p.toString(),'golem_quick_add','width=440,height=620,scrollbars=yes,resizable=yes,menubar=no,toolbar=no,location=no');})();">
-        <span class="material-icons" style="font-size:18px">bookmark_add</span>
-        Save to Golem OS
-      </a>
+      <!-- Browser toggle -->
+      <div class="flex gap-2">
+        <button class="tab-btn active" id="tab-arc"    onclick="showTab('arc')">Arc</button>
+        <button class="tab-btn"        id="tab-chrome" onclick="showTab('chrome')">Chrome / Safari</button>
+      </div>
 
-      <p class="text-[10px] text-white/30">
-        Can't drag? Right-click the button → "Bookmark this link"
-      </p>
+      <!-- Arc instructions -->
+      <div id="pane-arc" class="space-y-5">
+        <p class="text-xs text-white/50 leading-relaxed">
+          Arc URL-encodes dragged bookmarklets, breaking them. Use the manual method instead — takes 30 seconds once.
+        </p>
+
+        <div class="space-y-3">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="flex-1 space-y-2">
+              <p class="text-sm font-bold text-white">Copy the bookmarklet code</p>
+              <textarea id="bm-code" class="code-box" rows="2" readonly></textarea>
+              <button class="copy-btn" onclick="copyCode()" id="copy-btn">
+                <span class="material-icons text-base mr-1">content_copy</span>
+                Copy code
+              </button>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="step-num">2</div>
+            <div>
+              <p class="text-sm font-bold text-white">Bookmark any page in Arc</p>
+              <p class="text-[11px] text-white/40 mt-0.5">Go to any webpage and press <kbd class="bg-white/10 px-1.5 py-0.5 rounded text-white/60 font-mono text-[10px]">Cmd D</kbd> to save it to favorites</p>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="step-num">3</div>
+            <div>
+              <p class="text-sm font-bold text-white">Edit that bookmark's URL</p>
+              <p class="text-[11px] text-white/40 mt-0.5">In Arc's sidebar, right-click the new favorite → <strong class="text-white/60">Edit</strong> → clear the URL field → paste the code you copied → rename it <strong class="text-white/60">"Save to Golem OS"</strong> → press Enter</p>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="step-num">4</div>
+            <div>
+              <p class="text-sm font-bold text-white">Done — click it on any LinkedIn job page</p>
+              <p class="text-[11px] text-white/40 mt-0.5">Arc may ask "Run bookmarklet?" the first time — just confirm</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chrome / Safari instructions -->
+      <div id="pane-chrome" class="space-y-5 hidden">
+        <p class="text-xs text-white/50 leading-relaxed">
+          Drag the button below to your bookmarks bar (View → Show Bookmarks Bar, or <kbd class="bg-white/10 px-1.5 py-0.5 rounded text-white/60 font-mono text-[10px]">Cmd Shift B</kbd> if hidden).
+        </p>
+
+        <div class="text-center py-2">
+          <!--
+            BOOKMARKLET HREF — raw javascript: URI.
+            HTML entities (&quot;) are decoded by the browser when reading href,
+            so the executed JS sees plain " characters.
+          -->
+          <a class="bm-link" href="javascript:(function(){function g(s){for(var i=0;i<s.length;i++){var e=document.querySelector(s[i]);if(e)return e.innerText.trim().split('\n')[0].trim();}return '';}var r=g(['h1.job-details-jobs-unified-top-card__job-title','.jobs-unified-top-card__job-title h1','h1.t-24.t-bold','h1.t-24','h1']);var c=g(['.job-details-jobs-unified-top-card__company-name a','.job-details-jobs-unified-top-card__company-name','.jobs-unified-top-card__subtitle-primary-grouping a','.topcard__org-name-link','[class*=&quot;company-name&quot;] a']);if(!r||!c){var t=document.title.replace(' | LinkedIn','').split(' at ');if(!r&&t[0])r=t[0].trim();if(!c&&t[1])c=t[1].trim();}var p=new URLSearchParams({quick:'job',role:r,company:c,url:window.location.href});window.open('https://app.bedextrous.com/?'+p.toString(),'golem_quick_add','width=440,height=620,scrollbars=yes,resizable=yes,menubar=no,toolbar=no,location=no');})();">
+            <span class="material-icons" style="font-size:18px">bookmark_add</span>
+            Save to Golem OS
+          </a>
+          <p class="text-[10px] text-white/30 mt-3">Drag this button to your bookmarks bar</p>
+        </div>
+
+        <div class="step">
+          <div class="step-num">💡</div>
+          <p class="text-[11px] text-white/40">Can't drag? Right-click the button → "Bookmark Link" — it'll appear in your bookmarks and you can move it to the bar.</p>
+        </div>
+      </div>
     </div>
 
     <!-- How to use -->
-    <div class="glass rounded-3xl p-8 space-y-6">
-      <p class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">Step 2 — Use it</p>
-      <div class="space-y-5">
+    <div class="glass rounded-3xl p-8 space-y-5">
+      <p class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">How to use it</p>
+      <div class="space-y-4">
         <div class="step">
           <div class="step-num">1</div>
           <div>
             <p class="text-sm font-bold text-white">Open any LinkedIn job posting</p>
-            <p class="text-[11px] text-white/40 mt-0.5">Works on individual job pages (linkedin.com/jobs/view/…)</p>
+            <p class="text-[11px] text-white/40 mt-0.5">Works on linkedin.com/jobs/view/… pages</p>
           </div>
         </div>
         <div class="step">
           <div class="step-num">2</div>
           <div>
-            <p class="text-sm font-bold text-white">Click "Save to Golem OS" in your bookmarks bar</p>
-            <p class="text-[11px] text-white/40 mt-0.5">A small window opens with the job pre-filled</p>
+            <p class="text-sm font-bold text-white">Click "Save to Golem OS" in your favorites</p>
+            <p class="text-[11px] text-white/40 mt-0.5">A small window opens with job title, company, and URL pre-filled</p>
           </div>
         </div>
         <div class="step">
           <div class="step-num">3</div>
           <div>
-            <p class="text-sm font-bold text-white">Review the details, set a status, hit Save</p>
+            <p class="text-sm font-bold text-white">Set a status, add notes, hit Save</p>
             <p class="text-[11px] text-white/40 mt-0.5">The window closes automatically — you're back on LinkedIn</p>
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- What gets captured -->
-    <div class="glass rounded-3xl p-6 space-y-3">
-      <p class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500 mb-1">What gets captured</p>
-      <div class="grid grid-cols-2 gap-2 text-sm">
-        <div class="flex items-center gap-2 text-white/60">
-          <span class="material-icons text-emerald-500/60 text-base">work</span> Job title
-        </div>
-        <div class="flex items-center gap-2 text-white/60">
-          <span class="material-icons text-emerald-500/60 text-base">business</span> Company
-        </div>
-        <div class="flex items-center gap-2 text-white/60">
-          <span class="material-icons text-emerald-500/60 text-base">link</span> Job URL
-        </div>
-        <div class="flex items-center gap-2 text-white/60">
-          <span class="material-icons text-emerald-500/60 text-base">flag</span> Status (Wishlist)
-        </div>
-      </div>
-      <p class="text-[10px] text-white/30 pt-1">You can edit any field in the popup before saving.</p>
     </div>
 
     <!-- Back link -->
@@ -120,6 +182,35 @@
     </div>
 
   </div>
+
+  <script>
+    // The raw bookmarklet code (no HTML encoding) — used for the copy-to-clipboard path.
+    const RAW_BM = `javascript:(function(){function g(s){for(var i=0;i<s.length;i++){var e=document.querySelector(s[i]);if(e)return e.innerText.trim().split('\\n')[0].trim();}return '';}var r=g(['h1.job-details-jobs-unified-top-card__job-title','.jobs-unified-top-card__job-title h1','h1.t-24.t-bold','h1.t-24','h1']);var c=g(['.job-details-jobs-unified-top-card__company-name a','.job-details-jobs-unified-top-card__company-name','.jobs-unified-top-card__subtitle-primary-grouping a','.topcard__org-name-link','[class*="company-name"] a']);if(!r||!c){var t=document.title.replace(' | LinkedIn','').split(' at ');if(!r&&t[0])r=t[0].trim();if(!c&&t[1])c=t[1].trim();}var p=new URLSearchParams({quick:'job',role:r,company:c,url:window.location.href});window.open('https://app.bedextrous.com/?'+p.toString(),'golem_quick_add','width=440,height=620,scrollbars=yes,resizable=yes,menubar=no,toolbar=no,location=no');})();`;
+
+    // Populate the code textarea on load.
+    document.getElementById('bm-code').value = RAW_BM;
+
+    function showTab(tab) {
+      document.getElementById('pane-arc').classList.toggle('hidden', tab !== 'arc');
+      document.getElementById('pane-chrome').classList.toggle('hidden', tab !== 'chrome');
+      document.getElementById('tab-arc').classList.toggle('active', tab === 'arc');
+      document.getElementById('tab-chrome').classList.toggle('active', tab === 'chrome');
+    }
+
+    async function copyCode() {
+      try {
+        await navigator.clipboard.writeText(RAW_BM);
+        const btn = document.getElementById('copy-btn');
+        btn.innerHTML = '<span class="material-icons text-base mr-1">check</span> Copied!';
+        setTimeout(() => {
+          btn.innerHTML = '<span class="material-icons text-base mr-1">content_copy</span> Copy code';
+        }, 2000);
+      } catch (e) {
+        // Fallback: select the textarea so the user can Cmd+C manually.
+        document.getElementById('bm-code').select();
+      }
+    }
+  </script>
 
 </body>
 </html>
