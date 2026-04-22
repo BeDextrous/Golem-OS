@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Autofill · Golem OS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;700;800&display=swap');
+    :root { --bg: #0b0f10; --accent: #10b981; --border: rgba(255,255,255,0.08); }
+    body  { background: var(--bg); color: #e2e8f0; font-family: 'Plus Jakarta Sans', sans-serif; min-height: 100vh; }
+    .glass { background: rgba(25,32,35,0.7); backdrop-filter: blur(20px); border: 1px solid var(--border); }
+    .field-label {
+      display: block; font-size: 10px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.12em; color: rgba(255,255,255,0.35); margin-bottom: 6px;
+    }
+    .field-input {
+      width: 100%; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px; padding: 10px 14px; color: #e2e8f0; font-size: 13px;
+      font-family: 'Plus Jakarta Sans', sans-serif; outline: none;
+      transition: border-color 0.15s;
+    }
+    .field-input:focus { border-color: rgba(16,185,129,0.5); }
+    .field-input::placeholder { color: rgba(255,255,255,0.18); }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 22px; background: #10b981; color: #0b0f10;
+      border-radius: 14px; font-weight: 800; font-size: 13px;
+      cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 20px rgba(16,185,129,0.3); border: none;
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(16,185,129,0.4); }
+    .btn-ghost {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 18px; background: rgba(16,185,129,0.12);
+      border: 1px solid rgba(16,185,129,0.3); border-radius: 12px;
+      color: #10b981; font-weight: 800; font-size: 12px;
+      cursor: pointer; transition: background 0.15s; letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .btn-ghost:hover { background: rgba(16,185,129,0.22); }
+    .code-box {
+      width: 100%; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px; padding: 12px; font-family: monospace; font-size: 11px;
+      color: rgba(255,255,255,0.35); resize: none; outline: none;
+      white-space: nowrap; overflow-x: auto; display: block;
+    }
+    .step { display: flex; gap: 16px; align-items: flex-start; }
+    .step-num {
+      flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
+      background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3);
+      color: #10b981; font-weight: 800; font-size: 11px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .tab-btn {
+      padding: 8px 16px; border-radius: 10px; font-size: 11px; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 0.08em; cursor: pointer;
+      border: 1px solid transparent; transition: all 0.15s;
+    }
+    .tab-btn.active { background: rgba(16,185,129,0.15); color: #10b981; border-color: rgba(16,185,129,0.3); }
+    .tab-btn:not(.active) { color: rgba(255,255,255,0.3); }
+    .tab-btn:not(.active):hover { color: rgba(255,255,255,0.6); }
+    .saved-flash { display: none; align-items: center; gap: 6px; color: #10b981; font-size: 12px; font-weight: 800; }
+    .saved-flash.show { display: flex; }
+    .bm-link {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 14px 24px; background: #10b981; color: #0b0f10;
+      border-radius: 16px; font-weight: 800; font-size: 15px;
+      text-decoration: none; cursor: grab; user-select: none;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 24px rgba(16,185,129,0.35);
+    }
+    .bm-link:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(16,185,129,0.45); }
+    .bm-link:active { cursor: grabbing; transform: scale(0.97); }
+    .section-divider { border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 4px 0; }
+  </style>
+</head>
+<body>
+  <div class="max-w-lg mx-auto px-6 py-12 space-y-8">
+
+    <!-- Header -->
+    <div class="space-y-2">
+      <p class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">Golem OS · Career</p>
+      <h1 class="text-2xl font-black text-white leading-tight">Form Autofill</h1>
+      <p class="text-white/40 text-sm leading-relaxed">
+        Fill in your details once. Then use the bookmarklet on any job application page to instantly fill standard fields.
+      </p>
+    </div>
+
+    <!-- Profile form -->
+    <div class="glass rounded-3xl p-8 space-y-6">
+      <p class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">Your Profile</p>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="field-label" for="p-first">First name</label>
+          <input class="field-input" id="p-first" type="text" placeholder="Max">
+        </div>
+        <div>
+          <label class="field-label" for="p-last">Last name</label>
+          <input class="field-input" id="p-last" type="text" placeholder="Smith">
+        </div>
+      </div>
+
+      <div>
+        <label class="field-label" for="p-email">Email</label>
+        <input class="field-input" id="p-email" type="email" placeholder="max@example.com">
+      </div>
+
+      <div>
+        <label class="field-label" for="p-phone">Phone</label>
+        <input class="field-input" id="p-phone" type="tel" placeholder="+1 (555) 000-0000">
+      </div>
+
+      <hr class="section-divider">
+
+      <div>
+        <label class="field-label" for="p-linkedin">LinkedIn URL</label>
+        <input class="field-input" id="p-linkedin" type="url" placeholder="https://linkedin.com/in/yourhandle">
+      </div>
+
+      <div>
+        <label class="field-label" for="p-website">Website / Portfolio</label>
+        <input class="field-input" id="p-website" type="url" placeholder="https://yoursite.com">
+      </div>
+
+      <div>
+        <label class="field-label" for="p-github">GitHub URL</label>
+        <input class="field-input" id="p-github" type="url" placeholder="https://github.com/yourhandle">
+      </div>
+
+      <hr class="section-divider">
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="field-label" for="p-city">City</label>
+          <input class="field-input" id="p-city" type="text" placeholder="San Francisco">
+        </div>
+        <div>
+          <label class="field-label" for="p-state">State / Province</label>
+          <input class="field-input" id="p-state" type="text" placeholder="CA">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="field-label" for="p-zip">ZIP / Postal</label>
+          <input class="field-input" id="p-zip" type="text" placeholder="94105">
+        </div>
+        <div>
+          <label class="field-label" for="p-country">Country</label>
+          <input class="field-input" id="p-country" type="text" placeholder="United States">
+        </div>
+      </div>
+
+      <div class="flex items-center gap-4 pt-2">
+        <button class="btn-primary" onclick="saveProfile()">
+          <span class="material-icons text-base">save</span>
+          Save profile
+        </button>
+        <span class="saved-flash" id="saved-flash">
+          <span class="material-icons text-base">check_circle</span>
+          Saved!
+        </span>
+      </div>
+    </div>
+
+    <!-- Install bookmarklet -->
+    <div class="glass rounded-3xl p-8 space-y-6" id="install-card">
+      <p class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">Install the Bookmarklet</p>
+      <p class="text-xs text-white/40 leading-relaxed">
+        Save your profile above first — the bookmarklet code is generated from your data and lives only in your browser.
+      </p>
+
+      <!-- Browser tabs -->
+      <div class="flex gap-2">
+        <button class="tab-btn active" id="tab-arc"    onclick="showTab('arc')">Arc</button>
+        <button class="tab-btn"        id="tab-chrome" onclick="showTab('chrome')">Chrome / Safari</button>
+      </div>
+
+      <!-- Arc pane -->
+      <div id="pane-arc" class="space-y-5">
+        <p class="text-xs text-white/50 leading-relaxed">
+          Arc URL-encodes dragged bookmarklets, breaking them. Use the copy-paste method instead.
+        </p>
+        <div class="space-y-3">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="flex-1 space-y-2">
+              <p class="text-sm font-bold text-white">Copy the bookmarklet code</p>
+              <textarea id="bm-code" class="code-box" rows="2" readonly></textarea>
+              <button class="btn-ghost" onclick="copyCode()" id="copy-btn">
+                <span class="material-icons text-base">content_copy</span>
+                Copy code
+              </button>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div>
+              <p class="text-sm font-bold text-white">Bookmark any page in Arc</p>
+              <p class="text-[11px] text-white/40 mt-0.5">Go to any webpage and press <kbd class="bg-white/10 px-1.5 py-0.5 rounded text-white/60 font-mono text-[10px]">Cmd D</kbd></p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div>
+              <p class="text-sm font-bold text-white">Edit that bookmark's URL</p>
+              <p class="text-[11px] text-white/40 mt-0.5">Right-click the new favorite → <strong class="text-white/60">Edit</strong> → clear the URL → paste the code → rename it <strong class="text-white/60">"Autofill"</strong> → Enter</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">4</div>
+            <div>
+              <p class="text-sm font-bold text-white">Done — click it on any job application page</p>
+              <p class="text-[11px] text-white/40 mt-0.5">A green toast will confirm how many fields were filled. If you update your profile, repeat steps 1–3 to refresh the bookmarklet.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chrome / Safari pane -->
+      <div id="pane-chrome" class="space-y-5 hidden">
+        <p class="text-xs text-white/50 leading-relaxed">
+          Make sure your bookmarks bar is visible (<kbd class="bg-white/10 px-1.5 py-0.5 rounded text-white/60 font-mono text-[10px]">Cmd Shift B</kbd>), then drag the button below onto it.
+        </p>
+        <div class="text-center py-2">
+          <a id="bm-drag-link" class="bm-link" href="#">
+            <span class="material-icons" style="font-size:18px">flash_on</span>
+            Autofill
+          </a>
+          <p class="text-[10px] text-white/30 mt-3">Drag this button to your bookmarks bar</p>
+        </div>
+        <div class="step">
+          <div class="step-num">💡</div>
+          <p class="text-[11px] text-white/40">Can't drag? Right-click → "Bookmark Link" and move it to the bar. If you update your profile, come back and re-drag to replace it.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- How it works -->
+    <div class="glass rounded-3xl p-8 space-y-5">
+      <p class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">What gets filled</p>
+      <div class="space-y-2 text-xs text-white/50 leading-relaxed">
+        <p>The bookmarklet scans every visible text, email, tel, and URL input on the page and matches it against your profile using the field's name, id, placeholder, and label text.</p>
+        <p>Fields already containing a value are never overwritten. A green badge at the top-right will show how many fields were filled (or warn you if none matched).</p>
+        <div class="pt-1 grid grid-cols-2 gap-x-6 gap-y-1 text-[11px] text-white/35">
+          <span>✓ First / last name</span>
+          <span>✓ Full name</span>
+          <span>✓ Email address</span>
+          <span>✓ Phone number</span>
+          <span>✓ LinkedIn URL</span>
+          <span>✓ Website / portfolio</span>
+          <span>✓ GitHub URL</span>
+          <span>✓ City, state, ZIP</span>
+          <span>✓ Country</span>
+          <span>✓ Lever, Ashby, Greenhouse…</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Back link -->
+    <div class="text-center">
+      <a href="/" class="text-[11px] text-white/30 hover:text-emerald-500 transition-colors font-bold uppercase tracking-widest">
+        ← Back to Golem OS
+      </a>
+    </div>
+
+  </div>
+
+  <script>
+    // ─── Profile storage ─────────────────────────────────────────────────────
+    const KEYS = ['first','last','email','phone','linkedin','website','github','city','state','zip','country'];
+
+    function loadProfile() {
+      const raw = localStorage.getItem('golem:autofill:profile');
+      return raw ? JSON.parse(raw) : {};
+    }
+
+    function saveProfile() {
+      const p = {};
+      KEYS.forEach(k => { p[k] = (document.getElementById('p-' + k) || {}).value || ''; });
+      localStorage.setItem('golem:autofill:profile', JSON.stringify(p));
+      updateBookmarklet(p);
+      const flash = document.getElementById('saved-flash');
+      flash.classList.add('show');
+      setTimeout(() => flash.classList.remove('show'), 2200);
+    }
+
+    function fillForm(p) {
+      KEYS.forEach(k => {
+        const el = document.getElementById('p-' + k);
+        if (el && p[k]) el.value = p[k];
+      });
+    }
+
+    // ─── Bookmarklet generator ────────────────────────────────────────────────
+    function buildBookmarklet(p) {
+      // Build a compact JSON payload with only non-empty values.
+      const data = {};
+      KEYS.forEach(k => { if (p[k]) data[k] = p[k]; });
+
+      // The field-matching ruleset and filler, minified inline.
+      const code = `javascript:(function(){
+var P=${JSON.stringify(data)};
+var full=(P.first||'')+(P.first&&P.last?' ':'')+( P.last||'');
+var RULES=[
+  {rx:/first[_\\- ]?name|fname|given[_\\- ]?name/i, val:P.first},
+  {rx:/last[_\\- ]?name|lname|surname|family[_\\- ]?name/i, val:P.last},
+  {rx:/full[_\\- ]?name|your[_\\- ]?name|^name$|applicant[_\\- ]?name/i, val:full},
+  {rx:/e[_\\- ]?mail/i, val:P.email},
+  {rx:/phone|tel|mobile|cell/i, val:P.phone},
+  {rx:/linkedin/i, val:P.linkedin},
+  {rx:/website|portfolio|personal[_\\- ]?site|personal[_\\- ]?url/i, val:P.website},
+  {rx:/github/i, val:P.github},
+  {rx:/city|town/i, val:P.city},
+  {rx:/state|province|region/i, val:P.state},
+  {rx:/zip|postal/i, val:P.zip},
+  {rx:/country/i, val:P.country}
+];
+function sig(el){
+  var parts=[el.name,el.id,el.placeholder,el.getAttribute('aria-label'),el.getAttribute('aria-labelledby')];
+  if(el.id){var lab=document.querySelector('label[for="'+el.id+'"]');if(lab)parts.push(lab.innerText);}
+  var p=el.parentElement;
+  for(var i=0;i<4&&p&&p!==document.body;i++){
+    var lab=p.querySelector('label');
+    if(lab&&!lab.htmlFor)parts.push(lab.innerText);
+    p=p.parentElement;
+  }
+  return parts.filter(Boolean).join(' ');
+}
+var filled=0;
+var inputs=document.querySelectorAll('input[type=text],input[type=email],input[type=tel],input[type=url],input:not([type]),textarea[data-autofill]');
+inputs.forEach(function(el){
+  if(el.value)return;
+  var s=sig(el);
+  for(var i=0;i<RULES.length;i++){
+    if(RULES[i].rx.test(s)&&RULES[i].val){
+      el.value=RULES[i].val;
+      ['input','change','blur'].forEach(function(ev){el.dispatchEvent(new Event(ev,{bubbles:true}));});
+      filled++;break;
+    }
+  }
+});
+var t=document.createElement('div');
+t.style.cssText='position:fixed;top:16px;right:16px;z-index:2147483647;background:'+(filled?'#10b981':'#f59e0b')+';color:#fff;padding:10px 18px;border-radius:12px;font:700 13px/1 system-ui;box-shadow:0 4px 20px rgba(0,0,0,0.35);transition:opacity 0.4s';
+t.textContent=filled?'\\u2713 Filled '+filled+' field'+(filled>1?'s':''):'\\u26a0 No matching fields found';
+document.body.appendChild(t);
+setTimeout(function(){t.style.opacity='0';setTimeout(function(){t.remove()},400);},2800);
+})();`.replace(/\n\s*/g, '');
+
+      return code;
+    }
+
+    function updateBookmarklet(p) {
+      const code = buildBookmarklet(p);
+      const ta = document.getElementById('bm-code');
+      if (ta) ta.value = code;
+      const link = document.getElementById('bm-drag-link');
+      if (link) link.href = code;
+    }
+
+    // ─── Tab switcher ─────────────────────────────────────────────────────────
+    function showTab(tab) {
+      document.getElementById('pane-arc').classList.toggle('hidden', tab !== 'arc');
+      document.getElementById('pane-chrome').classList.toggle('hidden', tab !== 'chrome');
+      document.getElementById('tab-arc').classList.toggle('active', tab === 'arc');
+      document.getElementById('tab-chrome').classList.toggle('active', tab === 'chrome');
+    }
+
+    // ─── Copy to clipboard ────────────────────────────────────────────────────
+    async function copyCode() {
+      const code = document.getElementById('bm-code').value;
+      try {
+        await navigator.clipboard.writeText(code);
+        const btn = document.getElementById('copy-btn');
+        btn.innerHTML = '<span class="material-icons text-base">check</span> Copied!';
+        setTimeout(() => {
+          btn.innerHTML = '<span class="material-icons text-base">content_copy</span> Copy code';
+        }, 2000);
+      } catch (e) {
+        document.getElementById('bm-code').select();
+      }
+    }
+
+    // ─── Init ─────────────────────────────────────────────────────────────────
+    (function init() {
+      const p = loadProfile();
+      fillForm(p);
+      updateBookmarklet(p);
+
+      // Live-update the bookmarklet code as the user types.
+      KEYS.forEach(k => {
+        const el = document.getElementById('p-' + k);
+        if (el) el.addEventListener('input', () => {
+          const current = loadProfile();
+          KEYS.forEach(j => { current[j] = (document.getElementById('p-' + j) || {}).value || ''; });
+          updateBookmarklet(current);
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
