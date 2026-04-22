@@ -1719,6 +1719,71 @@
       });
     }
 
+    // ─── JOB URL AUTO-FILL ───────────────────────────────────────────────────
+    // When a URL is pasted into the Job URL field, attempt to extract role and
+    // company from the URL structure and fill empty fields automatically.
+    function titleCase(slug) {
+      return (slug || '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    function parseJobUrl(raw) {
+      const out = { role: '', company: '' };
+      try {
+        const u    = new URL(raw.trim());
+        const host = u.hostname.toLowerCase();
+        const path = u.pathname;
+
+        if (host.includes('linkedin.com')) {
+          // /jobs/view/senior-engineer-at-acme-corp-3942857362/
+          const m = path.match(/\/jobs\/view\/([^/?#]+)/);
+          if (m) {
+            const slug   = m[1].replace(/-\d+$/, ''); // strip trailing numeric ID
+            const atIdx  = slug.indexOf('-at-');
+            if (atIdx > 0) {
+              out.role    = titleCase(slug.slice(0, atIdx));
+              out.company = titleCase(slug.slice(atIdx + 4));
+            } else {
+              out.role = titleCase(slug);
+            }
+          }
+        } else if (host.includes('lever.co')) {
+          // jobs.lever.co/company-name/uuid
+          const parts = path.split('/').filter(Boolean);
+          if (parts[0]) out.company = titleCase(parts[0]);
+        } else if (host.includes('greenhouse.io')) {
+          // boards.greenhouse.io/company/jobs/id  OR  greenhouse.io/company/...
+          const parts = path.split('/').filter(Boolean);
+          const co = parts[0] === 'jobs' ? parts[1] : parts[0];
+          if (co) out.company = titleCase(co);
+        } else if (host.includes('myworkdayjobs.com')) {
+          // acme.wd5.myworkdayjobs.com/...
+          out.company = titleCase(host.split('.')[0]);
+        } else if (host.includes('ashbyhq.com')) {
+          // jobs.ashbyhq.com/company-name/job-id
+          const parts = path.split('/').filter(Boolean);
+          if (parts[0]) out.company = titleCase(parts[0]);
+        }
+      } catch (_) {}
+      return out;
+    }
+
+    function wireJobAppFields() {
+      const urlEl = document.getElementById('field-Job URL');
+      if (!urlEl) return;
+      const tryFill = () => {
+        const url = urlEl.value.trim();
+        if (!url.startsWith('http')) return;
+        const parsed = parseJobUrl(url);
+        if (!parsed.role && !parsed.company) return;
+        const roleEl    = document.getElementById('field-Role');
+        const companyEl = document.getElementById('field-Company');
+        if (parsed.role    && roleEl    && !roleEl.value.trim())    roleEl.value    = parsed.role;
+        if (parsed.company && companyEl && !companyEl.value.trim()) companyEl.value = parsed.company;
+      };
+      urlEl.addEventListener('paste',  () => setTimeout(tryFill, 0));
+      urlEl.addEventListener('change', tryFill);
+    }
+
     // ─── STATUS FILTERS (per view, persisted in localStorage) ──────────────
     // Items whose Status matches a value in the active set are shown.
     // Default hides the "completed" status so Done items disappear automatically.
@@ -1854,7 +1919,8 @@
       fields.forEach(f => { html += renderField(view, f, item[f]); });
       if (!isNew && item.ID) html = `<div class="text-[10px] opacity-30 font-mono">ID: ${item.ID}</div>` + html;
       document.getElementById('s-content').innerHTML = html;
-      if (view === 'Tasks') wireTaskCrossField();
+      if (view === 'Tasks')           wireTaskCrossField();
+      if (view === 'JobApplications') wireJobAppFields();
     }
     function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); }
 
