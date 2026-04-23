@@ -442,7 +442,8 @@
     let activeItem = { index: null, view: null, isNew: false };
     let activeView = 'Dashboard';
     let displayMode = 'card';
-    let careerTab = 'Applications'; // sub-tab within Career view
+    let careerTab  = 'Applications'; // sub-tab within Career view
+    let careerView = 'tiles';        // Applications view: 'tiles' | 'deck' | 'kanban'
 
     // ─── SCHEMAS (UI labels; ID column excluded from forms) ──────────────────
     const SCHEMA = {
@@ -765,7 +766,7 @@
 
     function createKanbanCard(item, view) {
       const titleField = {
-        Tasks: "Task Name", Goals: "Title", Reading: "Book Title"
+        Tasks: "Task Name", Goals: "Title", Reading: "Book Title", JobApplications: "Role"
       }[view] || "Title";
       const title = item[titleField] || 'Untitled';
 
@@ -774,8 +775,9 @@
       if (view === 'Tasks') {
         const goalLabel = resolveTaskGoalTitle(item);
         sub = [item.Priority, goalLabel, item["Due Date"]].filter(Boolean).join(' · ');
-      } else if (view === 'Goals')   sub = item.Area || '';
-      else if (view === 'Reading')   sub = item.Author || '';
+      } else if (view === 'Goals')         sub = item.Area || '';
+      else if (view === 'Reading')         sub = item.Author || '';
+      else if (view === 'JobApplications') sub = [item.Company, item["Date Applied"]].filter(Boolean).join(' · ');
 
       const priorityTag = (view === 'Tasks' && item.Priority)
         ? `<span class="text-[9px] font-black uppercase tracking-wider ${priorityClass(item.Priority)}">${escapeHtml(item.Priority)}</span>`
@@ -956,19 +958,35 @@
 
       content.innerHTML = html;
       if (displayMode === 'card') wireDragAndDrop();
+      if (careerTab === 'Applications' && careerView === 'kanban') wireKanbanDragAndDrop('JobApplications');
     }
 
-    function setCareerTab(tab) {
-      careerTab = tab;
-      render('Career');
-    }
+    function setCareerTab(tab) { careerTab = tab; render('Career'); }
+    function setCareerView(v)  { careerView = v;  render('Career'); }
 
     function renderApplicationsSection() {
+      // ── view-mode toggle ──────────────────────────────────────────────────
+      const modes = [
+        { key: 'tiles',  icon: 'grid_view',  label: 'Tiles' },
+        { key: 'deck',   icon: 'view_list',  label: 'Deck' },
+        { key: 'kanban', icon: 'view_column',label: 'Kanban' },
+      ];
       let html = `
-        <button onclick="openSidebar(null, 'JobApplications', true)"
-          class="w-full glass p-4 rounded-3xl border-dashed border-white/20 text-emerald-500 font-bold mb-4 text-sm tracking-wide active:scale-95 transition-transform">
-          + ADD APPLICATION
+        <div class="flex items-center gap-3 mb-4">
+          <button onclick="openSidebar(null, 'JobApplications', true)"
+            class="flex-1 glass p-4 rounded-3xl border-dashed border-white/20 text-emerald-500 font-bold text-sm tracking-wide active:scale-95 transition-transform">
+            + ADD APPLICATION
+          </button>
+          <div class="flex gap-1 glass rounded-2xl p-1 flex-shrink-0">`;
+      modes.forEach(m => {
+        const active = careerView === m.key;
+        const cls = active ? 'bg-emerald-500/20 text-emerald-400' : 'text-white/30 hover:text-white/60';
+        html += `<button title="${m.label}" onclick="setCareerView('${m.key}')"
+          class="p-2 rounded-xl transition-colors ${cls}">
+          <span class="material-icons" style="font-size:18px">${m.icon}</span>
         </button>`;
+      });
+      html += `</div></div>`;
 
       html += renderFilterBar('JobApplications');
 
@@ -980,9 +998,16 @@
         return html;
       }
 
-      const allStatuses = ENUM_FIELDS.Status.JobApplications;
-      const activeStatuses = getActiveStatuses('JobApplications') || allStatuses;
+      if (careerView === 'kanban') return html + renderKanbanView('JobApplications', data);
+      if (careerView === 'deck')   return html + renderAppDeck(data);
+      return html + renderAppTiles(data);
+    }
 
+    // Tiles — 2-col grid grouped by status (original layout)
+    function renderAppTiles(data) {
+      let html = '';
+      const allStatuses    = ENUM_FIELDS.Status.JobApplications;
+      const activeStatuses = getActiveStatuses('JobApplications') || allStatuses;
       allStatuses.filter(s => activeStatuses.some(a => a.toLowerCase() === s.toLowerCase()))
         .forEach(status => {
           const items = data.filter(i => (i.Status || '').toLowerCase() === status.toLowerCase());
@@ -992,7 +1017,6 @@
           items.forEach(item => { html += createJobAppCard(item); });
           html += `</div>`;
         });
-
       const unstatused = data.filter(i => !i.Status);
       if (unstatused.length) {
         html += `<div class="group-label">No Status</div>`;
@@ -1000,6 +1024,49 @@
         unstatused.forEach(item => { html += createJobAppCard(item); });
         html += `</div>`;
       }
+      return html;
+    }
+
+    // Deck — compact single-column list grouped by status
+    function renderAppDeck(data) {
+      let html = '';
+      const allStatuses    = ENUM_FIELDS.Status.JobApplications;
+      const activeStatuses = getActiveStatuses('JobApplications') || allStatuses;
+      const visible = allStatuses.filter(s => activeStatuses.some(a => a.toLowerCase() === s.toLowerCase()));
+
+      const renderDeckGroup = (label, items) => {
+        if (!items.length) return '';
+        let g = `<div class="group-label">${escapeHtml(label)}</div>`;
+        g += `<div class="glass rounded-3xl overflow-hidden mb-4">`;
+        items.forEach((item, idx) => {
+          const idAttr  = escapeHtml(String(item.ID || ''));
+          const border  = idx ? 'border-t border-white/5' : '';
+          const date    = item["Date Applied"] || '';
+          const notesDot = item.Notes
+            ? `<span class="material-icons flex-shrink-0" style="font-size:13px;color:rgba(255,255,255,0.2)">notes</span>`
+            : '';
+          g += `
+            <div onclick="openSidebar('${idAttr}', 'JobApplications')"
+              class="flex items-center gap-3 px-4 py-3.5 hover:bg-white/5 cursor-pointer transition-colors ${border}">
+              <span class="status-pill ${pillClass(item.Status)} flex-shrink-0" style="transform:scale(0.78);transform-origin:left;font-size:9px">${escapeHtml(item.Status || '—')}</span>
+              <div class="flex-1 min-w-0">
+                <p class="font-bold text-white text-sm truncate leading-tight">${escapeHtml(item.Role || 'Role TBD')}</p>
+                <p class="text-[10px] text-white/40 truncate">${escapeHtml(item.Company || '')}</p>
+              </div>
+              <div class="flex items-center gap-1.5 flex-shrink-0">
+                ${notesDot}
+                ${date ? `<span class="text-[10px] text-white/25 font-mono tabular-nums">${escapeHtml(date)}</span>` : ''}
+              </div>
+            </div>`;
+        });
+        g += `</div>`;
+        return g;
+      };
+
+      visible.forEach(status => {
+        html += renderDeckGroup(status, data.filter(i => (i.Status || '').toLowerCase() === status.toLowerCase()));
+      });
+      html += renderDeckGroup('No Status', data.filter(i => !i.Status));
       return html;
     }
 
@@ -2032,7 +2099,7 @@
       openSidebar, closeSidebar, saveChanges, deleteCurrentItem, confirmDelete, cancelDelete,
       toggleDisplayMode, toggleMenu, closeMenu, navigate, handleAddNewOption,
       toggleStatusFilter, quickAddKanban,
-      setCareerTab, openCareerResource
+      setCareerTab, setCareerView, openCareerResource
     });
   </script>
 </body>
