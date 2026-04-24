@@ -550,6 +550,15 @@
           const st = document.getElementById('field-Status');
           if (st) st.value = 'Wishlist';
         }, 60);
+      } else if (qp.get('quick') === 'link') {
+        render('Links');
+        openSidebar(null, 'Links', true);
+        // Pre-fill URL and Title from shortcut params.
+        setTimeout(() => {
+          const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+          set('field-URL',   qp.get('url')   || '');
+          set('field-Title', qp.get('title') || '');
+        }, 60);
       } else {
         render('Dashboard');
       }
