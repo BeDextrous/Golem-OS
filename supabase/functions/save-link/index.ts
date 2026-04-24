@@ -26,9 +26,11 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  // Auth check
-  const auth  = req.headers.get('Authorization') ?? '';
-  const token = auth.startsWith('Bearer ') ? auth.slice(7).trim() : auth.trim();
+  // Auth check — accept key from Authorization header OR ?key= query param
+  const auth    = req.headers.get('Authorization') ?? '';
+  const bearer  = auth.startsWith('Bearer ') ? auth.slice(7).trim() : auth.trim();
+  const qpKey   = new URL(req.url).searchParams.get('key') ?? '';
+  const token   = bearer || qpKey;
   if (!GOLEM_SAVE_KEY || token !== GOLEM_SAVE_KEY) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401, headers: { 'Content-Type': 'application/json' },
