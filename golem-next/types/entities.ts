@@ -1,0 +1,22 @@
+import type { Database } from './supabase'
+
+type T = Database['public']['Tables']
+
+export type TaskRow      = T['tasks']['Row']
+export type GoalRow      = T['goals']['Row']
+export type ObjectiveRow = T['objectives']['Row']
+export type ReadingRow   = T['reading']['Row']
+export type NoteRow      = T['notes']['Row']
+export type LinkRow      = T['links']['Row']
+export type FinanceRow   = T['finances']['Row']
+export type CRMRow       = T['crm']['Row']
+export type JobAppRow    = T['job_applications']['Row']
+export type TargetCoRow  = T['target_companies']['Row']
+
+export type TaskInsert    = T['tasks']['Insert']
+export type GoalInsert    = T['goals']['Insert']
+export type ReadingInsert = T['reading']['Insert']
+export type FinanceInsert = T['finances']['Insert']
+export type CRMInsert     = T['crm']['Insert']
+export type JobAppInsert  = T['job_applications']['Insert']
+export type TargetCoInsert = T['target_companies']['Insert']
