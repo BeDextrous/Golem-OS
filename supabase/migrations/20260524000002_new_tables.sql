@@ -58,9 +58,13 @@ CREATE INDEX IF NOT EXISTS projects_user_idx ON public.projects(user_id);
 CREATE INDEX IF NOT EXISTS projects_pillar_idx ON public.projects(pillar);
 
 -- FK from tasks → projects (project_id column added in migration 20260524000001)
-ALTER TABLE public.tasks
-  ADD CONSTRAINT IF NOT EXISTS tasks_project_id_fkey
-  FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE SET NULL;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'tasks_project_id_fkey') THEN
+    ALTER TABLE public.tasks
+      ADD CONSTRAINT tasks_project_id_fkey
+      FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE SET NULL;
+  END IF;
+END $$;
 
 -- ─── INVOICES ────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.invoices (

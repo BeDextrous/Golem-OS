@@ -318,9 +318,13 @@ create table if not exists public.projects (
 create index if not exists projects_user_idx on public.projects(user_id);
 create index if not exists projects_pillar_idx on public.projects(pillar);
 
-alter table public.tasks
-  add constraint if not exists tasks_project_id_fkey
-  foreign key (project_id) references public.projects(id) on delete set null;
+do $$ begin
+  if not exists (select 1 from pg_constraint where conname = 'tasks_project_id_fkey') then
+    alter table public.tasks
+      add constraint tasks_project_id_fkey
+      foreign key (project_id) references public.projects(id) on delete set null;
+  end if;
+end $$;
 
 -- ─── INVOICES ────────────────────────────────────────────────────────────────
 create table if not exists public.invoices (
