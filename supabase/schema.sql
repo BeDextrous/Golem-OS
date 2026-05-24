@@ -27,6 +27,7 @@ create table if not exists public.goals (
   area        text,
   status      text default 'Active' check (status in ('Active','Paused','Done')),
   notes       text,
+  pillar      text check (pillar in ('life','dextrous','work')),
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );
@@ -42,6 +43,7 @@ create table if not exists public.objectives (
   current_value  numeric,
   metric_unit    text,
   deadline       date,
+  pillar         text check (pillar in ('life','dextrous','work')),
   created_at     timestamptz not null default now(),
   updated_at     timestamptz not null default now()
 );
@@ -59,6 +61,9 @@ create table if not exists public.tasks (
   due_date      date,
   area          text,
   priority      text check (priority in ('High','Medium','Low')),
+  pillar        text check (pillar in ('life','dextrous','work')),
+  client_id     bigint references public.crm(id) on delete set null,
+  project_id    bigint,  -- FK to projects added after projects table
   created_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now()
 );
@@ -87,6 +92,8 @@ create table if not exists public.notes (
   title                 text,
   content               text,
   tags                  text,
+  pillar                text check (pillar in ('life','dextrous','work')),
+  drafts_uuid           text,
   parent_goal_id        bigint references public.goals(id)      on delete set null,
   parent_objective_id   bigint references public.objectives(id) on delete set null,
   parent_task_id        bigint references public.tasks(id)      on delete set null,
@@ -108,6 +115,7 @@ create table if not exists public.links (
   url                   text not null,
   website               text,
   date_added            date default current_date,
+  pillar                text check (pillar in ('life','dextrous','work')),
   parent_goal_id        bigint references public.goals(id)      on delete set null,
   parent_objective_id   bigint references public.objectives(id) on delete set null,
   parent_task_id        bigint references public.tasks(id)      on delete set null,
@@ -129,6 +137,7 @@ create table if not exists public.finances (
   label       text,
   category    text,
   amount      numeric(14,2) not null,
+  pillar      text check (pillar in ('life','dextrous','work')),
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );
@@ -146,6 +155,7 @@ create table if not exists public.crm (
   linkedin_url       text,
   last_contact_date  date,
   tags               text,
+  pillar             text check (pillar in ('life','dextrous','work')),
   interaction_log    text,
   created_at         timestamptz not null default now(),
   updated_at         timestamptz not null default now()
@@ -199,7 +209,12 @@ end $$;
 do $$
 declare t text;
 begin
-  foreach t in array array['goals','objectives','tasks','reading','notes','links','finances','crm','job_applications','target_companies']
+  foreach t in array array[
+    'goals','objectives','tasks','reading','notes','links','finances','crm',
+    'job_applications','target_companies',
+    'health_entries','clients','projects','invoices','knowledge_items',
+    'user_dashboard_config','user_pages'
+  ]
   loop
     execute format('drop trigger if exists %I_set_updated_at on public.%I', t, t);
     execute format(
@@ -209,11 +224,15 @@ begin
 end $$;
 
 -- ─── ROW-LEVEL SECURITY ──────────────────────────────────────────────────────
--- Every table: only the owning user can see / write their rows.
 do $$
 declare t text;
 begin
-  foreach t in array array['goals','objectives','tasks','reading','notes','links','finances','crm','job_applications','target_companies']
+  foreach t in array array[
+    'goals','objectives','tasks','reading','notes','links','finances','crm',
+    'job_applications','target_companies',
+    'health_entries','clients','projects','invoices','knowledge_items',
+    'cross_links','integration_cache','user_dashboard_config','user_pages'
+  ]
   loop
     execute format('alter table public.%I enable row level security', t);
     execute format('drop policy if exists "owner_select" on public.%I', t);
@@ -240,3 +259,151 @@ begin
     $f$, t);
   end loop;
 end $$;
+
+-- ─── HEALTH ENTRIES ──────────────────────────────────────────────────────────
+create table if not exists public.health_entries (
+  id          bigserial primary key,
+  user_id     uuid not null references auth.users(id) on delete cascade,
+  entry_date  date not null default current_date,
+  category    text not null check (category in ('sleep','exercise','nutrition','weight','mood','notes')),
+  value       numeric,
+  unit        text,
+  label       text,
+  notes       text,
+  source      text default 'manual' check (source in ('manual','oura','apple_health')),
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+create index if not exists health_entries_user_date_idx on public.health_entries(user_id, entry_date);
+
+-- ─── CLIENTS ─────────────────────────────────────────────────────────────────
+create table if not exists public.clients (
+  id              bigserial primary key,
+  user_id         uuid not null references auth.users(id) on delete cascade,
+  name            text not null,
+  company         text,
+  status          text default 'Active' check (status in ('Prospect','Active','Paused','Closed')),
+  contract_value  numeric(14,2),
+  currency        text default 'USD',
+  start_date      date,
+  end_date        date,
+  notes           text,
+  contact_id      bigint references public.crm(id) on delete set null,
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now()
+);
+create index if not exists clients_user_idx on public.clients(user_id);
+
+-- ─── PROJECTS ────────────────────────────────────────────────────────────────
+create table if not exists public.projects (
+  id            bigserial primary key,
+  user_id       uuid not null references auth.users(id) on delete cascade,
+  name          text not null,
+  pillar        text not null check (pillar in ('life','dextrous','work')),
+  project_type  text default 'personal' check (project_type in ('client','personal','work')),
+  client_id     bigint references public.clients(id) on delete set null,
+  status        text default 'Active' check (status in ('Planned','Active','On Hold','Done','Cancelled')),
+  start_date    date,
+  end_date      date,
+  description   text,
+  notes         text,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now()
+);
+create index if not exists projects_user_idx on public.projects(user_id);
+create index if not exists projects_pillar_idx on public.projects(pillar);
+
+alter table public.tasks
+  add constraint if not exists tasks_project_id_fkey
+  foreign key (project_id) references public.projects(id) on delete set null;
+
+-- ─── INVOICES ────────────────────────────────────────────────────────────────
+create table if not exists public.invoices (
+  id           bigserial primary key,
+  user_id      uuid not null references auth.users(id) on delete cascade,
+  client_id    bigint references public.clients(id) on delete set null,
+  amount       numeric(14,2) not null,
+  currency     text default 'USD',
+  status       text default 'Draft' check (status in ('Draft','Sent','Paid','Overdue','Cancelled')),
+  issued_date  date default current_date,
+  due_date     date,
+  paid_date    date,
+  notes        text,
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now()
+);
+create index if not exists invoices_user_idx on public.invoices(user_id);
+create index if not exists invoices_client_idx on public.invoices(client_id);
+
+-- ─── KNOWLEDGE ITEMS ─────────────────────────────────────────────────────────
+create table if not exists public.knowledge_items (
+  id          bigserial primary key,
+  user_id     uuid not null references auth.users(id) on delete cascade,
+  title       text not null,
+  content     text,
+  tags        text,
+  source_url  text,
+  project_id  bigint references public.projects(id) on delete set null,
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+create index if not exists knowledge_user_idx on public.knowledge_items(user_id);
+
+-- ─── CROSS LINKS ─────────────────────────────────────────────────────────────
+create table if not exists public.cross_links (
+  id                 bigserial primary key,
+  user_id            uuid not null references auth.users(id) on delete cascade,
+  source_table       text not null,
+  source_id          bigint not null,
+  target_table       text not null,
+  target_id          bigint not null,
+  relationship_label text,
+  created_at         timestamptz not null default now()
+);
+create index if not exists cross_links_user_idx on public.cross_links(user_id);
+
+-- ─── INTEGRATION CACHE ───────────────────────────────────────────────────────
+create table if not exists public.integration_cache (
+  id         bigserial primary key,
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  source     text not null,
+  data       jsonb not null default '{}',
+  fetched_at timestamptz not null default now(),
+  constraint integration_cache_user_source_unique unique (user_id, source)
+);
+create index if not exists integration_cache_user_idx on public.integration_cache(user_id);
+
+-- ─── USER DASHBOARD CONFIG ───────────────────────────────────────────────────
+create table if not exists public.user_dashboard_config (
+  id         bigserial primary key,
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  dashboard  text not null,
+  config     jsonb not null default '{}',
+  updated_at timestamptz not null default now(),
+  constraint user_dashboard_config_unique unique (user_id, dashboard)
+);
+
+-- ─── USER PAGES ──────────────────────────────────────────────────────────────
+create table if not exists public.user_pages (
+  id         bigserial primary key,
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  pillar     text not null check (pillar in ('life','dextrous','work')),
+  slug       text not null,
+  title      text not null,
+  icon       text,
+  data_type  text,
+  config     jsonb not null default '{}',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint user_pages_user_pillar_slug_unique unique (user_id, pillar, slug)
+);
+
+-- ─── GRANTS ──────────────────────────────────────────────────────────────────
+grant select, insert, update, delete
+  on public.goals, public.objectives, public.tasks, public.reading,
+     public.notes, public.links, public.finances, public.crm,
+     public.job_applications, public.target_companies,
+     public.health_entries, public.clients, public.projects, public.invoices,
+     public.knowledge_items, public.cross_links, public.integration_cache,
+     public.user_dashboard_config, public.user_pages
+  to authenticated;
