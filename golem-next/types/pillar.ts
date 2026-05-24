@@ -1,0 +1,92 @@
+export type Pillar = 'life' | 'dextrous' | 'work'
+
+export type PillarConfig = {
+  id: Pillar
+  label: string
+  color: string
+  bg: string
+  text: string
+  accent: string
+  border: string
+  badge: string
+  activePill: string
+  hoverPill: string
+  icon: string
+  routes: {
+    root: string
+    subnav: { label: string; href: string }[]
+  }
+}
+
+export const PILLARS = {
+  life: {
+    id: 'life' as const,
+    label: 'Life',
+    color: '#639922',
+    bg: 'bg-life-50',
+    text: 'text-life-800',
+    accent: 'text-life-400',
+    border: 'border-life-400',
+    badge: 'bg-life-100 text-life-800',
+    activePill: 'bg-life-400 text-white',
+    hoverPill: 'hover:bg-life-50 hover:text-life-800',
+    icon: 'Leaf',
+    routes: {
+      root: '/life',
+      subnav: [
+        { label: 'Overview', href: '/life' },
+        { label: 'Health', href: '/life/health' },
+        { label: 'Finances', href: '/life/finances' },
+        { label: 'Home', href: '/life/home' },
+        { label: 'Social', href: '/life/social' },
+        { label: 'Reading', href: '/life/reading' },
+      ],
+    },
+  },
+  dextrous: {
+    id: 'dextrous' as const,
+    label: 'Dextrous',
+    color: '#378ADD',
+    bg: 'bg-dextrous-50',
+    text: 'text-dextrous-800',
+    accent: 'text-dextrous-400',
+    border: 'border-dextrous-400',
+    badge: 'bg-dextrous-100 text-dextrous-800',
+    activePill: 'bg-dextrous-400 text-white',
+    hoverPill: 'hover:bg-dextrous-50 hover:text-dextrous-800',
+    icon: 'Briefcase',
+    routes: {
+      root: '/dextrous',
+      subnav: [
+        { label: 'Overview', href: '/dextrous' },
+        { label: 'Clients', href: '/dextrous/clients' },
+        { label: 'Projects', href: '/dextrous/projects' },
+        { label: 'Knowledge', href: '/dextrous/knowledge' },
+        { label: 'Jobs', href: '/dextrous/jobs' },
+        { label: 'Finances', href: '/dextrous/finances' },
+      ],
+    },
+  },
+  work: {
+    id: 'work' as const,
+    label: 'Work',
+    color: '#D85A30',
+    bg: 'bg-work-50',
+    text: 'text-work-800',
+    accent: 'text-work-400',
+    border: 'border-work-400',
+    badge: 'bg-work-100 text-work-800',
+    activePill: 'bg-work-400 text-white',
+    hoverPill: 'hover:bg-work-50 hover:text-work-800',
+    icon: 'Flame',
+    routes: {
+      root: '/work',
+      subnav: [
+        { label: 'Overview', href: '/work' },
+        { label: 'Projects', href: '/work/projects' },
+        { label: 'Tasks', href: '/work/tasks' },
+        { label: 'Team', href: '/work/team' },
+      ],
+    },
+  },
+} satisfies Record<Pillar, PillarConfig>

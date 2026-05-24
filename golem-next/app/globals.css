@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+/* Class-based dark mode for next-themes */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Stone — custom warm neutral */
+  --color-stone-50: #F7F6F3;
+  --color-stone-100: #EEECE7;
+  --color-stone-200: #DDD9D0;
+  --color-stone-400: #A8A39A;
+  --color-stone-600: #6B6560;
+  --color-stone-800: #3A3733;
+  --color-stone-900: #1E1C1A;
+
+  /* Life pillar — green */
+  --color-life-50: #EAF3DE;
+  --color-life-100: #C0DD97;
+  --color-life-200: #97C459;
+  --color-life-400: #639922;
+  --color-life-600: #3B6D11;
+  --color-life-800: #27500A;
+  --color-life-900: #173404;
+
+  /* Dextrous pillar — blue */
+  --color-dextrous-50: #E6F1FB;
+  --color-dextrous-100: #B5D4F4;
+  --color-dextrous-200: #85B7EB;
+  --color-dextrous-400: #378ADD;
+  --color-dextrous-600: #185FA5;
+  --color-dextrous-800: #0C447C;
+  --color-dextrous-900: #042C53;
+
+  /* Work pillar — terracotta */
+  --color-work-50: #FAECE7;
+  --color-work-100: #F5C4B3;
+  --color-work-200: #F0997B;
+  --color-work-400: #D85A30;
+  --color-work-600: #993C1D;
+  --color-work-800: #712B13;
+  --color-work-900: #4A1B0C;
+
+  /* Typography */
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Border radius */
+  --radius: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+}
