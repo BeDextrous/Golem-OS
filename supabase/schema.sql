@@ -178,9 +178,14 @@ create table if not exists public.job_applications (
   salary_range    text,
   salary_offer    text,
   notes           text,
-  contact_id      bigint references public.crm(id) on delete set null,
-  created_at      timestamptz not null default now(),
-  updated_at      timestamptz not null default now()
+  contact_id         bigint references public.crm(id) on delete set null,
+  location           text,
+  remote_type        text check (remote_type in ('Remote','Hybrid','Onsite')),
+  source             text,
+  next_action        text,
+  next_action_date   date,
+  created_at         timestamptz not null default now(),
+  updated_at         timestamptz not null default now()
 );
 create index if not exists job_applications_user_idx on public.job_applications(user_id);
 
