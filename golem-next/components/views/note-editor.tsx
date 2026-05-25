@@ -24,7 +24,7 @@ export function NoteEditor({ note: initial }: { note: NoteRow }) {
   const [note, setNote]             = useState(initial)
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved')
   const [showDelete, setShowDelete] = useState(false)
-  const timerRef  = useRef<ReturnType<typeof setTimeout>>()
+  const timerRef  = useRef<ReturnType<typeof setTimeout> | null>(null)
   const latestNote = useRef(note)
   latestNote.current = note
 
