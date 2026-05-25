@@ -3,6 +3,7 @@ import type {
   TaskRow, GoalRow, ObjectiveRow,
   ReadingRow, FinanceRow, CRMRow,
   JobAppRow, TargetCoRow,
+  NoteRow, LinkRow,
 } from '@/types/entities'
 
 export async function getTasks(): Promise<TaskRow[]> {
@@ -50,5 +51,17 @@ export async function getJobApps(): Promise<JobAppRow[]> {
 export async function getTargetCompanies(): Promise<TargetCoRow[]> {
   const sb = await createServerSupabaseClient()
   const { data } = await sb.from('target_companies').select('*').order('priority', { ascending: true })
+  return data ?? []
+}
+
+export async function getNotes(): Promise<NoteRow[]> {
+  const sb = await createServerSupabaseClient()
+  const { data } = await sb.from('notes').select('*').order('updated_at', { ascending: false })
+  return data ?? []
+}
+
+export async function getLinks(): Promise<LinkRow[]> {
+  const sb = await createServerSupabaseClient()
+  const { data } = await sb.from('links').select('*').order('created_at', { ascending: false })
   return data ?? []
 }
