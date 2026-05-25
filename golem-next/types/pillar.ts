@@ -64,6 +64,7 @@ export const PILLARS = {
         { label: 'Knowledge', href: '/dextrous/knowledge' },
         { label: 'Jobs', href: '/dextrous/jobs' },
         { label: 'Finances', href: '/dextrous/finances' },
+        { label: 'Invoices', href: '/dextrous/invoices' },
       ],
     },
   },

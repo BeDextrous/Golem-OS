@@ -5,6 +5,7 @@ import type {
   JobAppRow, TargetCoRow,
   NoteRow, LinkRow,
   ProjectRow, ClientRow, KnowledgeRow,
+  HealthRow, InvoiceRow,
 } from '@/types/entities'
 
 export async function getTasks(): Promise<TaskRow[]> {
@@ -82,5 +83,17 @@ export async function getClients(): Promise<ClientRow[]> {
 export async function getKnowledge(): Promise<KnowledgeRow[]> {
   const sb = await createServerSupabaseClient()
   const { data } = await sb.from('knowledge_items').select('*').order('updated_at', { ascending: false })
+  return data ?? []
+}
+
+export async function getHealthEntries(): Promise<HealthRow[]> {
+  const sb = await createServerSupabaseClient()
+  const { data } = await sb.from('health_entries').select('*').order('entry_date', { ascending: false })
+  return data ?? []
+}
+
+export async function getInvoices(): Promise<InvoiceRow[]> {
+  const sb = await createServerSupabaseClient()
+  const { data } = await sb.from('invoices').select('*').order('issued_date', { ascending: false })
   return data ?? []
 }
