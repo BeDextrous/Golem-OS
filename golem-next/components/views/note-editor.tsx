@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, ExternalLink, Trash2 } from 'lucide-react'
+import { ArrowLeft, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
 import type { NoteRow } from '@/types/entities'
@@ -24,28 +24,26 @@ export function NoteEditor({ note: initial }: { note: NoteRow }) {
   const [note, setNote]             = useState(initial)
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved')
   const [showDelete, setShowDelete] = useState(false)
-  const [draftsUuidInput, setDraftsUuidInput] = useState(initial.drafts_uuid ?? '')
-  const timerRef = useRef<ReturnType<typeof setTimeout>>()
+  const timerRef  = useRef<ReturnType<typeof setTimeout>>()
   const latestNote = useRef(note)
   latestNote.current = note
 
-  // ── Field updater ────────────────────────────────────────────────────
+  // ── Field updater ─────────────────────────────────────────────────────
   const upd = (field: keyof NoteRow, value: unknown) => {
     setNote(prev => ({ ...prev, [field]: value ?? null }))
     setSaveStatus('unsaved')
   }
 
-  // ── Save ─────────────────────────────────────────────────────────────
+  // ── Save ──────────────────────────────────────────────────────────────
   const save = useCallback(async (data: NoteRow) => {
     setSaveStatus('saving')
     const sb = createClient()
     const { error } = await sb.from('notes').update({
-      title:       data.title       ?? null,
-      content:     data.content     ?? null,
-      pillar:      data.pillar      ?? null,
-      tags:        data.tags        ?? null,
-      drafts_uuid: data.drafts_uuid ?? null,
-      updated_at:  new Date().toISOString(),
+      title:      data.title   ?? null,
+      content:    data.content ?? null,
+      pillar:     data.pillar  ?? null,
+      tags:       data.tags    ?? null,
+      updated_at: new Date().toISOString(),
     }).eq('id', data.id)
 
     if (error) {
@@ -65,43 +63,12 @@ export function NoteEditor({ note: initial }: { note: NoteRow }) {
     return () => clearTimeout(timerRef.current)
   }, [note, saveStatus, save])
 
-  // ── Save on page unload ───────────────────────────────────────────────
+  // ── Flush on page unload ──────────────────────────────────────────────
   useEffect(() => {
-    const flush = () => {
-      if (saveStatus === 'unsaved') save(latestNote.current)
-    }
+    const flush = () => { if (saveStatus === 'unsaved') save(latestNote.current) }
     window.addEventListener('beforeunload', flush)
     return () => window.removeEventListener('beforeunload', flush)
   }, [saveStatus, save])
-
-  // ── Drafts UUID field commit ──────────────────────────────────────────
-  const commitDraftsUuid = () => {
-    const val = draftsUuidInput.trim() || null
-    setNote(prev => ({ ...prev, drafts_uuid: val }))
-    setSaveStatus('unsaved')
-  }
-
-  // ── Open / Send to Drafts ─────────────────────────────────────────────
-  const openInDrafts = () => {
-    // Flush any unsaved changes first
-    clearTimeout(timerRef.current)
-    save(latestNote.current)
-
-    if (note.drafts_uuid) {
-      // Open the linked draft
-      window.location.href = `drafts://open?uuid=${note.drafts_uuid}`
-    } else {
-      // Create a new draft, embedding the note ID as a tag so the Drafts
-      // action can find this note when syncing back.
-      const text = [note.title, '', note.content]
-        .filter(x => x != null)
-        .join('\n')
-        .trim()
-      const encoded = encodeURIComponent(text)
-      window.location.href =
-        `drafts://create?text=${encoded}&tag=golem&tag=golem-note-${note.id}`
-    }
-  }
 
   // ── Delete ────────────────────────────────────────────────────────────
   const handleDelete = async () => {
@@ -111,7 +78,6 @@ export function NoteEditor({ note: initial }: { note: NoteRow }) {
     router.push('/life/notes')
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────
   const pillarColor = note.pillar ? PILLAR_COLORS[note.pillar] : undefined
 
   return (
@@ -127,27 +93,17 @@ export function NoteEditor({ note: initial }: { note: NoteRow }) {
           Notes
         </button>
 
-        <div className="flex items-center gap-3">
-          <span className={`text-xs transition-colors ${
-            saveStatus === 'saving' ? 'text-stone-400' :
-            saveStatus === 'error'  ? 'text-red-400' :
-            saveStatus === 'unsaved'? 'text-amber-500' :
-            'text-stone-300 dark:text-stone-600'
-          }`}>
-            {saveStatus === 'saving'  ? 'Saving…' :
-             saveStatus === 'error'   ? 'Error saving' :
-             saveStatus === 'unsaved' ? 'Unsaved' :
-             'Saved'}
-          </span>
-
-          <button
-            onClick={openInDrafts}
-            className="flex items-center gap-1.5 text-xs text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 border border-stone-200 dark:border-stone-700 rounded-md px-2.5 py-1.5 transition-colors hover:bg-stone-50 dark:hover:bg-stone-800"
-          >
-            <ExternalLink size={12} />
-            {note.drafts_uuid ? 'Open in Drafts' : 'Send to Drafts'}
-          </button>
-        </div>
+        <span className={`text-xs transition-colors ${
+          saveStatus === 'saving'  ? 'text-stone-400' :
+          saveStatus === 'error'   ? 'text-red-400' :
+          saveStatus === 'unsaved' ? 'text-amber-500' :
+          'text-stone-300 dark:text-stone-600'
+        }`}>
+          {saveStatus === 'saving'  ? 'Saving…' :
+           saveStatus === 'error'   ? 'Error saving' :
+           saveStatus === 'unsaved' ? 'Unsaved' :
+           'Saved'}
+        </span>
       </div>
 
       {/* ── Writing area ── */}
@@ -191,18 +147,6 @@ export function NoteEditor({ note: initial }: { note: NoteRow }) {
             onChange={e => upd('tags', e.target.value || null)}
             placeholder="tags, comma-separated"
             className="flex-1 min-w-24 text-xs text-stone-500 dark:text-stone-400 bg-transparent border-none outline-none placeholder:text-stone-300 dark:placeholder:text-stone-600"
-          />
-
-          <span className="text-stone-200 dark:text-stone-700 text-xs">·</span>
-
-          {/* Drafts UUID link */}
-          <input
-            value={draftsUuidInput}
-            onChange={e => setDraftsUuidInput(e.target.value)}
-            onBlur={commitDraftsUuid}
-            onKeyDown={e => e.key === 'Enter' && commitDraftsUuid()}
-            placeholder={note.drafts_uuid ? 'Drafts UUID linked ✓' : 'Paste Drafts UUID to link…'}
-            className="w-48 text-xs text-stone-400 dark:text-stone-500 bg-transparent border-none outline-none placeholder:text-stone-300 dark:placeholder:text-stone-600 truncate"
           />
 
           <span className="flex-1" />
