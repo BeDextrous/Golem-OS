@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { getTasks, getGoals, getObjectives } from '@/lib/queries'
+import { getTasks, getGoals, getObjectives, getProjects } from '@/lib/queries'
 
 function StatCard({
   title,
@@ -42,17 +42,18 @@ function StatCard({
 }
 
 export default async function WorkOverviewPage() {
-  const [tasks, goals, objectives] = await Promise.all([
-    getTasks(), getGoals(), getObjectives(),
+  const [tasks, goals, objectives, projects] = await Promise.all([
+    getTasks(), getGoals(), getObjectives(), getProjects(),
   ])
 
-  const activeTasks  = tasks.filter(t => t.status === 'Active')
-  const todayStr     = new Date().toISOString().slice(0, 10)
-  const overdueTasks = tasks.filter(t =>
+  const activeTasks    = tasks.filter(t => t.status === 'Active')
+  const todayStr       = new Date().toISOString().slice(0, 10)
+  const overdueTasks   = tasks.filter(t =>
     t.due_date && t.due_date < todayStr && t.status !== 'Done'
   )
-  const workGoals    = goals.filter(g => g.pillar === 'work' && g.status === 'Active')
+  const workGoals      = goals.filter(g => g.pillar === 'work' && g.status === 'Active')
   const allActiveGoals = goals.filter(g => g.status === 'Active')
+  const workProjects   = projects.filter(p => p.pillar === 'work' && p.status === 'Active')
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
@@ -81,6 +82,15 @@ export default async function WorkOverviewPage() {
             { label: 'objectives', value: objectives.length },
           ]}
           items={workGoals.slice(0, 3).map(g => g.title)}
+        />
+        <StatCard
+          title="Projects"
+          href="/work/projects"
+          stats={[
+            { label: 'active', value: workProjects.length },
+            { label: 'total', value: projects.filter(p => p.pillar === 'work').length },
+          ]}
+          items={workProjects.slice(0, 3).map(p => p.name)}
         />
       </div>
     </div>

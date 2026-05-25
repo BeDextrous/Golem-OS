@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { getJobApps, getTargetCompanies, getCRM, getGoals } from '@/lib/queries'
+import { getJobApps, getTargetCompanies, getCRM, getGoals, getClients, getProjects, getKnowledge } from '@/lib/queries'
 
 function StatCard({
   title,
@@ -42,13 +42,15 @@ function StatCard({
 }
 
 export default async function DextrousOverviewPage() {
-  const [apps, targets, contacts, goals] = await Promise.all([
-    getJobApps(), getTargetCompanies(), getCRM(), getGoals(),
+  const [apps, targets, contacts, goals, clients, projects, knowledge] = await Promise.all([
+    getJobApps(), getTargetCompanies(), getCRM(), getGoals(), getClients(), getProjects(), getKnowledge(),
   ])
 
   const ACTIVE_STATUSES = ['Applied', 'Phone Screen', 'Interview', 'Offer']
-  const activeApps = apps.filter(a => ACTIVE_STATUSES.includes(a.status ?? ''))
-  const dexGoals   = goals.filter(g => g.pillar === 'dextrous' && g.status === 'Active')
+  const activeApps    = apps.filter(a => ACTIVE_STATUSES.includes(a.status ?? ''))
+  const dexGoals      = goals.filter(g => g.pillar === 'dextrous' && g.status === 'Active')
+  const activeClients = clients.filter(c => c.status === 'Active')
+  const dexProjects   = projects.filter(p => p.pillar === 'dextrous' && p.status === 'Active')
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
@@ -70,13 +72,28 @@ export default async function DextrousOverviewPage() {
           items={activeApps.slice(0, 3).map(a => `${a.role ?? 'Role'} @ ${a.company}`)}
         />
         <StatCard
-          title="Contacts"
-          href="/dextrous/jobs"
+          title="Clients"
+          href="/dextrous/clients"
           stats={[
-            { label: 'contacts', value: contacts.length },
-            { label: 'targets', value: targets.length },
+            { label: 'active', value: activeClients.length },
+            { label: 'total', value: clients.length },
           ]}
-          items={contacts.slice(0, 3).map(c => `${c.name}${c.company ? ` · ${c.company}` : ''}`)}
+          items={activeClients.slice(0, 3).map(c => `${c.name}${c.company ? ` · ${c.company}` : ''}`)}
+        />
+        <StatCard
+          title="Projects"
+          href="/dextrous/projects"
+          stats={[
+            { label: 'active', value: dexProjects.length },
+            { label: 'total', value: projects.filter(p => p.pillar === 'dextrous').length },
+          ]}
+          items={dexProjects.slice(0, 3).map(p => p.name)}
+        />
+        <StatCard
+          title="Knowledge"
+          href="/dextrous/knowledge"
+          stats={[{ label: 'items', value: knowledge.length }]}
+          items={knowledge.slice(0, 3).map(k => k.title)}
         />
         <StatCard
           title="Goals"
