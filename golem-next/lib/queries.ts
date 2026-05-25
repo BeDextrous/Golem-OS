@@ -86,6 +86,20 @@ export async function getKnowledge(): Promise<KnowledgeRow[]> {
   return data ?? []
 }
 
+export async function getLifeFinances(): Promise<FinanceRow[]> {
+  const sb = await createServerSupabaseClient()
+  const { data } = await sb.from('finances').select('*')
+    .or('pillar.eq.life,pillar.is.null')
+    .order('entry_date', { ascending: false })
+  return data ?? []
+}
+
+export async function getNoteById(id: number): Promise<NoteRow | null> {
+  const sb = await createServerSupabaseClient()
+  const { data } = await sb.from('notes').select('*').eq('id', id).single()
+  return data ?? null
+}
+
 export async function getHealthEntries(): Promise<HealthRow[]> {
   const sb = await createServerSupabaseClient()
   const { data } = await sb.from('health_entries').select('*').order('entry_date', { ascending: false })

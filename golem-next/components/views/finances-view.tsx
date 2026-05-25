@@ -9,20 +9,32 @@ import type { FinanceRow } from '@/types/entities'
 
 const today = () => new Date().toISOString().slice(0, 10)
 
+const PILLAR_OPTS = [
+  { value: 'life',     label: 'Life' },
+  { value: 'dextrous', label: 'Dextrous' },
+  { value: 'work',     label: 'Work' },
+]
+
 type Form = Partial<Omit<FinanceRow, 'id' | 'user_id' | 'created_at' | 'updated_at'>>
 
-export function FinancesView({ initialItems }: { initialItems: FinanceRow[] }) {
-  const [items, setItems] = useState(initialItems)
+export function FinancesView({
+  initialItems,
+  defaultPillar,
+}: {
+  initialItems: FinanceRow[]
+  defaultPillar?: string
+}) {
+  const [items, setItems]       = useState(initialItems)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editItem, setEditItem] = useState<FinanceRow | null>(null)
-  const [form, setForm] = useState<Form>({})
+  const [form, setForm]         = useState<Form>({})
 
   const upd = <K extends keyof Form>(k: K, v: Form[K]) =>
     setForm(f => ({ ...f, [k]: v ?? null }))
 
   const openNew = () => {
     setEditItem(null)
-    setForm({ entry_date: today() })
+    setForm({ entry_date: today(), pillar: defaultPillar ?? undefined })
     setDrawerOpen(true)
   }
 
@@ -30,9 +42,10 @@ export function FinancesView({ initialItems }: { initialItems: FinanceRow[] }) {
     setEditItem(item)
     setForm({
       entry_date: item.entry_date,
-      label: item.label,
-      category: item.category,
-      amount: item.amount,
+      label:      item.label,
+      category:   item.category,
+      amount:     item.amount,
+      pillar:     item.pillar ?? undefined,
     })
     setDrawerOpen(true)
   }
@@ -43,10 +56,12 @@ export function FinancesView({ initialItems }: { initialItems: FinanceRow[] }) {
     const { data: { user } } = await sb.auth.getUser()
     if (!user) throw new Error('Not authenticated')
 
-    const payload = {
+    const payload: Form = {
       ...form,
       entry_date: form.entry_date || today(),
-      amount: form.amount ?? 0,
+      amount:     form.amount ?? 0,
+      // Always stamp the pillar when defaultPillar is set
+      pillar:     defaultPillar ?? form.pillar,
     }
 
     if (editItem) {
@@ -101,11 +116,15 @@ export function FinancesView({ initialItems }: { initialItems: FinanceRow[] }) {
   const fmt = (n: number | null) =>
     n == null ? '—' : `$${Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2 })}`
 
+  const heading = defaultPillar
+    ? defaultPillar.charAt(0).toUpperCase() + defaultPillar.slice(1) + ' Finances'
+    : 'Finances'
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-stone-900 dark:text-stone-50">Finances</h1>
+          <h1 className="text-xl font-semibold text-stone-900 dark:text-stone-50">{heading}</h1>
           <p className="text-xs text-stone-400 mt-0.5">Total: {fmt(total)}</p>
         </div>
         <Button onClick={openNew} size="sm">
@@ -169,7 +188,7 @@ export function FinancesView({ initialItems }: { initialItems: FinanceRow[] }) {
           step="0.01"
           value={form.amount ?? ''}
           onChange={e => upd('amount', e.target.value ? Number(e.target.value) : undefined)}
-          placeholder="0.00"
+          placeholder="0.00 (negative = expense)"
         />
         <Input
           label="Date"
@@ -184,6 +203,16 @@ export function FinancesView({ initialItems }: { initialItems: FinanceRow[] }) {
           placeholder="— None —"
           options={dynamicCategories.map(c => ({ value: c, label: c }))}
         />
+        {/* Only show pillar picker when not scoped to a specific pillar */}
+        {!defaultPillar && (
+          <Select
+            label="Pillar"
+            value={form.pillar ?? ''}
+            onChange={e => upd('pillar', e.target.value || undefined)}
+            placeholder="— None —"
+            options={PILLAR_OPTS}
+          />
+        )}
       </ItemDrawer>
     </div>
   )

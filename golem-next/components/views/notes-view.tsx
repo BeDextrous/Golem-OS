@@ -2,24 +2,19 @@
 import { useState, useMemo } from 'react'
 import { Plus, Search } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Button, Input, Select, Textarea } from '@/components/ui'
-import { ItemDrawer } from '@/components/data/item-drawer'
+import { Button } from '@/components/ui'
 import type { NoteRow } from '@/types/entities'
 
 const PILLAR_OPTS = [
-  { value: 'life', label: 'Life' },
-  { value: 'dextrous', label: 'Dextrous' },
-  { value: 'work', label: 'Work' },
+  { value: 'life',      label: 'Life' },
+  { value: 'dextrous',  label: 'Dextrous' },
+  { value: 'work',      label: 'Work' },
 ]
 const PILLAR_COLORS: Record<string, string> = {
   life: '#639922', dextrous: '#378ADD', work: '#D85A30',
 }
-
-type Form = Partial<Omit<NoteRow,
-  'id' | 'user_id' | 'created_at' | 'updated_at' |
-  'parent_goal_id' | 'parent_objective_id' | 'parent_task_id' | 'drafts_uuid'
->>
 
 export function NotesView({
   initialItems,
@@ -28,59 +23,35 @@ export function NotesView({
   initialItems: NoteRow[]
   defaultPillar?: string
 }) {
-  const [items, setItems]           = useState(initialItems)
-  const [search, setSearch]         = useState('')
+  const router = useRouter()
+  const [items, setItems]               = useState(initialItems)
+  const [search, setSearch]             = useState('')
   const [pillarFilter, setPillarFilter] = useState<string | null>(defaultPillar ?? null)
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const [editItem, setEditItem]     = useState<NoteRow | null>(null)
-  const [form, setForm]             = useState<Form>({})
+  const [creating, setCreating]         = useState(false)
 
-  const upd = <K extends keyof Form>(k: K, v: Form[K]) =>
-    setForm(f => ({ ...f, [k]: v ?? undefined }))
-
-  const openNew = () => {
-    setEditItem(null)
-    setForm({ pillar: pillarFilter ?? undefined })
-    setDrawerOpen(true)
-  }
-  const openEdit = (item: NoteRow) => {
-    setEditItem(item)
-    setForm({
-      title:   item.title   ?? undefined,
-      content: item.content ?? undefined,
-      pillar:  item.pillar  ?? undefined,
-      tags:    item.tags    ?? undefined,
-    })
-    setDrawerOpen(true)
-  }
-
-  const handleSave = async () => {
-    const sb = createClient()
-    const { data: { user } } = await sb.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
-    const payload = { ...form }
-    if (editItem) {
-      const { error } = await sb.from('notes').update(payload).eq('id', editItem.id)
+  // ── New note: create blank in DB then navigate to editor ──────────────────
+  const openNew = async () => {
+    if (creating) return
+    setCreating(true)
+    try {
+      const sb = createClient()
+      const { data: { user } } = await sb.auth.getUser()
+      if (!user) { toast.error('Not signed in'); return }
+      const { data, error } = await sb
+        .from('notes')
+        .insert({ user_id: user.id, pillar: pillarFilter ?? null })
+        .select()
+        .single()
       if (error) throw error
-      setItems(prev => prev.map(n => n.id === editItem.id ? { ...n, ...payload, updated_at: new Date().toISOString() } : n))
-      toast.success('Updated')
-    } else {
-      const { data, error } = await sb.from('notes').insert({ ...payload, user_id: user.id }).select().single()
-      if (error) throw error
-      if (data) setItems(prev => [data, ...prev])
-      toast.success('Note added')
+      if (data) {
+        setItems(prev => [data, ...prev])
+        router.push(`/life/notes/${data.id}`)
+      }
+    } catch {
+      toast.error('Could not create note')
+    } finally {
+      setCreating(false)
     }
-    setDrawerOpen(false)
-  }
-
-  const handleDelete = async () => {
-    if (!editItem) return
-    const sb = createClient()
-    const { error } = await sb.from('notes').delete().eq('id', editItem.id)
-    if (error) throw error
-    setItems(prev => prev.filter(n => n.id !== editItem.id))
-    setDrawerOpen(false)
-    toast.success('Deleted')
   }
 
   const filtered = useMemo(() => {
@@ -89,9 +60,9 @@ export function NotesView({
     if (search.trim()) {
       const q = search.toLowerCase()
       out = out.filter(n =>
-        (n.title ?? '').toLowerCase().includes(q) ||
+        (n.title   ?? '').toLowerCase().includes(q) ||
         (n.content ?? '').toLowerCase().includes(q) ||
-        (n.tags ?? '').toLowerCase().includes(q)
+        (n.tags    ?? '').toLowerCase().includes(q)
       )
     }
     return out
@@ -107,8 +78,8 @@ export function NotesView({
           <h1 className="text-xl font-semibold text-stone-900 dark:text-stone-50">Notes</h1>
           <p className="text-xs text-stone-400 mt-0.5">{items.length} notes</p>
         </div>
-        <Button onClick={openNew} size="sm">
-          <Plus size={14} /> New Note
+        <Button onClick={openNew} size="sm" disabled={creating}>
+          <Plus size={14} /> {creating ? 'Creating…' : 'New Note'}
         </Button>
       </div>
 
@@ -150,7 +121,7 @@ export function NotesView({
           {filtered.map((note, idx) => (
             <button
               key={note.id}
-              onClick={() => openEdit(note)}
+              onClick={() => router.push(`/life/notes/${note.id}`)}
               className={`w-full text-left px-4 py-3 hover:bg-stone-50 dark:hover:bg-stone-800/50 transition-colors ${
                 idx > 0 ? 'border-t border-stone-100 dark:border-stone-800' : ''
               }`}
@@ -187,6 +158,9 @@ export function NotesView({
                   <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
                     {fmt(note.updated_at)}
                   </p>
+                  {note.drafts_uuid && (
+                    <p className="text-xs text-stone-300 dark:text-stone-600 mt-0.5">Drafts ✓</p>
+                  )}
                 </div>
               </div>
             </button>
@@ -199,41 +173,6 @@ export function NotesView({
           <p className="text-sm">{search || pillarFilter ? 'No notes match.' : 'No notes yet.'}</p>
         </div>
       )}
-
-      <ItemDrawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        title={editItem ? 'Edit Note' : 'New Note'}
-        onSave={handleSave}
-        onDelete={editItem ? handleDelete : undefined}
-      >
-        <Input
-          label="Title"
-          value={form.title ?? ''}
-          onChange={e => upd('title', e.target.value || undefined)}
-          placeholder="Note title (optional)"
-        />
-        <Textarea
-          label="Content"
-          value={form.content ?? ''}
-          onChange={e => upd('content', e.target.value || undefined)}
-          placeholder="Write your note…"
-          rows={8}
-        />
-        <Input
-          label="Tags"
-          value={form.tags ?? ''}
-          onChange={e => upd('tags', e.target.value || undefined)}
-          placeholder="tag1, tag2, tag3"
-        />
-        <Select
-          label="Pillar"
-          value={form.pillar ?? ''}
-          onChange={e => upd('pillar', e.target.value || undefined)}
-          placeholder="— None —"
-          options={PILLAR_OPTS}
-        />
-      </ItemDrawer>
     </div>
   )
 }
