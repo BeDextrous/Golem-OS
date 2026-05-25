@@ -1,5 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Golem OS — Drafts Sync Action
+// Golem OS — "→ Save to Golem OS" Drafts Action  (Drafts → Golem)
+// Companion: drafts-fetch.js handles the reverse direction (Golem → Drafts)
 // ─────────────────────────────────────────────────────────────────────────────
 //
 // SETUP (one-time):
