@@ -1,8 +1,6 @@
 import Link from 'next/link'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { getTasks, getFinances, getJobApps, getReading } from '@/lib/queries'
-
-const ACTIVE_APP_STATUSES = new Set(['Applied', 'Phone Screen', 'Interview', 'Offer'])
+import { getTasks, getFinances, getReading, getNotes, getGoals, getObjectives } from '@/lib/queries'
+import { ClickableTaskList } from '@/components/dashboard/clickable-task-list'
 
 function Section({ title, href, children }: {
   title: string
@@ -33,14 +31,11 @@ function EmptyRow({ label }: { label: string }) {
 }
 
 export default async function HomePage() {
-  const supabase = await createServerSupabaseClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  const [tasks, finances, apps, reading] = await Promise.all([
-    getTasks(), getFinances(), getJobApps(), getReading(),
+  const [tasks, finances, reading, notes, goals, objectives] = await Promise.all([
+    getTasks(), getFinances(), getReading(), getNotes(), getGoals(), getObjectives(),
   ])
 
-  const today = new Date()
+  const today    = new Date()
   const todayStr = today.toISOString().slice(0, 10)
   const thisMonth = todayStr.slice(0, 7)
 
@@ -60,22 +55,17 @@ export default async function HomePage() {
     .filter(t => t.due_date && t.due_date <= todayStr && t.status !== 'Done')
     .sort((a, b) => (a.due_date ?? '').localeCompare(b.due_date ?? ''))
 
-  // Active job apps in pipeline
-  const activeApps = apps
-    .filter(a => ACTIVE_APP_STATUSES.has(a.status ?? ''))
-    .sort((a, b) => {
-      const order = ['Offer', 'Interview', 'Phone Screen', 'Applied']
-      return order.indexOf(a.status ?? '') - order.indexOf(b.status ?? '')
-    })
-
   // This month's finance summary
   const monthEntries = finances.filter(f => f.entry_date?.startsWith(thisMonth))
-  const monthTotal = monthEntries.reduce((s, f) => s + (f.amount ?? 0), 0)
-  const fmtMoney = (n: number) =>
+  const monthTotal   = monthEntries.reduce((s, f) => s + (f.amount ?? 0), 0)
+  const fmtMoney     = (n: number) =>
     `${n < 0 ? '-' : ''}$${Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2 })}`
 
   // Currently reading
   const currentReads = reading.filter(r => r.status === 'Reading')
+
+  // Recent notes
+  const recentNotes = notes.slice(0, 5)
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
@@ -85,34 +75,17 @@ export default async function HomePage() {
         <p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">{dateLabel}</p>
       </div>
 
-      {/* Today's tasks */}
+      {/* Today's tasks — clickable */}
       <Section title={`Today · ${urgentTasks.length} task${urgentTasks.length !== 1 ? 's' : ''}`} href="/work/tasks">
         {urgentTasks.length === 0 ? (
           <EmptyRow label="No tasks due — enjoy the day." />
         ) : (
-          urgentTasks.slice(0, 5).map((task, idx) => {
-            const isOverdue = (task.due_date ?? '') < todayStr
-            return (
-              <div
-                key={task.id}
-                className={`flex items-center gap-3 px-4 py-2.5 ${
-                  idx > 0 ? 'border-t border-stone-100 dark:border-stone-800' : ''
-                }`}
-              >
-                <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                  isOverdue ? 'bg-red-400' : 'bg-amber-400'
-                }`} />
-                <p className="text-sm text-stone-800 dark:text-stone-200 flex-1 truncate">
-                  {task.name}
-                </p>
-                <span className={`text-xs shrink-0 ${
-                  isOverdue ? 'text-red-500' : 'text-stone-400'
-                }`}>
-                  {isOverdue ? `overdue ${task.due_date}` : 'today'}
-                </span>
-              </div>
-            )
-          })
+          <ClickableTaskList
+            initialTasks={urgentTasks.slice(0, 5)}
+            goals={goals}
+            objectives={objectives}
+            dueBefore={todayStr}
+          />
         )}
         {urgentTasks.length > 5 && (
           <div className="px-4 py-2 border-t border-stone-100 dark:border-stone-800">
@@ -123,29 +96,36 @@ export default async function HomePage() {
         )}
       </Section>
 
-      {/* Job pipeline */}
-      {activeApps.length > 0 && (
-        <Section title={`Pipeline · ${activeApps.length} active`} href="/dextrous/jobs">
-          {activeApps.slice(0, 5).map((app, idx) => (
-            <div
-              key={app.id}
-              className={`flex items-center gap-3 px-4 py-2.5 ${
+      {/* Recent notes */}
+      <Section title={`Notes · ${notes.length} total`} href="/life/notes">
+        {recentNotes.length === 0 ? (
+          <EmptyRow label="No notes yet." />
+        ) : (
+          recentNotes.map((note, idx) => (
+            <Link
+              key={note.id}
+              href={`/life/notes/${note.id}`}
+              className={`flex items-center gap-3 px-4 py-2.5 hover:bg-stone-50 dark:hover:bg-stone-800/50 transition-colors ${
                 idx > 0 ? 'border-t border-stone-100 dark:border-stone-800' : ''
               }`}
             >
-              <span className="text-xs px-2 py-0.5 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400 shrink-0">
-                {app.status}
-              </span>
               <p className="text-sm text-stone-800 dark:text-stone-200 flex-1 truncate">
-                {app.role ? `${app.role} @ ${app.company}` : app.company}
+                {note.title ?? 'Untitled'}
               </p>
-              {app.next_action_date && app.next_action_date <= todayStr && (
-                <span className="text-xs text-amber-500 shrink-0">action due</span>
+              {note.pillar && (
+                <span className="text-xs text-stone-400 dark:text-stone-500 shrink-0 capitalize">
+                  {note.pillar}
+                </span>
               )}
-            </div>
-          ))}
-        </Section>
-      )}
+              {note.updated_at && (
+                <span className="text-xs text-stone-300 dark:text-stone-600 shrink-0 hidden sm:inline">
+                  {new Date(note.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                </span>
+              )}
+            </Link>
+          ))
+        )}
+      </Section>
 
       {/* Bottom row: finances + reading */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -159,8 +139,8 @@ export default async function HomePage() {
           {monthEntries.slice(0, 3).map((f, idx) => (
             <div
               key={f.id}
-              className={`flex items-center justify-between px-4 py-1.5 ${
-                idx > 0 ? 'border-t border-stone-100 dark:border-stone-800' : 'border-t border-stone-100 dark:border-stone-800'
+              className={`flex items-center justify-between px-4 py-1.5 border-t border-stone-100 dark:border-stone-800 ${
+                idx > 0 ? '' : ''
               }`}
             >
               <p className="text-xs text-stone-600 dark:text-stone-400 truncate flex-1">{f.label ?? '—'}</p>

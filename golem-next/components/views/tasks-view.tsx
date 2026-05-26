@@ -29,12 +29,13 @@ const PRIORITY_COLOR: Record<string, string> = {
 type Form = Partial<Omit<TaskRow, 'id' | 'user_id' | 'created_at' | 'updated_at'>>
 
 interface Props {
-  initialTasks: TaskRow[]
-  goals: GoalRow[]
-  objectives: ObjectiveRow[]
+  initialTasks:  TaskRow[]
+  goals:         GoalRow[]
+  objectives:    ObjectiveRow[]
+  defaultPillar?: string
 }
 
-export function TasksView({ initialTasks, goals, objectives }: Props) {
+export function TasksView({ initialTasks, goals, objectives, defaultPillar }: Props) {
   const [items, setItems] = useState(initialTasks)
   const [activeStatuses, setActiveStatuses] = useState<string[]>([])
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -50,7 +51,7 @@ export function TasksView({ initialTasks, goals, objectives }: Props) {
 
   const openNew = () => {
     setEditItem(null)
-    setForm({ status: 'To Do' })
+    setForm({ status: 'To Do', pillar: defaultPillar ?? null })
     setDrawerOpen(true)
   }
 

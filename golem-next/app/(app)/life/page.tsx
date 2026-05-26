@@ -1,11 +1,9 @@
 import Link from 'next/link'
-import { getReading, getFinances, getNotes, getLinks, getGoals } from '@/lib/queries'
+import { getReading, getFinances, getNotes, getLinks, getGoals, getTasks, getObjectives } from '@/lib/queries'
+import { ClickableTaskList } from '@/components/dashboard/clickable-task-list'
 
 function StatCard({
-  title,
-  href,
-  stats,
-  items,
+  title, href, stats, items,
 }: {
   title: string
   href: string
@@ -31,9 +29,7 @@ function StatCard({
       {items.length > 0 && (
         <ul className="space-y-1">
           {items.map((item, i) => (
-            <li key={i} className="text-xs text-stone-600 dark:text-stone-400 truncate">
-              · {item}
-            </li>
+            <li key={i} className="text-xs text-stone-600 dark:text-stone-400 truncate">· {item}</li>
           ))}
         </ul>
       )}
@@ -42,13 +38,13 @@ function StatCard({
 }
 
 export default async function LifeOverviewPage() {
-  const [reading, finances, notes, links, goals] = await Promise.all([
-    getReading(), getFinances(), getNotes(), getLinks(), getGoals(),
+  const [reading, finances, notes, links, goals, tasks, objectives] = await Promise.all([
+    getReading(), getFinances(), getNotes(), getLinks(), getGoals(), getTasks(), getObjectives(),
   ])
 
-  const thisMonth = new Date().toISOString().slice(0, 7)
+  const thisMonth     = new Date().toISOString().slice(0, 7)
   const monthFinances = finances.filter(f => f.entry_date?.startsWith(thisMonth))
-  const monthTotal = monthFinances.reduce((s, f) => s + (f.amount ?? 0), 0)
+  const monthTotal    = monthFinances.reduce((s, f) => s + (f.amount ?? 0), 0)
   const fmt = (n: number) =>
     `${n < 0 ? '-' : ''}$${Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2 })}`
 
@@ -56,6 +52,7 @@ export default async function LifeOverviewPage() {
   const lifeGoals     = goals.filter(g => g.pillar === 'life' && g.status === 'Active')
   const lifeNotes     = notes.filter(n => n.pillar === 'life')
   const lifeLinks     = links.filter(l => l.pillar === 'life')
+  const lifeTasks     = tasks.filter(t => t.pillar === 'life' && t.status !== 'Done')
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
@@ -66,7 +63,17 @@ export default async function LifeOverviewPage() {
         </p>
       </div>
 
+      {/* Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <StatCard
+          title="Tasks"
+          href="/life/tasks"
+          stats={[
+            { label: 'active', value: lifeTasks.filter(t => t.status === 'Active').length },
+            { label: 'total', value: lifeTasks.length },
+          ]}
+          items={lifeTasks.slice(0, 3).map(t => t.name)}
+        />
         <StatCard
           title="Finances"
           href="/life/finances"
@@ -107,6 +114,25 @@ export default async function LifeOverviewPage() {
           items={lifeLinks.slice(0, 3).map(l => l.title ?? l.url)}
         />
       </div>
+
+      {/* Inline clickable task list */}
+      {lifeTasks.length > 0 && (
+        <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-lg overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-stone-100 dark:border-stone-800">
+            <p className="text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500">
+              Active Tasks
+            </p>
+            <Link href="/life/tasks" className="text-xs text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors">
+              View all →
+            </Link>
+          </div>
+          <ClickableTaskList
+            initialTasks={lifeTasks.slice(0, 8)}
+            goals={goals}
+            objectives={objectives}
+          />
+        </div>
+      )}
     </div>
   )
 }

@@ -64,6 +64,16 @@ export function GlobalNav() {
                   </Link>
                 )
               })}
+              <Link
+                href="/focus"
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  pathname.startsWith('/focus')
+                    ? 'bg-stone-800 text-white dark:bg-stone-100 dark:text-stone-900'
+                    : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-stone-900 dark:hover:text-stone-100'
+                }`}
+              >
+                Focus
+              </Link>
             </nav>
           </div>
 

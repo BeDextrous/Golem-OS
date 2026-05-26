@@ -1,11 +1,9 @@
 import Link from 'next/link'
 import { getTasks, getGoals, getObjectives, getProjects } from '@/lib/queries'
+import { ClickableTaskList } from '@/components/dashboard/clickable-task-list'
 
 function StatCard({
-  title,
-  href,
-  stats,
-  items,
+  title, href, stats, items,
 }: {
   title: string
   href: string
@@ -31,9 +29,7 @@ function StatCard({
       {items.length > 0 && (
         <ul className="space-y-1">
           {items.map((item, i) => (
-            <li key={i} className="text-xs text-stone-600 dark:text-stone-400 truncate">
-              · {item}
-            </li>
+            <li key={i} className="text-xs text-stone-600 dark:text-stone-400 truncate">· {item}</li>
           ))}
         </ul>
       )}
@@ -46,11 +42,10 @@ export default async function WorkOverviewPage() {
     getTasks(), getGoals(), getObjectives(), getProjects(),
   ])
 
-  const activeTasks    = tasks.filter(t => t.status === 'Active')
+  const workTasks      = tasks.filter(t => t.pillar === 'work')
+  const activeTasks    = workTasks.filter(t => t.status === 'Active')
   const todayStr       = new Date().toISOString().slice(0, 10)
-  const overdueTasks   = tasks.filter(t =>
-    t.due_date && t.due_date < todayStr && t.status !== 'Done'
-  )
+  const overdueTasks   = workTasks.filter(t => t.due_date && t.due_date < todayStr && t.status !== 'Done')
   const workGoals      = goals.filter(g => g.pillar === 'work' && g.status === 'Active')
   const allActiveGoals = goals.filter(g => g.status === 'Active')
   const workProjects   = projects.filter(p => p.pillar === 'work' && p.status === 'Active')
@@ -59,11 +54,10 @@ export default async function WorkOverviewPage() {
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
       <div>
         <h1 className="text-xl font-semibold text-stone-900 dark:text-stone-50">Work</h1>
-        <p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
-          Projects, tasks, and team
-        </p>
+        <p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">Projects, tasks, and goals</p>
       </div>
 
+      {/* Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard
           title="Tasks"
@@ -93,6 +87,25 @@ export default async function WorkOverviewPage() {
           items={workProjects.slice(0, 3).map(p => p.name)}
         />
       </div>
+
+      {/* Inline clickable task list */}
+      {workTasks.filter(t => t.status !== 'Done').length > 0 && (
+        <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-lg overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-stone-100 dark:border-stone-800">
+            <p className="text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500">
+              Active Tasks
+            </p>
+            <Link href="/work/tasks" className="text-xs text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors">
+              View all →
+            </Link>
+          </div>
+          <ClickableTaskList
+            initialTasks={workTasks.filter(t => t.status !== 'Done').slice(0, 8)}
+            goals={goals}
+            objectives={objectives}
+          />
+        </div>
+      )}
     </div>
   )
 }

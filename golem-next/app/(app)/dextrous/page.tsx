@@ -1,11 +1,9 @@
 import Link from 'next/link'
-import { getJobApps, getTargetCompanies, getCRM, getGoals, getClients, getProjects, getKnowledge } from '@/lib/queries'
+import { getJobApps, getTargetCompanies, getCRM, getGoals, getClients, getProjects, getKnowledge, getTasks, getObjectives } from '@/lib/queries'
+import { ClickableTaskList } from '@/components/dashboard/clickable-task-list'
 
 function StatCard({
-  title,
-  href,
-  stats,
-  items,
+  title, href, stats, items,
 }: {
   title: string
   href: string
@@ -31,9 +29,7 @@ function StatCard({
       {items.length > 0 && (
         <ul className="space-y-1">
           {items.map((item, i) => (
-            <li key={i} className="text-xs text-stone-600 dark:text-stone-400 truncate">
-              · {item}
-            </li>
+            <li key={i} className="text-xs text-stone-600 dark:text-stone-400 truncate">· {item}</li>
           ))}
         </ul>
       )}
@@ -42,8 +38,8 @@ function StatCard({
 }
 
 export default async function DextrousOverviewPage() {
-  const [apps, targets, contacts, goals, clients, projects, knowledge] = await Promise.all([
-    getJobApps(), getTargetCompanies(), getCRM(), getGoals(), getClients(), getProjects(), getKnowledge(),
+  const [apps, targets, contacts, goals, clients, projects, knowledge, tasks, objectives] = await Promise.all([
+    getJobApps(), getTargetCompanies(), getCRM(), getGoals(), getClients(), getProjects(), getKnowledge(), getTasks(), getObjectives(),
   ])
 
   const ACTIVE_STATUSES = ['Applied', 'Phone Screen', 'Interview', 'Offer']
@@ -51,6 +47,7 @@ export default async function DextrousOverviewPage() {
   const dexGoals      = goals.filter(g => g.pillar === 'dextrous' && g.status === 'Active')
   const activeClients = clients.filter(c => c.status === 'Active')
   const dexProjects   = projects.filter(p => p.pillar === 'dextrous' && p.status === 'Active')
+  const dexTasks      = tasks.filter(t => t.pillar === 'dextrous' && t.status !== 'Done')
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
@@ -61,7 +58,17 @@ export default async function DextrousOverviewPage() {
         </p>
       </div>
 
+      {/* Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <StatCard
+          title="Tasks"
+          href="/dextrous/tasks"
+          stats={[
+            { label: 'active', value: dexTasks.filter(t => t.status === 'Active').length },
+            { label: 'total', value: dexTasks.length },
+          ]}
+          items={dexTasks.slice(0, 3).map(t => t.name)}
+        />
         <StatCard
           title="Jobs"
           href="/dextrous/jobs"
@@ -102,6 +109,25 @@ export default async function DextrousOverviewPage() {
           items={dexGoals.slice(0, 3).map(g => g.title)}
         />
       </div>
+
+      {/* Inline clickable task list */}
+      {dexTasks.length > 0 && (
+        <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-lg overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-stone-100 dark:border-stone-800">
+            <p className="text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500">
+              Active Tasks
+            </p>
+            <Link href="/dextrous/tasks" className="text-xs text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors">
+              View all →
+            </Link>
+          </div>
+          <ClickableTaskList
+            initialTasks={dexTasks.slice(0, 8)}
+            goals={goals}
+            objectives={objectives}
+          />
+        </div>
+      )}
     </div>
   )
 }

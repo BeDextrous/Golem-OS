@@ -35,6 +35,7 @@ export const PILLARS = {
       root: '/life',
       subnav: [
         { label: 'Overview', href: '/life' },
+        { label: 'Tasks', href: '/life/tasks' },
         { label: 'Health', href: '/life/health' },
         { label: 'Finances', href: '/life/finances' },
         { label: 'Reading', href: '/life/reading' },
@@ -59,6 +60,7 @@ export const PILLARS = {
       root: '/dextrous',
       subnav: [
         { label: 'Overview', href: '/dextrous' },
+        { label: 'Tasks', href: '/dextrous/tasks' },
         { label: 'Clients', href: '/dextrous/clients' },
         { label: 'Projects', href: '/dextrous/projects' },
         { label: 'Knowledge', href: '/dextrous/knowledge' },
