@@ -37,12 +37,12 @@ Self-contained single-page app that replaces the Google Apps Script version.
 5. **Build Command**: leave blank
 6. **Output Directory**: leave blank (the folder itself is the output)
 7. Deploy. You'll get a `*.vercel.app` URL — test it.
-8. Project Settings → Domains → add `app.bedextrous.com`.
+8. Project Settings → Domains → add `golems.bedextrous.com`.
 9. Vercel will give you a CNAME target. In Squarespace DNS settings, add a CNAME record:
-    - Host: `app`
+    - Host: `golems`
     - Data: `<cname-target>.vercel-dns.com`
 10. Wait a few minutes for DNS + SSL to finalize.
-11. Add `https://app.bedextrous.com` to:
+11. Add `https://golems.bedextrous.com` to:
     - Supabase → Auth → URL Configuration → Redirect URLs
     - Google Cloud Console → OAuth client → Authorized JavaScript origins
 
