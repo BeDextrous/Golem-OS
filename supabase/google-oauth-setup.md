@@ -16,7 +16,7 @@ Scoped to Supabase project `wllsrdfflaudwhfpxzfe` and Google Workspace domain `b
    - Name: `Golem OS Web`
    - **Authorized JavaScript origins** (add both):
      - `http://localhost:5173`
-     - `https://app.bedextrous.com`
+     - `https://golems.bedextrous.com`
    - **Authorized redirect URIs** (this is Supabase's callback, not yours):
      - `https://wllsrdfflaudwhfpxzfe.supabase.co/auth/v1/callback`
    - Create → copy the **Client ID** and **Client secret**.
@@ -31,10 +31,10 @@ Scoped to Supabase project `wllsrdfflaudwhfpxzfe` and Google Workspace domain `b
 ## 3. Supabase — configure redirect URLs
 
 1. Open <https://supabase.com/dashboard/project/wllsrdfflaudwhfpxzfe/auth/url-configuration>.
-2. **Site URL**: `https://app.bedextrous.com`
+2. **Site URL**: `https://golems.bedextrous.com`
 3. **Redirect URLs** (allow-list; add both):
    - `http://localhost:5173`
-   - `https://app.bedextrous.com`
+   - `https://golems.bedextrous.com`
 4. Save.
 
 ## 4. Smoke test (skip for now)

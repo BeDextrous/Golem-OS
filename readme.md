@@ -2,7 +2,7 @@
 
 A personal productivity dashboard — tasks, goals, objectives, reading list,
 notes, links, finances, and CRM — running at
-[app.bedextrous.com](https://app.bedextrous.com).
+[golems.bedextrous.com](https://golems.bedextrous.com).
 
 Single-page static web app backed by Supabase. No build step, no server of
 your own. The browser talks to Postgres directly over PostgREST, and

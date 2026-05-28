@@ -8,7 +8,7 @@ here disagrees with another README, trust this file and update the other one.
 
 Golem OS is a single-page productivity dashboard (tasks, goals, objectives,
 reading list, notes, links, finances, CRM) running at
-**app.bedextrous.com**. The app itself is a static bundle of HTML + vanilla
+**golems.bedextrous.com**. The app itself is a static bundle of HTML + vanilla
 JavaScript served from Vercel. All persistent data lives in a Supabase
 project; the browser talks to Supabase directly using the public `anon` key,
 with Row-Level Security pinning every row to the signed-in user. Auth is
@@ -247,7 +247,7 @@ Deploys are triggered automatically on every push to `origin/main`. A typical
 Preview deploys do get generated for branches, but since the workflow pushes
 straight to `main`, you rarely see them.
 
-Custom domain: `app.bedextrous.com` is a CNAME to Vercel in the Squarespace
+Custom domain: `golems.bedextrous.com` is a CNAME to Vercel in the Squarespace
 DNS. If that ever needs reconfiguring, the target is whatever Vercel shows
 under Project Settings → Domains. The same domain is listed in Supabase
 (Auth → URL Configuration → Redirect URLs) and in Google Cloud Console
