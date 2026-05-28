@@ -6,295 +6,280 @@ here disagrees with another README, trust this file and update the other one.
 
 ## 1. What Golem OS is today
 
-Golem OS is a single-page productivity dashboard (tasks, goals, objectives,
-reading list, notes, links, finances, CRM) running at
-**golems.bedextrous.com**. The app itself is a static bundle of HTML + vanilla
-JavaScript served from Vercel. All persistent data lives in a Supabase
-project; the browser talks to Supabase directly using the public `anon` key,
-with Row-Level Security pinning every row to the signed-in user. Auth is
-Google OAuth via Supabase, and the dashboard calendar widget reads the next
-seven days from Google Calendar using the provider token issued at sign-in.
+Golem OS is a full-stack Next.js 16 productivity app (tasks, goals,
+objectives, projects, clients, notes, links, finances, CRM, jobs pipeline)
+running at **golems.bedextrous.com**. The app is server-rendered via Vercel
+(using Next.js App Router with React Server Components). All persistent data
+lives in a Supabase project; server components call Supabase directly using
+the service-role-equivalent SSR client, while client components use the
+public anon client. Auth is Google OAuth via Supabase, with Row-Level
+Security pinning every row to the signed-in user.
 
-There is no backend of your own — no Node server, no build step. The trade
-for that simplicity is that the browser holds the whole app and Supabase
-enforces all authorization.
+The app is a Progressive Web App (PWA): it registers a service worker
+(`public/sw.js`) for offline support and can be installed as a desktop app
+via `"display": "standalone"` in the manifest.
 
-A legacy Google Apps Script implementation (`Code.gs`, the root `Index.html`,
-`appsscript.json`, `deploy.sh`, `.clasp.json`) still lives at the repo root.
-It is retired. The live app is the `web/` folder. The Apps Script files are
-kept around for a little while so the two systems can run in parallel during
-the cutover; they can be deleted once you're confident nothing depends on
-them.
+It contains two AI-powered widgets inside the Dextrous pillar:
+- **Mike** — a streaming legal/business assistant backed by the Anthropic API
+  (`claude-opus-4-5` with prompt caching on the system prompt)
+- **Drive** — a Google Drive widget using OAuth2 + the Drive v3 API and the
+  Google Picker
+
+The old static site (`web/`) and the legacy Google Apps Script files at the
+repo root are retired. The live app is `golem-next/`.
 
 ## 2. High-level data flow
 
 ```
-┌───────────────┐     static HTML/JS      ┌──────────────┐
-│  Browser      │ ──────────────────────► │   Vercel     │
-│ app.bedextrous│ ◄────────────────────── │ (CDN + TLS)  │
-│    .com       │                         └──────────────┘
-│               │                                ▲
-│               │          git push              │ auto-deploy on
-│               │      ┌───────────────┐         │ push to main
-│               │      │   GitHub      │ ────────┘
-│               │      │ BeDextrous/   │
-│               │      │ Golem-OS      │
-│               │      └───────────────┘
+┌───────────────┐   Next.js SSR / RSC     ┌──────────────────────┐
+│  Browser      │ ◄──────────────────────►│  Vercel (Edge + Node)│
+│  golems.      │                         │  project: golems     │
+│  bedextrous   │                         └──────────────────────┘
+│  .com         │                                    ▲
+│               │         git push to main           │ auto-deploy
+│               │     ┌──────────────────┐           │
+│               │     │  GitHub          │───────────┘
+│               │     │  BeDextrous/     │
+│               │     │  Golem-OS        │
+│               │     └──────────────────┘
 │               │
-│               │     PostgREST + RLS     ┌──────────────┐
-│               │ ──────────────────────► │  Supabase    │
-│               │ ◄────────────────────── │  wllsrdfflau │
-│               │      Google OAuth       │  dwhfpxzfe   │
-└───────────────┘      Calendar API       └──────────────┘
+│               │   PostgREST + RLS       ┌──────────────────────┐
+│               │ ◄──────────────────────►│  Supabase            │
+│               │   Google OAuth          │  wllsrdfflaudwhfpxzfe│
+│               │                         └──────────────────────┘
+│               │
+│               │   Anthropic API (stream)┌──────────────────────┐
+│               │ ◄──────────────────────►│  /api/mike route     │
+│               │                         │  (server-side only)  │
+│               │                         └──────────────────────┘
+│               │
+│               │   Google Drive API      ┌──────────────────────┐
+│               │ ◄──────────────────────►│  Google Drive v3 +   │
+│               │   (client-side OAuth2)  │  Picker API          │
+└───────────────┘                         └──────────────────────┘
 ```
 
 The repo is the source of truth. Any change — UI, schema, policy — lands as a
-commit, is pushed to `origin/main`, and is picked up by both Vercel (for
-code) and Supabase (for schema migrations, via a manual `supabase db push`).
+commit, is pushed to `origin/main`, and is picked up by Vercel automatically.
+Schema changes additionally require `supabase db push` from your Mac.
 
-## 3. Role of Claude (Cowork mode)
+## 3. Role of Claude
 
-Claude runs inside a sandboxed Linux environment that has read/write access
-to the `golem-os` folder on your Mac but **no outbound network access** to
-`github.com`, `*.supabase.co`, `*.supabase.com`, or certain npm packages.
-The proxy returns HTTP 403 on those hosts. DNS for external names is
-unreachable. That boundary is the single most important thing to understand
-about the workflow.
+Claude has direct access to the repo and can:
+- Edit any file in `golem-next/` and commit
+- Run `git push` to deploy to production
+- Run `npx tsc --noEmit` to type-check before pushing
+- Read the Next.js 16 docs at `node_modules/next/dist/docs/` before writing
+  any Next.js code (breaking changes vs prior versions — always check)
 
-Because of this, Claude's job ends at the local repo:
-
-- Claude can edit code and schema files, stage them, and make commits
-  locally, using `git -c user.name=Max -c user.email=max@bedextrous.com` so
-  the commits carry your identity without mutating global git config.
-- Claude can write migration SQL into `supabase/migrations/` but cannot
-  apply it to the remote database.
-- Claude cannot run `git push`, `supabase login`, `supabase link`, or
-  `supabase db push`.
-
-Everything that reaches out to a real network — GitHub, Supabase, npm —
-has to run from your Mac. Claude will hand you the exact command to paste.
+Claude cannot:
+- Apply schema migrations to the remote database (`supabase db push` requires
+  your Mac with CLI credentials)
+- Access live Supabase data outside of what MCP tools expose
 
 ## 4. Local files
 
-The repository lives at `~/golem-os` on your Mac and is mounted into the
-Cowork sandbox at the same-looking path. What each folder is for:
-
 ```
 golem-os/
-├── web/                       ← THE live app (deployed to Vercel)
-│   ├── index.html             single-page app, all UI + data logic
-│   ├── config.js              public Supabase URL + anon key (safe to commit)
-│   └── README.md              first-time setup + known limitations
+├── golem-next/                  ← THE live app (Next.js 16, deployed to Vercel)
+│   ├── app/                     App Router pages + layouts + API routes
+│   │   ├── (app)/               Authenticated pages (dashboard, pillars)
+│   │   │   ├── page.tsx         Main dashboard
+│   │   │   ├── life/            Life pillar (tasks, health, notes, etc.)
+│   │   │   ├── dextrous/        Dextrous pillar (clients, projects, mike, drive)
+│   │   │   ├── work/            Work pillar
+│   │   │   └── focus/           Cross-pillar task/goal/objective view
+│   │   ├── (auth)/              Login page
+│   │   ├── api/mike/            Streaming Anthropic API route (server-side)
+│   │   ├── layout.tsx           Root layout (PWA meta, theme-color)
+│   │   ├── manifest.ts          PWA manifest (display: standalone)
+│   │   └── providers.tsx        Client providers (theme, toaster)
+│   ├── components/
+│   │   ├── ui/                  Button, etc.
+│   │   ├── layout/              GlobalNav, PillarNav
+│   │   ├── dashboard/           ClickableTaskList, etc.
+│   │   ├── views/               Full-page view components (tasks, notes, focus…)
+│   │   └── widgets/             MikeWidget, DriveWidget
+│   ├── lib/
+│   │   ├── queries.ts           Supabase server-side queries
+│   │   ├── supabase/            client.ts + server.ts SSR helpers
+│   │   └── utils.ts             cn() and misc
+│   ├── types/
+│   │   ├── entities.ts          Derived row types from supabase.ts
+│   │   ├── pillar.ts            PILLARS config (subnav, colours)
+│   │   └── supabase.ts          Generated Supabase types
+│   ├── public/
+│   │   ├── sw.js                Service worker (stale-while-revalidate)
+│   │   ├── icon-192.png         PWA icon
+│   │   └── icon-512.png         PWA icon
+│   ├── instrumentation-client.ts  Service worker registration (Next.js 16 hook)
+│   ├── next.config.ts           Headers for sw.js, turbopack root
+│   ├── .env.local               Secrets (gitignored)
+│   └── package.json
 │
 ├── supabase/
-│   ├── config.toml            supabase CLI project scaffold (major_version=17)
-│   ├── schema.sql             canonical schema; idempotent, safe to re-run
-│   ├── google-oauth-setup.md  one-time OAuth provider setup notes
-│   ├── migrations/            timestamped SQL files applied via `supabase db push`
-│   │   └── YYYYMMDDHHMMSS_*.sql
-│   └── migrate/               one-shot Node scripts for data moves/fixes
-│       ├── import.mjs             initial Sheet → Supabase import
-│       ├── migrate-status.mjs     example: in-place data normalization
-│       ├── package.json           local deps: @supabase/supabase-js, dotenv
-│       ├── .env                   service_role key + USER_ID (gitignored)
-│       ├── .env.example           template you copy to .env
-│       └── imports/*.csv          gitignored; user data for the initial import
+│   ├── schema.sql               Canonical schema; idempotent, safe to re-run
+│   ├── migrations/              Timestamped SQL applied via `supabase db push`
+│   └── migrate/                 One-shot Node data-fix scripts
 │
-├── vercel.json                cleanUrls / trailingSlash config (no build steps)
-├── readme.md                  project-level overview (still mentions Apps Script)
-├── DEV_GUIDE.md               this file
-├── .gitignore                 excludes .env, CSVs, supabase/.branches/, .temp/
-├── .mcp.json                  dev-time MCP server config (Supabase MCP endpoint)
-│
-│   ── legacy / retired ──
-├── Code.gs                    old Apps Script backend
-├── Index.html                 old Apps Script UI
-├── appsscript.json            Apps Script manifest
-├── deploy.sh                  clasp push helper
-├── .clasp.json                clasp project binding
-└── progress-archive.{md,ipynb}  dev notebook from the Apps Script era
+├── web/                         ← RETIRED static app (do not edit)
+├── DEV_GUIDE.md                 This file
+├── readme.md                    Project-level overview
+└── .gitignore
 ```
 
-A few rules that make this layout easier to work with. Secrets never go in
-`web/` — it's shipped to the browser verbatim; that's why only the `anon`
-key is in `web/config.js`, and why `supabase/migrate/.env` holds the
-service-role key (which must never leave your machine). Migration filenames
-must be timestamped (`YYYYMMDDHHMMSS_`) because `supabase db push` applies
-them in filename order. The `supabase/.temp/` and `supabase/.branches/`
-folders are CLI state and are gitignored.
+## 5. Environment variables
 
-## 5. GitHub
+Stored in `golem-next/.env.local` (gitignored). Required for full
+functionality:
 
-Remote: <https://github.com/BeDextrous/Golem-OS>, branch `main`. This repo
-is private and only you push to it.
+| Variable | Purpose | Where to get it |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL | Supabase dashboard |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public anon key | Supabase dashboard |
+| `NEXT_PUBLIC_APP_URL` | App base URL (localhost or production) | Manual |
+| `ANTHROPIC_API_KEY` | Powers the Mike widget | console.anthropic.com |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Google Drive OAuth client | console.cloud.google.com |
+| `NEXT_PUBLIC_GOOGLE_API_KEY` | Google Drive + Picker API key | console.cloud.google.com |
 
-Claude commits locally; you push. A typical session ends with a prompt like:
+For production, all variables except `NEXT_PUBLIC_APP_URL` (set to
+`https://golems.bedextrous.com`) are configured in Vercel → Project Settings
+→ Environment Variables.
 
-```bash
-git push
-```
+## 6. GitHub
 
-If the push is rejected because the remote moved forward (happens if Vercel
-or a previous session added a commit you don't have), fix it with:
+Remote: <https://github.com/BeDextrous/Golem-OS>, branch `main`.
+
+Commits go straight to `main`. Vercel auto-deploys on every push. There is
+no PR workflow, no CI, and no branch protection.
+
+If the push is rejected because the remote moved forward:
 
 ```bash
 git pull --rebase origin main && git push
 ```
 
-There is no PR workflow, no CI, and no branch protection. Commits go
-straight to `main`, and `main` is what Vercel deploys. Keep commit messages
-descriptive (`feat(web): …`, `chore(supabase): …`, `fix: …`) because the
-git log is the only change log the project has.
+Keep commit messages descriptive (`feat(golem-next): …`, `fix: …`,
+`chore(supabase): …`) — the git log is the only changelog.
 
-## 6. Supabase
+## 7. Supabase
 
-Project ref: **`wllsrdfflaudwhfpxzfe`**. Dashboard:
-<https://supabase.com/dashboard/project/wllsrdfflaudwhfpxzfe>. Postgres 17.
+Project ref: **`wllsrdfflaudwhfpxzfe`**
+Dashboard: <https://supabase.com/dashboard/project/wllsrdfflaudwhfpxzfe>
+Postgres 17.
 
-### Keys and where they live
+### Keys
 
-The **anon key** is public-safe and sits in `web/config.js`. Anyone who
-loads the site sees it; that's fine because every table has an RLS policy
-restricting reads and writes to `auth.uid() = user_id`. Rotate the anon key
-only if you rotate RLS too.
+The **anon key** is safe to ship to the browser (RLS enforces per-user
+isolation). It lives in `.env.local` as `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 
-The **service_role key** bypasses RLS. It lives *only* in
-`supabase/migrate/.env` on your Mac and is used by one-shot Node scripts
-that need to write as the system. It must never be committed, never shipped
-to the browser, and never pasted into a session. The `.gitignore` enforces
-the first part; the second two are on you.
+The **service_role key** bypasses RLS. It must never be committed or shipped
+to the browser. It lives only in `supabase/migrate/.env` for one-shot data
+scripts.
 
-### The CLI, and why login matters
+### Schema change workflow
 
-Two separate auth layers live behind `supabase db push`:
-
-1. **Management API access token** — controls what projects your CLI can
-   administer. `supabase login` (GitHub OAuth is fine) sets this.
-2. **Postgres password** — the actual database password for the project.
-   `supabase link --project-ref wllsrdfflaudwhfpxzfe` prompts for it on
-   first run and caches it under `supabase/.temp/` (gitignored).
-
-You only do both once per machine. After that, migration pushes are a
-single command.
-
-First time on a new machine:
+Claude writes a new file at `supabase/migrations/YYYYMMDDHHMMSS_description.sql`
+and updates `supabase/schema.sql`. Then:
 
 ```bash
-brew install supabase/tap/supabase          # CLI — npm install is proxy-blocked
-supabase login                               # GitHub OAuth works
+git push                 # deploys code to Vercel
+supabase db push         # applies pending migrations to Supabase
+```
+
+Push the migration before the code if the code depends on the new schema.
+
+### First time on a new machine
+
+```bash
+brew install supabase/tap/supabase
+supabase login
 supabase link --project-ref wllsrdfflaudwhfpxzfe
 ```
 
-### Schema change workflow (DDL)
+## 8. Vercel
 
-When Claude wants to change the schema, it writes a new file at
-`supabase/migrations/YYYYMMDDHHMMSS_description.sql` and also updates the
-canonical `supabase/schema.sql` so the two stay in sync. Then Claude
-commits. Your part:
+**Project name:** `golems`
+**Root directory:** `golem-next/`
+**Framework:** Next.js
+**Branch:** `main`
 
-```bash
-git push                 # ships code + migration file to GitHub
-supabase db push         # applies pending migrations to the remote DB
-```
+Deploys trigger automatically on push. A typical push is live in 1–2 minutes.
+No staging environment. Preview deploys exist for non-main branches.
 
-Order matters only when the code depends on the new schema — push the
-migration first in that case, because Vercel deploys the code the moment
-`git push` lands.
+### Custom domain
 
-Rolling back a migration is not automated. If something's broken, either
-write a forward migration that reverses the change, or restore from the
-Supabase daily backup via the dashboard.
+`golems.bedextrous.com` is a CNAME to Vercel's servers, configured in
+Squarespace DNS. If the domain ever needs reconfiguring, update it in:
+1. Vercel → Project Settings → Domains
+2. Supabase → Auth → URL Configuration → Redirect URLs
+3. Google Cloud Console → OAuth client → Authorized JavaScript origins
 
-### One-shot data fixes (no DDL)
+### Google Cloud Console project
 
-For in-place data normalization that doesn't change the schema, write a
-small Node script under `supabase/migrate/` that uses the service_role key
-and scopes updates to `USER_ID`. `migrate-status.mjs` is the pattern: it
-loads `.env`, counts affected rows, runs the update, and verifies the
-result. Run it from your Mac:
+Project: `Golem` (enabled APIs: Google Drive API, Google Picker API)
+OAuth 2.0 client: `Golem Local` (web application)
+Authorized origins: `http://localhost:3000`, `https://golems.bedextrous.com`
+
+## 9. Running locally
 
 ```bash
-cd supabase/migrate
-npm install              # first time only
-node migrate-status.mjs  # or: npm run migrate-status
+cd golem-next
+npm install          # first time
+npm run dev          # starts on http://localhost:3000
 ```
 
-These scripts must also run from your Mac because the sandbox can't reach
-`*.supabase.co`. Keep them in the repo as an audit trail of what was
-changed, but treat them as one-shot — they generally aren't idempotent.
+TypeScript check before pushing:
 
-### Row-Level Security, in practice
+```bash
+cd golem-next
+npx tsc --noEmit
+```
 
-Every table has `enable row level security` and policies of the form
-`using (auth.uid() = user_id) with check (auth.uid() = user_id)`. The
-browser can only see rows it owns, which is why pushing the anon key to the
-frontend is safe. If you ever add a new table, **add RLS at the same time
-in the same migration** — a table without policies is either invisible to
-the client or wide-open, depending on defaults, and both are bad.
+**Important:** This is Next.js 16.2.6 — a version with breaking changes vs
+prior Next.js. Always read `node_modules/next/dist/docs/` before writing
+framework-specific code. Key differences:
+- `proxy.ts` replaces `middleware.ts`
+- `instrumentation-client.ts` for client-side init (not `_app.tsx`)
+- `app/manifest.ts` for PWA manifest (not `public/manifest.json`)
+- React 19: `useRef<T>()` requires an initial value argument
 
-## 7. Vercel
+## 10. PWA / Desktop app
 
-Vercel serves `web/` as a static site. There is no build step; the folder
-itself is the deployed artifact.
+The app is installable as a desktop app:
+- **Chrome:** address bar install icon → "Install Golem OS"
+- **iOS:** Share → Add to Home Screen
 
-Project settings: root directory `web`, framework preset Other, build
-command blank, output directory blank. `vercel.json` at the repo root sets
-`cleanUrls: true` and `trailingSlash: false`; that's all the Vercel config
-there is.
+Service worker (`public/sw.js`) caches the 5 main routes at install time and
+uses stale-while-revalidate for all GET requests. API routes are excluded from
+caching. The SW is registered via `instrumentation-client.ts` before React
+hydration.
 
-Deploys are triggered automatically on every push to `origin/main`. A typical
-`git push` is live in under a minute. There is no staging environment.
-Preview deploys do get generated for branches, but since the workflow pushes
-straight to `main`, you rarely see them.
+## 11. Mike (AI legal assistant)
 
-Custom domain: `golems.bedextrous.com` is a CNAME to Vercel in the Squarespace
-DNS. If that ever needs reconfiguring, the target is whatever Vercel shows
-under Project Settings → Domains. The same domain is listed in Supabase
-(Auth → URL Configuration → Redirect URLs) and in Google Cloud Console
-(OAuth client → Authorized JavaScript origins). Changing the domain means
-updating all three.
+Mike is a streaming chat widget at `/dextrous/mike`, backed by:
+- **API route:** `app/api/mike/route.ts` — server-side only, uses Anthropic SDK
+  with `claude-opus-4-5` and prompt caching on the system prompt
+- **Widget:** `components/widgets/mike-widget.tsx` — streaming UI with copy
+  per message, conversation reset, and starter prompts
 
-## 8. Other things worth knowing
+Requires `ANTHROPIC_API_KEY` in `.env.local` (and in Vercel env vars for
+production).
 
-**Google OAuth and the calendar widget.** Sign-in is Google via Supabase's
-OAuth provider. The scope list includes `calendar.readonly`, which is how
-the dashboard calendar pulls events. If someone signed in before the scope
-was added, the provider token won't include calendar access — they see a
-"Calendar access requires re-signing in" banner and need to sign out and
-back in to re-consent. The setup details are in
-`supabase/google-oauth-setup.md`.
+## 12. Google Drive widget
 
-**Legacy status values.** The Tasks table moved from
-`Active/In Progress/Blocked/Paused/Done` to `To Do/Active/On Hold/Done`.
-There's display-side migration logic in `web/index.html` (`STATUS_MIGRATION`,
-`migrateStatus`, `migrateState`) that rewrites old values on read, so the
-frontend keeps working against stale exports or backups. The DB itself was
-normalized by migration `20260421010334_task_status_enum_update.sql`, which
-updates rows and then replaces the `tasks_status_check` constraint. The
-display-side fallback stays in place as a belt-and-braces measure.
+Drive widget at `/dextrous/drive`. Client-side OAuth2 via `gapi`:
+- Sign in with Google → shows recent files, search, file picker
+- Uses `window.gapi` (loaded dynamically from `apis.google.com`)
+- File picker loaded on demand from `apis.google.com/js/picker.js`
 
-**Running locally.** The app is fully static. `cd web && python3 -m
-http.server 5173` serves it; port 5173 is the one allow-listed in both
-Supabase redirect URLs and the Google OAuth client, so stick to it.
+Requires `NEXT_PUBLIC_GOOGLE_CLIENT_ID` and `NEXT_PUBLIC_GOOGLE_API_KEY`.
 
-**MCP.** `.mcp.json` points at the Supabase MCP endpoint for the project.
-This only matters inside Cowork when Claude is asked to read live data
-through MCP; it has no effect on the deployed app.
+## 13. When something seems off
 
-**When something seems off.** First check the git log (everything that
-changes the system is a commit). Then check the Supabase dashboard logs for
-400/500s — RLS failures and CHECK-constraint violations both surface there.
-Vercel's deploy log is the third place to look, but it rarely fails because
-there's no build step.
-
-## 9. Summary of who does what
-
-A normal change, end to end: Claude edits files in `web/` and/or writes SQL
-into `supabase/migrations/`, updates `supabase/schema.sql` if the schema
-changed, commits with a descriptive message, and tells you the commands to
-run. You run `git push` (which triggers Vercel) and, if there was a
-migration, `supabase db push` (which applies it to the database). If the
-change was a one-shot data fix, you run the Node script from
-`supabase/migrate/` instead of a migration push.
-
-That's the whole loop.
+1. `git log` — everything that changes the system is a commit
+2. Vercel deploy log — build errors show here
+3. Supabase dashboard logs — RLS failures and constraint violations
+4. `npx tsc --noEmit` in `golem-next/` — catches type errors before they hit
+   production
+5. Browser console on the live site — runtime errors that didn't surface in TS
