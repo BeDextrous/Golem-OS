@@ -22,3 +22,6 @@ supabase/.temp/
 # Editor / IDE
 .vscode/
 .idea/
+
+# Claude Code / Cowork internals
+.claude/

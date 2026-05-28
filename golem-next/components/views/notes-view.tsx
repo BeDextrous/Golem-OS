@@ -1,6 +1,6 @@
 'use client'
 import { useState, useMemo } from 'react'
-import { Plus, Search } from 'lucide-react'
+import { Plus, Search, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -28,6 +28,8 @@ export function NotesView({
   const [search, setSearch]             = useState('')
   const [pillarFilter, setPillarFilter] = useState<string | null>(defaultPillar ?? null)
   const [creating, setCreating]         = useState(false)
+  const [confirmId, setConfirmId]       = useState<number | null>(null)
+  const [deletingIds, setDeletingIds]   = useState<Set<number>>(new Set())
 
   // ── New note: create blank in DB then navigate to editor ──────────────────
   const openNew = async () => {
@@ -51,6 +53,22 @@ export function NotesView({
       toast.error('Could not create note')
     } finally {
       setCreating(false)
+    }
+  }
+
+  const deleteNote = async (id: number) => {
+    setDeletingIds(prev => new Set(prev).add(id))
+    try {
+      const sb = createClient()
+      const { error } = await sb.from('notes').delete().eq('id', id)
+      if (error) throw error
+      setItems(prev => prev.filter(n => n.id !== id))
+      setConfirmId(null)
+      toast.success('Note deleted')
+    } catch {
+      toast.error('Could not delete note')
+    } finally {
+      setDeletingIds(prev => { const s = new Set(prev); s.delete(id); return s })
     }
   }
 
@@ -119,51 +137,88 @@ export function NotesView({
       {filtered.length > 0 && (
         <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-lg overflow-hidden">
           {filtered.map((note, idx) => (
-            <button
+            <div
               key={note.id}
-              onClick={() => router.push(`/life/notes/${note.id}`)}
-              className={`w-full text-left px-4 py-3 hover:bg-stone-50 dark:hover:bg-stone-800/50 transition-colors ${
+              className={`group relative flex items-stretch ${
                 idx > 0 ? 'border-t border-stone-100 dark:border-stone-800' : ''
               }`}
             >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-stone-900 dark:text-stone-100">
-                    {note.title || <span className="text-stone-400 italic font-normal">Untitled</span>}
-                  </p>
-                  {note.content && (
-                    <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 line-clamp-2 whitespace-pre-line">
-                      {note.content}
-                    </p>
-                  )}
-                  {note.tags && (
-                    <div className="flex gap-1 mt-1.5 flex-wrap">
-                      {note.tags.split(',').map(t => t.trim()).filter(Boolean).map(tag => (
-                        <span
-                          key={tag}
-                          className="px-1.5 py-0.5 text-xs bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 rounded"
-                        >
-                          {tag}
-                        </span>
-                      ))}
+              {confirmId === note.id ? (
+                /* ── Inline delete confirmation ── */
+                <div className="flex-1 flex items-center justify-between px-4 py-3 bg-red-50 dark:bg-red-950/20">
+                  <p className="text-sm text-red-700 dark:text-red-400">Delete &ldquo;{note.title || 'Untitled'}&rdquo;?</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setConfirmId(null)}
+                      className="px-3 py-1 text-xs rounded-md border border-stone-300 dark:border-stone-600 text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => deleteNote(note.id)}
+                      disabled={deletingIds.has(note.id)}
+                      className="px-3 py-1 text-xs rounded-md bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                    >
+                      {deletingIds.has(note.id) ? 'Deleting…' : 'Delete'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* ── Navigate button (main row body) ── */}
+                  <button
+                    onClick={() => router.push(`/life/notes/${note.id}`)}
+                    className="flex-1 text-left px-4 py-3 hover:bg-stone-50 dark:hover:bg-stone-800/50 transition-colors min-w-0"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-stone-900 dark:text-stone-100">
+                          {note.title || <span className="text-stone-400 italic font-normal">Untitled</span>}
+                        </p>
+                        {note.content && (
+                          <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 line-clamp-2 whitespace-pre-line">
+                            {note.content}
+                          </p>
+                        )}
+                        {note.tags && (
+                          <div className="flex gap-1 mt-1.5 flex-wrap">
+                            {note.tags.split(',').map(t => t.trim()).filter(Boolean).map(tag => (
+                              <span
+                                key={tag}
+                                className="px-1.5 py-0.5 text-xs bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 rounded"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-right shrink-0 ml-2">
+                        {note.pillar && (
+                          <p className="text-xs font-medium" style={{ color: PILLAR_COLORS[note.pillar] }}>
+                            {PILLAR_OPTS.find(p => p.value === note.pillar)?.label}
+                          </p>
+                        )}
+                        <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
+                          {fmt(note.updated_at)}
+                        </p>
+                        {note.drafts_uuid && (
+                          <p className="text-xs text-stone-300 dark:text-stone-600 mt-0.5">Drafts ✓</p>
+                        )}
+                      </div>
                     </div>
-                  )}
-                </div>
-                <div className="text-right shrink-0 ml-2">
-                  {note.pillar && (
-                    <p className="text-xs font-medium" style={{ color: PILLAR_COLORS[note.pillar] }}>
-                      {PILLAR_OPTS.find(p => p.value === note.pillar)?.label}
-                    </p>
-                  )}
-                  <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
-                    {fmt(note.updated_at)}
-                  </p>
-                  {note.drafts_uuid && (
-                    <p className="text-xs text-stone-300 dark:text-stone-600 mt-0.5">Drafts ✓</p>
-                  )}
-                </div>
-              </div>
-            </button>
+                  </button>
+                  {/* ── Delete button (appears on hover) ── */}
+                  <button
+                    onClick={() => setConfirmId(note.id)}
+                    className="px-3 flex items-center text-stone-300 dark:text-stone-700 hover:text-red-500 dark:hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+                    aria-label="Delete note"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </>
+              )}
+            </div>
           ))}
         </div>
       )}
