@@ -14,10 +14,22 @@
 --   * Status / Priority are TEXT with CHECK constraints rather than enums —
 --     easier to evolve without ALTER TYPE dances.
 --   * UI labels ("Task Name", "Due Date", etc.) live in the frontend mapping.
+--
+-- Order of operations (important for a fresh database):
+--   1. Extensions
+--   2. All CREATE TABLE statements (Phase 1, then Phase 2)
+--   3. FK constraint added after both phases exist
+--   4. updated_at function + trigger loop
+--   5. RLS policies loop
+--   6. Grants
 -- ─────────────────────────────────────────────────────────────────────────────
 
 -- Extensions
 create extension if not exists "pgcrypto";
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- PHASE 1 TABLES
+-- ─────────────────────────────────────────────────────────────────────────────
 
 -- ─── GOALS ───────────────────────────────────────────────────────────────────
 create table if not exists public.goals (
@@ -63,7 +75,7 @@ create table if not exists public.tasks (
   priority      text check (priority in ('High','Medium','Low')),
   pillar        text check (pillar in ('life','dextrous','work')),
   client_id     bigint references public.crm(id) on delete set null,
-  project_id    bigint,  -- FK to projects added after projects table
+  project_id    bigint,  -- FK to projects added after projects table (see below)
   created_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now()
 );
@@ -164,28 +176,28 @@ create index if not exists crm_user_idx on public.crm(user_id);
 
 -- ─── JOB APPLICATIONS ────────────────────────────────────────────────────────
 create table if not exists public.job_applications (
-  id              bigserial primary key,
-  user_id         uuid not null references auth.users(id) on delete cascade,
-  company         text not null,
-  role            text,
-  status          text default 'Wishlist'
-                  check (status in (
-                    'Wishlist','Applied','Phone Screen',
-                    'Interview','Offer','Accepted','Rejected'
-                  )),
-  date_applied    date,
-  job_url         text,
-  salary_range    text,
-  salary_offer    text,
-  notes           text,
-  contact_id         bigint references public.crm(id) on delete set null,
-  location           text,
-  remote_type        text check (remote_type in ('Remote','Hybrid','Onsite')),
-  source             text,
-  next_action        text,
-  next_action_date   date,
-  created_at         timestamptz not null default now(),
-  updated_at         timestamptz not null default now()
+  id               bigserial primary key,
+  user_id          uuid not null references auth.users(id) on delete cascade,
+  company          text not null,
+  role             text,
+  status           text default 'Wishlist'
+                   check (status in (
+                     'Wishlist','Applied','Phone Screen',
+                     'Interview','Offer','Accepted','Rejected'
+                   )),
+  date_applied     date,
+  job_url          text,
+  salary_range     text,
+  salary_offer     text,
+  notes            text,
+  contact_id       bigint references public.crm(id) on delete set null,
+  location         text,
+  remote_type      text check (remote_type in ('Remote','Hybrid','Onsite')),
+  source           text,
+  next_action      text,
+  next_action_date date,
+  created_at       timestamptz not null default now(),
+  updated_at       timestamptz not null default now()
 );
 create index if not exists job_applications_user_idx on public.job_applications(user_id);
 
@@ -203,67 +215,9 @@ create table if not exists public.target_companies (
 );
 create index if not exists target_companies_user_idx on public.target_companies(user_id);
 
--- ─── updated_at triggers ─────────────────────────────────────────────────────
-create or replace function public.set_updated_at()
-returns trigger language plpgsql as $$
-begin
-  new.updated_at := now();
-  return new;
-end $$;
-
-do $$
-declare t text;
-begin
-  foreach t in array array[
-    'goals','objectives','tasks','reading','notes','links','finances','crm',
-    'job_applications','target_companies',
-    'health_entries','clients','projects','invoices','knowledge_items',
-    'user_dashboard_config','user_pages'
-  ]
-  loop
-    execute format('drop trigger if exists %I_set_updated_at on public.%I', t, t);
-    execute format(
-      'create trigger %I_set_updated_at before update on public.%I
-         for each row execute function public.set_updated_at()', t, t);
-  end loop;
-end $$;
-
--- ─── ROW-LEVEL SECURITY ──────────────────────────────────────────────────────
-do $$
-declare t text;
-begin
-  foreach t in array array[
-    'goals','objectives','tasks','reading','notes','links','finances','crm',
-    'job_applications','target_companies',
-    'health_entries','clients','projects','invoices','knowledge_items',
-    'cross_links','integration_cache','user_dashboard_config','user_pages'
-  ]
-  loop
-    execute format('alter table public.%I enable row level security', t);
-    execute format('drop policy if exists "owner_select" on public.%I', t);
-    execute format('drop policy if exists "owner_insert" on public.%I', t);
-    execute format('drop policy if exists "owner_update" on public.%I', t);
-    execute format('drop policy if exists "owner_delete" on public.%I', t);
-
-    execute format($f$
-      create policy "owner_select" on public.%I
-        for select using (auth.uid() = user_id)
-    $f$, t);
-    execute format($f$
-      create policy "owner_insert" on public.%I
-        for insert with check (auth.uid() = user_id)
-    $f$, t);
-    execute format($f$
-      create policy "owner_update" on public.%I
-        for update using (auth.uid() = user_id)
-                  with check (auth.uid() = user_id)
-    $f$, t);
-    execute format($f$
-      create policy "owner_delete" on public.%I
-        for delete using (auth.uid() = user_id)
-    $f$, t);
-  end loop;
-end $$;
+-- ─────────────────────────────────────────────────────────────────────────────
+-- PHASE 2 TABLES
+-- ─────────────────────────────────────────────────────────────────────────────
 
 -- ─── HEALTH ENTRIES ──────────────────────────────────────────────────────────
 create table if not exists public.health_entries (
@@ -317,14 +271,6 @@ create table if not exists public.projects (
 );
 create index if not exists projects_user_idx on public.projects(user_id);
 create index if not exists projects_pillar_idx on public.projects(pillar);
-
-do $$ begin
-  if not exists (select 1 from pg_constraint where conname = 'tasks_project_id_fkey') then
-    alter table public.tasks
-      add constraint tasks_project_id_fkey
-      foreign key (project_id) references public.projects(id) on delete set null;
-  end if;
-end $$;
 
 -- ─── INVOICES ────────────────────────────────────────────────────────────────
 create table if not exists public.invoices (
@@ -407,7 +353,88 @@ create table if not exists public.user_pages (
   constraint user_pages_user_pillar_slug_unique unique (user_id, pillar, slug)
 );
 
--- ─── GRANTS ──────────────────────────────────────────────────────────────────
+-- ─────────────────────────────────────────────────────────────────────────────
+-- FOREIGN KEY: tasks → projects (projects must exist first)
+-- ─────────────────────────────────────────────────────────────────────────────
+do $$ begin
+  if not exists (select 1 from pg_constraint where conname = 'tasks_project_id_fkey') then
+    alter table public.tasks
+      add constraint tasks_project_id_fkey
+      foreign key (project_id) references public.projects(id) on delete set null;
+  end if;
+end $$;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- updated_at TRIGGER FUNCTION + LOOP
+-- All tables exist by this point, so the loop is safe on a fresh database.
+-- ─────────────────────────────────────────────────────────────────────────────
+create or replace function public.set_updated_at()
+returns trigger language plpgsql as $$
+begin
+  new.updated_at := now();
+  return new;
+end $$;
+
+do $$
+declare t text;
+begin
+  foreach t in array array[
+    'goals','objectives','tasks','reading','notes','links','finances','crm',
+    'job_applications','target_companies',
+    'health_entries','clients','projects','invoices','knowledge_items',
+    'user_dashboard_config','user_pages'
+  ]
+  loop
+    execute format('drop trigger if exists %I_set_updated_at on public.%I', t, t);
+    execute format(
+      'create trigger %I_set_updated_at before update on public.%I
+         for each row execute function public.set_updated_at()', t, t);
+  end loop;
+end $$;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- ROW-LEVEL SECURITY
+-- All tables exist by this point, so the loop is safe on a fresh database.
+-- ─────────────────────────────────────────────────────────────────────────────
+do $$
+declare t text;
+begin
+  foreach t in array array[
+    'goals','objectives','tasks','reading','notes','links','finances','crm',
+    'job_applications','target_companies',
+    'health_entries','clients','projects','invoices','knowledge_items',
+    'cross_links','integration_cache','user_dashboard_config','user_pages'
+  ]
+  loop
+    execute format('alter table public.%I enable row level security', t);
+    execute format('drop policy if exists "owner_select" on public.%I', t);
+    execute format('drop policy if exists "owner_insert" on public.%I', t);
+    execute format('drop policy if exists "owner_update" on public.%I', t);
+    execute format('drop policy if exists "owner_delete" on public.%I', t);
+
+    execute format($f$
+      create policy "owner_select" on public.%I
+        for select using (auth.uid() = user_id)
+    $f$, t);
+    execute format($f$
+      create policy "owner_insert" on public.%I
+        for insert with check (auth.uid() = user_id)
+    $f$, t);
+    execute format($f$
+      create policy "owner_update" on public.%I
+        for update using (auth.uid() = user_id)
+                  with check (auth.uid() = user_id)
+    $f$, t);
+    execute format($f$
+      create policy "owner_delete" on public.%I
+        for delete using (auth.uid() = user_id)
+    $f$, t);
+  end loop;
+end $$;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- GRANTS
+-- ─────────────────────────────────────────────────────────────────────────────
 grant select, insert, update, delete
   on public.goals, public.objectives, public.tasks, public.reading,
      public.notes, public.links, public.finances, public.crm,
