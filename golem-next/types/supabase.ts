@@ -463,9 +463,11 @@ export type Database = {
           date_added: string | null
           id: number
           parent_goal_id: number | null
+          parent_note_id: number | null
           parent_objective_id: number | null
           parent_task_id: number | null
           pillar: string | null
+          read_at: string | null
           title: string | null
           updated_at: string
           url: string
@@ -477,9 +479,11 @@ export type Database = {
           date_added?: string | null
           id?: number
           parent_goal_id?: number | null
+          parent_note_id?: number | null
           parent_objective_id?: number | null
           parent_task_id?: number | null
           pillar?: string | null
+          read_at?: string | null
           title?: string | null
           updated_at?: string
           url: string
@@ -491,9 +495,11 @@ export type Database = {
           date_added?: string | null
           id?: number
           parent_goal_id?: number | null
+          parent_note_id?: number | null
           parent_objective_id?: number | null
           parent_task_id?: number | null
           pillar?: string | null
+          read_at?: string | null
           title?: string | null
           updated_at?: string
           url?: string
@@ -506,6 +512,13 @@ export type Database = {
             columns: ["parent_goal_id"]
             isOneToOne: false
             referencedRelation: "goals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "links_parent_note_id_fkey"
+            columns: ["parent_note_id"]
+            isOneToOne: false
+            referencedRelation: "notes"
             referencedColumns: ["id"]
           },
           {
