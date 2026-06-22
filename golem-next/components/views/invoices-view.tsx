@@ -11,9 +11,9 @@ const STATUSES = ['Draft', 'Sent', 'Paid', 'Overdue', 'Cancelled']
 const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD']
 const STATUS_COLOR: Record<string, string> = {
   Draft:     '#A8A39A',
-  Sent:      '#378ADD',
-  Paid:      '#639922',
-  Overdue:   '#D85A30',
+  Sent:      '#DA6B51',
+  Paid:      '#7FA98A',
+  Overdue:   '#5B5F8D',
   Cancelled: '#A8A39A',
 }
 
@@ -152,7 +152,7 @@ export function InvoicesView({
                   >
                     <div
                       className="w-2 h-2 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: isOverdue ? '#D85A30' : STATUS_COLOR[inv.status ?? 'Draft'] }}
+                      style={{ backgroundColor: isOverdue ? '#5B5F8D' : STATUS_COLOR[inv.status ?? 'Draft'] }}
                     />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-stone-900 dark:text-stone-100">

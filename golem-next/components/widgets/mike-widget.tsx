@@ -156,7 +156,7 @@ export function MikeWidget() {
       {/* ── Header ── */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-full bg-[#378ADD] flex items-center justify-center text-white text-xs font-bold">
+          <div className="w-7 h-7 rounded-full bg-[#DA6B51] flex items-center justify-center text-white text-xs font-bold">
             M
           </div>
           <div>
@@ -179,8 +179,8 @@ export function MikeWidget() {
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center gap-6 py-8">
             <div className="text-center">
-              <div className="w-12 h-12 rounded-full bg-[#378ADD]/10 flex items-center justify-center mx-auto mb-3">
-                <span className="text-2xl font-bold text-[#378ADD]">M</span>
+              <div className="w-12 h-12 rounded-full bg-[#DA6B51]/10 flex items-center justify-center mx-auto mb-3">
+                <span className="text-2xl font-bold text-[#DA6B51]">M</span>
               </div>
               <p className="text-sm font-medium text-stone-700 dark:text-stone-300">Ask Mike anything</p>
               <p className="text-xs text-stone-400 mt-1">Legal guidance, contracts, business strategy</p>
@@ -190,7 +190,7 @@ export function MikeWidget() {
                 <button
                   key={s}
                   onClick={() => send(s)}
-                  className="text-left text-xs px-3 py-2 rounded-lg border border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-400 hover:border-[#378ADD] hover:text-[#378ADD] dark:hover:text-[#378ADD] transition-colors"
+                  className="text-left text-xs px-3 py-2 rounded-lg border border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-400 hover:border-[#DA6B51] hover:text-[#DA6B51] dark:hover:text-[#DA6B51] transition-colors"
                 >
                   {s}
                 </button>
@@ -232,7 +232,7 @@ export function MikeWidget() {
             onKeyDown={handleKeyDown}
             placeholder="Ask Mike… (Enter to send, Shift+Enter for new line)"
             rows={1}
-            className="flex-1 resize-none px-3 py-2 text-sm bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-700 rounded-lg outline-none focus:ring-2 focus:ring-[#378ADD]/40 focus:border-[#378ADD] text-stone-900 dark:text-stone-100 placeholder:text-stone-400 transition-all max-h-32 overflow-y-auto"
+            className="flex-1 resize-none px-3 py-2 text-sm bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-700 rounded-lg outline-none focus:ring-2 focus:ring-[#DA6B51]/40 focus:border-[#DA6B51] text-stone-900 dark:text-stone-100 placeholder:text-stone-400 transition-all max-h-32 overflow-y-auto"
             style={{ minHeight: '38px' }}
             onInput={e => {
               const el = e.currentTarget
@@ -245,7 +245,7 @@ export function MikeWidget() {
             onClick={() => send(input)}
             disabled={!input.trim() || streaming}
             size="sm"
-            className="shrink-0 bg-[#378ADD] hover:bg-[#2a6ab5] text-white border-none h-[38px] px-3"
+            className="shrink-0 bg-[#DA6B51] hover:bg-[#2a6ab5] text-white border-none h-[38px] px-3"
           >
             <Send size={14} />
           </Button>

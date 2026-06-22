@@ -14,7 +14,7 @@ const PILLAR_OPTS = [
   { value: 'work', label: 'Work' },
 ]
 const PILLAR_COLORS: Record<string, string> = {
-  life: '#639922', dextrous: '#378ADD', work: '#D85A30',
+  life: '#7FA98A', dextrous: '#DA6B51', work: '#5B5F8D',
 }
 
 type GoalForm = Partial<Omit<GoalRow, 'id' | 'user_id' | 'created_at' | 'updated_at'>>

@@ -4,41 +4,41 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  /* Stone — custom warm neutral */
-  --color-stone-50: #F7F6F3;
-  --color-stone-100: #EEECE7;
-  --color-stone-200: #DDD9D0;
-  --color-stone-400: #A8A39A;
-  --color-stone-600: #6B6560;
-  --color-stone-800: #3A3733;
-  --color-stone-900: #1E1C1A;
+  /* Stone — warm cream/ink neutral (Moebius / Ed Mell sunset aesthetic, shared with bedextrous-site) */
+  --color-stone-50: #FAF3E8;
+  --color-stone-100: #F1DCBA;
+  --color-stone-200: #DCC9A8;
+  --color-stone-400: #8D8396;
+  --color-stone-600: #685F6E;
+  --color-stone-800: #3B3640;
+  --color-stone-900: #2E2A3A;
 
-  /* Life pillar — green */
-  --color-life-50: #EAF3DE;
-  --color-life-100: #C0DD97;
-  --color-life-200: #97C459;
-  --color-life-400: #639922;
-  --color-life-600: #3B6D11;
-  --color-life-800: #27500A;
-  --color-life-900: #173404;
+  /* Life pillar — sage (Matcha Cream family) */
+  --color-life-50: #EDF2EA;
+  --color-life-100: #CFE0CC;
+  --color-life-200: #AFCBA8;
+  --color-life-400: #7FA98A;
+  --color-life-600: #5C8A68;
+  --color-life-800: #3F6249;
+  --color-life-900: #294430;
 
-  /* Dextrous pillar — blue */
-  --color-dextrous-50: #E6F1FB;
-  --color-dextrous-100: #B5D4F4;
-  --color-dextrous-200: #85B7EB;
-  --color-dextrous-400: #378ADD;
-  --color-dextrous-600: #185FA5;
-  --color-dextrous-800: #0C447C;
-  --color-dextrous-900: #042C53;
+  /* Dextrous pillar — terracotta (brand color) */
+  --color-dextrous-50: #FBE7DD;
+  --color-dextrous-100: #F3C3AE;
+  --color-dextrous-200: #EA9F7D;
+  --color-dextrous-400: #DA6B51;
+  --color-dextrous-600: #B84B34;
+  --color-dextrous-800: #8A3624;
+  --color-dextrous-900: #5C2317;
 
-  /* Work pillar — terracotta */
-  --color-work-50: #FAECE7;
-  --color-work-100: #F5C4B3;
-  --color-work-200: #F0997B;
-  --color-work-400: #D85A30;
-  --color-work-600: #993C1D;
-  --color-work-800: #712B13;
-  --color-work-900: #4A1B0C;
+  /* Work pillar — dusk blue (Kyoto Dusk family) */
+  --color-work-50: #E7E8F0;
+  --color-work-100: #C5C8DE;
+  --color-work-200: #A3A8CB;
+  --color-work-400: #5B5F8D;
+  --color-work-600: #454870;
+  --color-work-800: #313353;
+  --color-work-900: #1F2037;
 
   /* Typography */
   --font-sans: var(--font-inter), system-ui, sans-serif;

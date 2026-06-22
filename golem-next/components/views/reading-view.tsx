@@ -13,9 +13,9 @@ const STATUSES = ['Want to Read', 'Reading', 'Paused', 'Read']
 const FILTER_KEY = 'golem:filter:reading'
 
 const STATUS_COLOR: Record<string, string> = {
-  'Reading':       '#378ADD',
+  'Reading':       '#DA6B51',
   'Want to Read':  '#6B6560',
-  'Paused':        '#D85A30',
+  'Paused':        '#5B5F8D',
   'Read':          '#A8A39A',
 }
 

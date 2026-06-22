@@ -10,8 +10,8 @@ import type { ClientRow } from '@/types/entities'
 const STATUSES = ['Active', 'Prospective', 'Past', 'Archived']
 const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD']
 const STATUS_COLOR: Record<string, string> = {
-  'Active':      '#639922',
-  'Prospective': '#378ADD',
+  'Active':      '#7FA98A',
+  'Prospective': '#DA6B51',
   'Past':        '#A8A39A',
   'Archived':    '#A8A39A',
 }

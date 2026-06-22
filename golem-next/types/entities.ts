@@ -17,6 +17,7 @@ export type ClientRow    = T['clients']['Row']
 export type KnowledgeRow = T['knowledge_items']['Row']
 export type HealthRow    = T['health_entries']['Row']
 export type InvoiceRow   = T['invoices']['Row']
+export type LeadRow      = T['dextrous_leads']['Row']
 
 export type TaskInsert    = T['tasks']['Insert']
 export type GoalInsert    = T['goals']['Insert']

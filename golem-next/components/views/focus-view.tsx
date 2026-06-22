@@ -19,19 +19,19 @@ const ALL_STATUSES   = ['To Do', 'Active', 'On Hold', 'Paused', 'Done', 'Archive
 const PRIORITIES     = ['High', 'Medium', 'Low']
 const FILTER_KEY     = 'golem:filter:focus'
 const PILLAR_OPTS    = [
-  { value: 'life',      label: 'Life',      color: '#639922' },
-  { value: 'dextrous',  label: 'Dextrous',  color: '#378ADD' },
-  { value: 'work',      label: 'Work',      color: '#D85A30' },
+  { value: 'life',      label: 'Life',      color: '#7FA98A' },
+  { value: 'dextrous',  label: 'Dextrous',  color: '#DA6B51' },
+  { value: 'work',      label: 'Work',      color: '#5B5F8D' },
 ]
 const TYPE_COLORS: Record<ItemType, string> = {
-  task:      '#D85A30',
-  goal:      '#378ADD',
+  task:      '#5B5F8D',
+  goal:      '#DA6B51',
   objective: '#9B59B6',
 }
 const STATUS_COLOR: Record<string, string> = {
-  'Active':   '#639922',
+  'Active':   '#7FA98A',
   'To Do':    '#6B6560',
-  'On Hold':  '#D85A30',
+  'On Hold':  '#5B5F8D',
   'Paused':   '#F5A623',
   'Done':     '#A8A39A',
   'Archived': '#C0B9B2',

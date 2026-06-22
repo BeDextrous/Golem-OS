@@ -12,13 +12,13 @@ type Result = {
 }
 
 const TYPE_COLOR: Record<string, string> = {
-  Task:      '#D85A30',
-  Goal:      '#D85A30',
-  Note:      '#639922',
-  Reading:   '#639922',
-  Link:      '#378ADD',
-  Job:       '#378ADD',
-  Knowledge: '#378ADD',
+  Task:      '#5B5F8D',
+  Goal:      '#5B5F8D',
+  Note:      '#7FA98A',
+  Reading:   '#7FA98A',
+  Link:      '#DA6B51',
+  Job:       '#DA6B51',
+  Knowledge: '#DA6B51',
   Finance:   '#8B5CF6',
 }
 

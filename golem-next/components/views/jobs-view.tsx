@@ -16,11 +16,11 @@ const APP_FILTER_KEY = 'golem:filter:job_applications'
 
 const APP_STATUS_COLOR: Record<string, string> = {
   Wishlist:      '#6B6560',
-  Applied:       '#378ADD',
-  'Phone Screen':'#639922',
-  Interview:     '#639922',
-  Offer:         '#D85A30',
-  Accepted:      '#639922',
+  Applied:       '#DA6B51',
+  'Phone Screen':'#7FA98A',
+  Interview:     '#7FA98A',
+  Offer:         '#5B5F8D',
+  Accepted:      '#7FA98A',
   Rejected:      '#A8A39A',
 }
 

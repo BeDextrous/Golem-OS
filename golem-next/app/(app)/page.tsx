@@ -166,7 +166,7 @@ export default async function HomePage() {
                     <div className="flex-1 h-1 bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden">
                       <div
                         className="h-full rounded-full"
-                        style={{ width: `${book.progress_pct}%`, backgroundColor: '#639922' }}
+                        style={{ width: `${book.progress_pct}%`, backgroundColor: '#7FA98A' }}
                       />
                     </div>
                     <span className="text-xs text-stone-400 tabular-nums">{book.progress_pct}%</span>

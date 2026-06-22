@@ -13,7 +13,7 @@ const PRIORITY_COLOR: Record<string, string> = {
   High: 'text-red-500', Medium: 'text-amber-500', Low: 'text-stone-400',
 }
 const STATUS_COLOR: Record<string, string> = {
-  'Active': '#639922', 'To Do': '#6B6560', 'On Hold': '#D85A30', 'Done': '#A8A39A',
+  'Active': '#7FA98A', 'To Do': '#6B6560', 'On Hold': '#5B5F8D', 'Done': '#A8A39A',
 }
 
 type TaskForm = Partial<Omit<TaskRow, 'id' | 'user_id' | 'created_at' | 'updated_at'>>

@@ -22,7 +22,7 @@ export const PILLARS = {
   life: {
     id: 'life' as const,
     label: 'Life',
-    color: '#639922',
+    color: '#7FA98A',
     bg: 'bg-life-50',
     text: 'text-life-800',
     accent: 'text-life-400',
@@ -47,7 +47,7 @@ export const PILLARS = {
   dextrous: {
     id: 'dextrous' as const,
     label: 'Dextrous',
-    color: '#378ADD',
+    color: '#DA6B51',
     bg: 'bg-dextrous-50',
     text: 'text-dextrous-800',
     accent: 'text-dextrous-400',
@@ -60,6 +60,7 @@ export const PILLARS = {
       root: '/dextrous',
       subnav: [
         { label: 'Overview', href: '/dextrous' },
+        { label: 'Leads', href: '/dextrous/leads' },
         { label: 'Tasks', href: '/dextrous/tasks' },
         { label: 'Clients', href: '/dextrous/clients' },
         { label: 'Projects', href: '/dextrous/projects' },
@@ -75,7 +76,7 @@ export const PILLARS = {
   work: {
     id: 'work' as const,
     label: 'Work',
-    color: '#D85A30',
+    color: '#5B5F8D',
     bg: 'bg-work-50',
     text: 'text-work-800',
     accent: 'text-work-400',

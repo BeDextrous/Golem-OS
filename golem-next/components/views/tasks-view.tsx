@@ -14,9 +14,9 @@ const PRIORITIES = ['High', 'Medium', 'Low']
 const FILTER_KEY = 'golem:filter:tasks'
 
 const STATUS_COLOR: Record<string, string> = {
-  'Active':  '#639922',
+  'Active':  '#7FA98A',
   'To Do':   '#6B6560',
-  'On Hold': '#D85A30',
+  'On Hold': '#5B5F8D',
   'Done':    '#A8A39A',
 }
 

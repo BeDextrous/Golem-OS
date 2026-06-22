@@ -14,12 +14,12 @@ const PILLAR_OPTS = [
   { value: 'work', label: 'Work' },
 ]
 const PILLAR_COLORS: Record<string, string> = {
-  life: '#639922', dextrous: '#378ADD', work: '#D85A30',
+  life: '#7FA98A', dextrous: '#DA6B51', work: '#5B5F8D',
 }
 const STATUS_COLOR: Record<string, string> = {
-  'Active':   '#639922',
-  'Planning': '#378ADD',
-  'On Hold':  '#D85A30',
+  'Active':   '#7FA98A',
+  'Planning': '#DA6B51',
+  'On Hold':  '#5B5F8D',
   'Done':     '#A8A39A',
   'Archived': '#A8A39A',
 }

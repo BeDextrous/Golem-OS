@@ -151,6 +151,39 @@ export type Database = {
         }
         Relationships: []
       }
+      dextrous_leads: {
+        Row: {
+          created_at: string
+          email: string
+          id: number
+          message: string | null
+          name: string
+          source: string | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: number
+          message?: string | null
+          name: string
+          source?: string | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: number
+          message?: string | null
+          name?: string
+          source?: string | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       finances: {
         Row: {
           amount: number
