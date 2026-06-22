@@ -25,3 +25,10 @@ supabase/.temp/
 
 # Claude Code / Cowork internals
 .claude/
+
+# Superpowers internals
+.superpowers/
+# Python venvs (e.g. tools/pinscrape/.venv)
+**/.venv/
+# Runtime scratch
+/data/

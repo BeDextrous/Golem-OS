@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Wrapper so you can run `pinscrape-board "<board url>"` from anywhere.
+set -euo pipefail
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec "$DIR/.venv/bin/python" "$DIR/board_scrape.py" "$@"

@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Wrapper so you can run `pinscrape "keyword"` from anywhere.
+# Resolves paths relative to this script, so it works regardless of cwd.
+set -euo pipefail
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec "$DIR/.venv/bin/python" "$DIR/scrape.py" "$@"
