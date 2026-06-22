@@ -31,10 +31,25 @@ This sidesteps Drive churn entirely: only non-code artifacts (no `node_modules`)
 |---|---|
 | Approach | Hybrid (code local, assets in Drive) |
 | Drive split | By brand: bedextrous Drive for bedextrous; casaboca Drive for CasaBoca |
+| Drive layout | **Fit existing folders** (`GOLEMS/`, `Dextrous Assets/`) — no new `Projects/` tree |
 | Scope | All four projects |
 | Local code root | `~/Projects/` |
-| New repo owner | `BeDextrous` GitHub org, **private** |
+| Repo owner | `BeDextrous` GitHub org, **private** (incl. transferring inkspotter from personal) |
 | Tooling | `gh` CLI (authed as `maxsgoodman-dev`, has `repo` scope + `BeDextrous` access) |
+
+### Reality discovered (overrides earlier assumptions)
+
+- **inkspotter** is already a git repo at the nested path `~/inkspotter/inkspotter/`, with an
+  existing remote `github.com/maxsgoodman-dev/inkspotter` (personal). Decision: **transfer to
+  `BeDextrous` org**, relocate + flatten to `~/Projects/inkspotter/`, gitignore its `venv` (419M).
+- **bedextrous-site** is untracked inside golem-os (576M incl. `node_modules`) → new private
+  `BeDextrous/bedextrous-site` repo.
+- **`tools/pinscrape`** is a small Python scraper (built the moodboard); the 161M is its `.venv`
+  (regenerable, ignored by its own `.gitignore`). It **stays in the golem-os repo as code** —
+  it is NOT a Drive move.
+- **bedextrous Drive `My Drive/` already has an organizing scheme**: `GOLEMS/` (golem-os docs as
+  gdocs), `Dextrous Assets/` (brand assets), `Pinterest/` (moodboard taxonomy). Assets fit into
+  these rather than a new tree.
 
 ## Target structure
 
@@ -42,22 +57,26 @@ This sidesteps Drive churn entirely: only non-code artifacts (no `node_modules`)
 
 ```
 ~/Projects/
-  golem-os/          → github.com/BeDextrous/Golem-OS   (existing remote, relocated)
-  bedextrous-site/   → github.com/BeDextrous/bedextrous-site   (NEW private repo, extracted from golem-os)
-  inkspotter/        → github.com/BeDextrous/inkspotter         (NEW private repo)
+  golem-os/          → github.com/BeDextrous/Golem-OS         (existing remote, relocated)
+  bedextrous-site/   → github.com/BeDextrous/bedextrous-site  (NEW private repo, extracted from golem-os)
+  inkspotter/        → github.com/BeDextrous/inkspotter        (EXISTING repo, transferred from personal + flattened)
 ```
 
-### Assets — Google Drive, by brand
+### Assets — Google Drive, fitting existing folders
 
 ```
-GoogleDrive-max@bedextrous.com/My Drive/Projects/
-  golem-os/        ← output/ (incl. moodboard), Resume PDF, progress-archive.*
-  bedextrous-site/ ← design source, moodboards, content drafts
-  inkspotter/      ← non-code assets
+GoogleDrive-max@bedextrous.com/My Drive/
+  GOLEMS/                  ← progress-archive.md, progress-archive.ipynb (golem-os docs live here)
+  Dextrous Assets/
+    moodboard/             ← golem-os/output/moodboard (canonical Moebius/Ed Mell reference)
+  Resume - Max Goodman.pdf ← stray personal file from repo root (relocate; user may move)
 
 GoogleDrive-max@casaboca.com/My Drive/
-  CasaBoca-os/     ← entire folder as-is (Edelman legal .docx/.pptx + .gs scripts)
+  CasaBoca-os/             ← entire folder as-is (Edelman legal .docx/.pptx + .gs scripts)
 ```
+
+bedextrous-site and inkspotter: no asset moves required at migration time (code-required
+assets stay in each repo's `public/`). Revisit if working/source assets surface.
 
 ## The rule: what stays in the repo vs moves to Drive
 
@@ -74,38 +93,44 @@ GoogleDrive-max@casaboca.com/My Drive/
 
 ### Per-project move-lists (final sign-off per project at execution time)
 
-**golem-os → bedextrous Drive `My Drive/Projects/golem-os/`:**
-- `output/` (6.2M; includes `output/moodboard` — the canonical Moebius/Ed Mell visual reference)
-- `Resume - Max Goodman.pdf`
-- `progress-archive.md`, `progress-archive.ipynb`
-- ⚠️ `tools/` (161M) — inspect before deciding. Large for a tools dir; may contain vendored
-  binaries that belong in Drive (or should be gitignored), not committed code. Decide at execution.
+**golem-os → bedextrous Drive (fitting existing folders):**
+- `output/moodboard` (5.6M, untracked) → `Dextrous Assets/moodboard/` — plain move.
+- `progress-archive.md`, `progress-archive.ipynb` (git-tracked) → `GOLEMS/` — `git rm` + move.
+- `Resume - Max Goodman.pdf` (git-tracked) → `My Drive/` root — `git rm` + move.
+- `tools/pinscrape` — **stays in repo** (code; `.venv`/`output` ignored by its own `.gitignore`).
+- `data/time_epoch.json` (untracked, runtime scratch) → **gitignore, stays local**, no Drive.
 
-**bedextrous-site → bedextrous Drive:** design/source assets identified after extraction
-(code stays in the repo's `public/`).
-
-**inkspotter → bedextrous Drive:** non-code assets identified during migration.
+**bedextrous-site / inkspotter → bedextrous Drive:** no asset moves at migration time
+(code-required assets stay in each repo's `public/`).
 
 **CasaBoca-os → casaboca Drive:** whole folder moves as-is (legal docs + `.gs` scripts).
 Not a code repo; no GitHub remote.
 
 ## Migration order (safety-first)
 
-1. **Clean golem-os git state** — commit or stash current uncommitted changes + untracked
-   dirs (`bedextrous-site/`, `leads/`, `leads-view.tsx`, migration, `.superpowers/`).
-   Nothing moves until the working tree is in a known state.
-2. **Extract `bedextrous-site/`** from golem-os → `~/Projects/bedextrous-site`: move dir,
-   `git init`, add `.gitignore` (node_modules, .next, .env*), create
-   `BeDextrous/bedextrous-site` private remote, initial commit + push.
-3. **Relocate golem-os** `~/golem-os` → `~/Projects/golem-os` (plain `mv`; local move of a
-   git repo is safe). Verify remote + a build still work from the new path.
-4. **inkspotter** `~/inkspotter` → `~/Projects/inkspotter`: `git init`, `.gitignore`,
-   create `BeDextrous/inkspotter` private remote, initial commit + push.
-5. **Move asset move-lists** into the brand Drive folders, per project, after sign-off.
-   For tracked items, `git rm` + commit the removal.
-6. **CasaBoca-os** → casaboca Drive, whole folder.
-7. **Verify** — each repo builds; each Drive folder visible on web; nothing app-critical
-   left behind.
+golem-os is relocated **last** because it is this session's working directory; moving it
+mid-session breaks subsequent relative tooling.
+
+1. **inkspotter** — commit/stash its 17 dirty changes; relocate+flatten
+   `~/inkspotter/inkspotter` → `~/Projects/inkspotter`; transfer repo
+   `maxsgoodman-dev/inkspotter` → `BeDextrous/inkspotter`; update local remote; confirm
+   `venv` gitignored.
+2. **CasaBoca-os** → casaboca Drive, whole folder (verify copy before removing source).
+3. **Extract `bedextrous-site/`** from golem-os → `~/Projects/bedextrous-site`: move dir,
+   `git init`, `.gitignore` (node_modules, .next, .env*), create `BeDextrous/bedextrous-site`
+   private remote, initial commit + push.
+4. **Clean golem-os git state** — add `.gitignore` entries (`.superpowers/`, `/data/`,
+   `**/.venv/`); commit the leads feature WIP + `tools/pinscrape` code.
+5. **Move golem-os assets to Drive** — `output/moodboard` → `Dextrous Assets/`;
+   `git rm` + move `progress-archive.*` → `GOLEMS/` and `Resume*.pdf` → `My Drive/`;
+   commit the removals. Verify copies synced before removing sources.
+6. **Relocate golem-os** `~/golem-os` → `~/Projects/golem-os` (plain `mv`); rename the Claude
+   project dir `~/.claude/projects/-Users-maxgoodman-golem-os` →
+   `-Users-maxgoodman-Projects-golem-os` so history + memory follow.
+7. **Update memories** — `dextrous_design_aesthetic.md` (moodboard now in Drive),
+   `pinscrape_tool.md` (new repo path).
+8. **Verify** — each repo builds; Drive folders visible on web; nothing app-critical left behind.
+   Reopen Claude Code from `~/Projects/golem-os` after the move.
 
 ## Risks & mitigations
 
