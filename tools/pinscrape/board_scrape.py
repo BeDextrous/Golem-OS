@@ -58,6 +58,12 @@ def session_for(cookie):
         "User-Agent": UA,
         "Accept": "application/json, text/javascript, */*, q=0.01",
         "X-Requested-With": "XMLHttpRequest",
+        # Required by Pinterest's PWS resource endpoints; without the
+        # PWS-Handler header they reject every call as "Invalid Resource
+        # Request" (403). The bracketed value is a literal route template,
+        # not interpolated — the same handler serves board + feed resources.
+        "X-Pinterest-AppState": "active",
+        "X-Pinterest-PWS-Handler": "www/[username]/[slug].js",
         "Cookie": cookie,
         "Referer": "https://www.pinterest.com/",
     })
