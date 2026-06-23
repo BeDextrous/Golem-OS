@@ -55,6 +55,25 @@ When the cookie expires, the tool says so — re-grab and re-paste it.
 
 > Uses Pinterest's internal (undocumented) endpoints; may break if Pinterest changes them.
 
+## Download search results (`pinscrape-search`)
+
+Downloads full-res images from a Pinterest **search**, using the same cookie as
+`pinscrape-board`. Companion script `search_scrape.py`. Higher quality and
+authenticated (personalized) results vs. the library-based `pinscrape` search.
+
+**Run** (accepts a bare query or a full `/search/pins/?q=...` URL):
+```bash
+pinscrape-search "moebius"                              # -> Searches/moebius/ (first 100)
+pinscrape-search "moebius desert" -n 200 --to "Art/Moebius"
+pinscrape-search "https://www.pinterest.com/search/pins/?q=moebius"   # URL form
+```
+
+Defaults to `Pinterest/Searches/<query>/` and the first **100** results (searches
+are effectively endless). `-n 0` pages until results run out. Same content-hash
+naming as the other tools, so re-runs dedupe.
+
+> Shares the `.pinterest_cookie` and the same internal-endpoint caveat as `pinscrape-board`.
+
 ## Use the library directly
 
 ```python
