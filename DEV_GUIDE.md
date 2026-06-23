@@ -26,7 +26,7 @@ It contains two AI-powered widgets inside the Dextrous pillar:
   Google Picker
 
 The old static site (`web/`) and the legacy Google Apps Script files at the
-repo root are retired. The live app is `golem-next/`.
+repo root are retired. The live app is `golem-os-web/`.
 
 ## 2. High-level data flow
 
@@ -66,7 +66,7 @@ Schema changes additionally require `supabase db push` from your Mac.
 ## 3. Role of Claude
 
 Claude has direct access to the repo and can:
-- Edit any file in `golem-next/` and commit
+- Edit any file in `golem-os-web/` and commit
 - Run `git push` to deploy to production
 - Run `npx tsc --noEmit` to type-check before pushing
 - Read the Next.js 16 docs at `node_modules/next/dist/docs/` before writing
@@ -81,7 +81,7 @@ Claude cannot:
 
 ```
 golem-os/
-├── golem-next/                  ← THE live app (Next.js 16, deployed to Vercel)
+├── golem-os-web/                ← THE live app (Next.js 16, deployed to Vercel)
 │   ├── app/                     App Router pages + layouts + API routes
 │   │   ├── (app)/               Authenticated pages (dashboard, pillars)
 │   │   │   ├── page.tsx         Main dashboard
@@ -130,7 +130,7 @@ golem-os/
 
 ## 5. Environment variables
 
-Stored in `golem-next/.env.local` (gitignored). Required for full
+Stored in `golem-os-web/.env.local` (gitignored). Required for full
 functionality:
 
 | Variable | Purpose | Where to get it |
@@ -159,7 +159,7 @@ If the push is rejected because the remote moved forward:
 git pull --rebase origin main && git push
 ```
 
-Keep commit messages descriptive (`feat(golem-next): …`, `fix: …`,
+Keep commit messages descriptive (`feat(golem-os-web): …`, `fix: …`,
 `chore(supabase): …`) — the git log is the only changelog.
 
 ## 7. Supabase
@@ -200,7 +200,7 @@ supabase link --project-ref wllsrdfflaudwhfpxzfe
 ## 8. Vercel
 
 **Project name:** `golems`
-**Root directory:** `golem-next/`
+**Root directory:** `golem-os-web/`  _(renamed from `golem-next/` 2026-06-22 — update this in Vercel → Project Settings → Build & Deployment → Root Directory, or deploys will fail)_
 **Framework:** Next.js
 **Branch:** `main`
 
@@ -224,7 +224,7 @@ Authorized origins: `http://localhost:3000`, `https://golems.bedextrous.com`
 ## 9. Running locally
 
 ```bash
-cd golem-next
+cd golem-os-web
 npm install          # first time
 npm run dev          # starts on http://localhost:3000
 ```
@@ -232,7 +232,7 @@ npm run dev          # starts on http://localhost:3000
 TypeScript check before pushing:
 
 ```bash
-cd golem-next
+cd golem-os-web
 npx tsc --noEmit
 ```
 
@@ -280,6 +280,6 @@ Requires `NEXT_PUBLIC_GOOGLE_CLIENT_ID` and `NEXT_PUBLIC_GOOGLE_API_KEY`.
 1. `git log` — everything that changes the system is a commit
 2. Vercel deploy log — build errors show here
 3. Supabase dashboard logs — RLS failures and constraint violations
-4. `npx tsc --noEmit` in `golem-next/` — catches type errors before they hit
+4. `npx tsc --noEmit` in `golem-os-web/` — catches type errors before they hit
    production
 5. Browser console on the live site — runtime errors that didn't surface in TS
