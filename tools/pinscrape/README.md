@@ -33,6 +33,28 @@ Options:
 
 > A harmless pydantic warning may print when some pins lack expected fields — downloads still succeed.
 
+## Download a whole board (`pinscrape-board`)
+
+Downloads every image from a Pinterest board — public **or secret** — using your
+logged-in session cookie. Companion script `board_scrape.py`.
+
+**One-time cookie setup:**
+1. Log in to pinterest.com in your browser.
+2. DevTools → Network → refresh → click any `pinterest.com` request → copy the full
+   `Cookie:` request-header value.
+3. Paste it into `tools/pinscrape/.pinterest_cookie` (gitignored, never committed).
+
+**Run:**
+```bash
+pinscrape-board "https://pinterest.com/yourname/sci-fi/"            # whole board -> Boards/sci-fi/
+pinscrape-board "https://pinterest.com/yourname/sci-fi/" -n 50 --to "Art/Sci-fi"
+```
+
+Output defaults to `Pinterest/Boards/<board-slug>/`; override with `--to`/`-o`.
+When the cookie expires, the tool says so — re-grab and re-paste it.
+
+> Uses Pinterest's internal (undocumented) endpoints; may break if Pinterest changes them.
+
 ## Use the library directly
 
 ```python
