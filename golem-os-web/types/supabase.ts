@@ -29,6 +29,7 @@ export type Database = {
           status: string | null
           updated_at: string
           user_id: string
+          workspace_group: string | null
         }
         Insert: {
           company?: string | null
@@ -44,6 +45,7 @@ export type Database = {
           status?: string | null
           updated_at?: string
           user_id: string
+          workspace_group?: string | null
         }
         Update: {
           company?: string | null
@@ -59,6 +61,7 @@ export type Database = {
           status?: string | null
           updated_at?: string
           user_id?: string
+          workspace_group?: string | null
         }
         Relationships: [
           {

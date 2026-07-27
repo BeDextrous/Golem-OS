@@ -30,10 +30,12 @@ export function ProjectsView({
   initialProjects,
   clients,
   defaultPillar,
+  defaultClientId,
 }: {
   initialProjects: ProjectRow[]
   clients: ClientRow[]
   defaultPillar?: string
+  defaultClientId?: number
 }) {
   const [items, setItems]           = useState(initialProjects)
   const [pillarFilter, setPillarFilter] = useState<string | null>(defaultPillar ?? null)
@@ -46,7 +48,12 @@ export function ProjectsView({
 
   const openNew = () => {
     setEditItem(null)
-    setForm({ status: 'Planning', pillar: pillarFilter ?? 'work' })
+    setForm({
+      status: 'Planning',
+      pillar: pillarFilter ?? 'work',
+      project_type: defaultClientId ? 'client' : undefined,
+      client_id: defaultClientId,
+    })
     setDrawerOpen(true)
   }
   const openEdit = (item: ProjectRow) => {

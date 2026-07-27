@@ -92,6 +92,7 @@ export const PILLARS = {
         { label: 'Tasks', href: '/work/tasks' },
         { label: 'Goals', href: '/work/goals' },
         { label: 'Projects', href: '/work/projects' },
+        { label: 'Clients', href: '/work/clients' },
       ],
     },
   },
