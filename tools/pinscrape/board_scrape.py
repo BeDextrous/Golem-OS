@@ -52,12 +52,22 @@ def load_cookie(explicit):
     return cookie
 
 
-def session_for(cookie):
+BOARD_PWS_HANDLER = "www/[username]/[slug].js"
+
+
+def session_for(cookie, pws_handler=BOARD_PWS_HANDLER):
     s = requests.Session()
     s.headers.update({
         "User-Agent": UA,
         "Accept": "application/json, text/javascript, */*, q=0.01",
         "X-Requested-With": "XMLHttpRequest",
+        # Required by Pinterest's PWS resource endpoints; without the
+        # PWS-Handler header they reject every call as "Invalid Resource
+        # Request" (403). The bracketed value is a literal route template,
+        # not interpolated. Each resource family has its own handler route
+        # (board page vs. search page), so callers pass the matching one.
+        "X-Pinterest-AppState": "active",
+        "X-Pinterest-PWS-Handler": pws_handler,
         "Cookie": cookie,
         "Referer": "https://www.pinterest.com/",
     })
@@ -106,6 +116,19 @@ def get_board_id(s, username, slug):
     return data["id"], data.get("name", slug)
 
 
+def best_image_url(pin):
+    """Highest-res image URL for a pin: 'orig' if present, else the widest
+    size. Returns None for videos / non-image pins."""
+    images = (pin or {}).get("images") or {}
+    if not images:
+        return None
+    if isinstance(images.get("orig"), dict) and images["orig"].get("url"):
+        return images["orig"]["url"]
+    best = max(images.values(),
+               key=lambda i: i.get("width", 0) if isinstance(i, dict) else 0)
+    return best.get("url") if isinstance(best, dict) else None
+
+
 def iter_board_pins(s, board_id, username, slug, limit=None):
     """Yield image URLs from a board, paging via the bookmark cursor."""
     source_url = f"/{username}/{slug}/"
@@ -120,17 +143,7 @@ def iter_board_pins(s, board_id, username, slug, limit=None):
         if not pins:
             break
         for pin in pins:
-            images = (pin or {}).get("images") or {}
-            if not images:
-                continue  # videos / non-image pins
-            # Pick the largest available size; "orig" first, else widest WxH key.
-            url = None
-            if "orig" in images:
-                url = images["orig"].get("url")
-            if not url:
-                best = max(images.values(),
-                           key=lambda i: i.get("width", 0) if isinstance(i, dict) else 0)
-                url = best.get("url") if isinstance(best, dict) else None
+            url = best_image_url(pin)
             if url:
                 yield url
                 seen += 1
