@@ -32,3 +32,5 @@ supabase/.temp/
 **/.venv/
 # Runtime scratch
 /data/
+.vercel
+.env*
