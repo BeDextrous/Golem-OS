@@ -1,6 +1,9 @@
 import Link from 'next/link'
 import { getJobApps, getTargetCompanies, getCRM, getGoals, getClients, getProjects, getKnowledge, getTasks, getObjectives } from '@/lib/queries'
 import { ClickableTaskList } from '@/components/dashboard/clickable-task-list'
+import { CalendarWidget } from '@/components/widgets/calendar-widget'
+import { GmailWidget } from '@/components/widgets/gmail-widget'
+import { DriveWidget } from '@/components/widgets/drive-widget'
 
 function StatCard({
   title, href, stats, items,
@@ -108,6 +111,13 @@ export default async function DextrousOverviewPage() {
           stats={[{ label: 'active', value: dexGoals.length }]}
           items={dexGoals.slice(0, 3).map(g => g.title)}
         />
+      </div>
+
+      {/* Connected: Calendar, Gmail, Drive */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <CalendarWidget connection="dextrous" compact />
+        <GmailWidget connection="dextrous" compact />
+        <DriveWidget connection="dextrous" compact />
       </div>
 
       {/* Inline clickable task list */}

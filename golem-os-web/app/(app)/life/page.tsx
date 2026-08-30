@@ -1,6 +1,9 @@
 import Link from 'next/link'
 import { getReading, getFinances, getNotes, getLinks, getGoals, getTasks, getObjectives } from '@/lib/queries'
 import { ClickableTaskList } from '@/components/dashboard/clickable-task-list'
+import { CalendarWidget } from '@/components/widgets/calendar-widget'
+import { GmailWidget } from '@/components/widgets/gmail-widget'
+import { DriveWidget } from '@/components/widgets/drive-widget'
 
 function StatCard({
   title, href, stats, items,
@@ -113,6 +116,13 @@ export default async function LifeOverviewPage() {
           stats={[{ label: 'saved links', value: lifeLinks.length }]}
           items={lifeLinks.slice(0, 3).map(l => l.title ?? l.url)}
         />
+      </div>
+
+      {/* Connected: Calendar, Gmail, Drive */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <CalendarWidget connection="life" compact />
+        <GmailWidget connection="life" compact />
+        <DriveWidget connection="life" compact />
       </div>
 
       {/* Inline clickable task list */}

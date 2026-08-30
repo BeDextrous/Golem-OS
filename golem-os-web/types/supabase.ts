@@ -21,8 +21,12 @@ export type Database = {
           contract_value: number | null
           created_at: string
           currency: string | null
+          drive_folder_id: string | null
+          drive_folder_url: string | null
           end_date: string | null
           id: number
+          latest_update: string | null
+          latest_update_at: string | null
           name: string
           notes: string | null
           start_date: string | null
@@ -36,8 +40,12 @@ export type Database = {
           contract_value?: number | null
           created_at?: string
           currency?: string | null
+          drive_folder_id?: string | null
+          drive_folder_url?: string | null
           end_date?: string | null
           id?: number
+          latest_update?: string | null
+          latest_update_at?: string | null
           name: string
           notes?: string | null
           start_date?: string | null
@@ -51,8 +59,12 @@ export type Database = {
           contract_value?: number | null
           created_at?: string
           currency?: string | null
+          drive_folder_id?: string | null
+          drive_folder_url?: string | null
           end_date?: string | null
           id?: number
+          latest_update?: string | null
+          latest_update_at?: string | null
           name?: string
           notes?: string | null
           start_date?: string | null

@@ -248,6 +248,10 @@ create table if not exists public.clients (
   end_date        date,
   notes           text,
   contact_id      bigint references public.crm(id) on delete set null,
+  drive_folder_url text,
+  drive_folder_id   text,
+  latest_update     text,
+  latest_update_at  timestamptz,
   created_at      timestamptz not null default now(),
   updated_at      timestamptz not null default now()
 );

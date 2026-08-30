@@ -117,3 +117,28 @@ export async function getLeads(): Promise<LeadRow[]> {
   const { data } = await sb.from('dextrous_leads').select('*').order('created_at', { ascending: false })
   return data ?? []
 }
+
+export async function getClientById(id: number): Promise<ClientRow | null> {
+  const sb = await createServerSupabaseClient()
+  const { data } = await sb.from('clients').select('*').eq('id', id).single()
+  return data ?? null
+}
+
+export async function getProjectsByClient(clientId: number): Promise<ProjectRow[]> {
+  const sb = await createServerSupabaseClient()
+  const { data } = await sb.from('projects').select('*').eq('client_id', clientId).order('created_at', { ascending: false })
+  return data ?? []
+}
+
+export async function getTasksByProjectIds(projectIds: number[]): Promise<TaskRow[]> {
+  if (projectIds.length === 0) return []
+  const sb = await createServerSupabaseClient()
+  const { data } = await sb.from('tasks').select('*').in('project_id', projectIds)
+  return data ?? []
+}
+
+export async function getInvoicesByClient(clientId: number): Promise<InvoiceRow[]> {
+  const sb = await createServerSupabaseClient()
+  const { data } = await sb.from('invoices').select('*').eq('client_id', clientId).order('due_date', { ascending: true })
+  return data ?? []
+}

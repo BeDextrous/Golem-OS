@@ -1,6 +1,7 @@
 'use client'
 import { useState, useMemo } from 'react'
-import { Plus } from 'lucide-react'
+import Link from 'next/link'
+import { Plus, Pencil } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
 import { Button, Input, Select, Textarea } from '@/components/ui'
@@ -124,10 +125,9 @@ export function ClientsView({ initialClients }: { initialClients: ClientRow[] })
             </p>
             <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-lg overflow-hidden">
               {clients.map((client, idx) => (
-                <button
+                <div
                   key={client.id}
-                  onClick={() => openEdit(client)}
-                  className={`w-full text-left flex items-center gap-3 px-4 py-3 hover:bg-stone-50 dark:hover:bg-stone-800/50 transition-colors ${
+                  className={`flex items-center gap-3 px-4 py-3 hover:bg-stone-50 dark:hover:bg-stone-800/50 transition-colors ${
                     idx > 0 ? 'border-t border-stone-100 dark:border-stone-800' : ''
                   }`}
                 >
@@ -136,7 +136,7 @@ export function ClientsView({ initialClients }: { initialClients: ClientRow[] })
                     className="w-2 h-2 rounded-full flex-shrink-0"
                     style={{ backgroundColor: STATUS_COLOR[client.status ?? 'Prospective'] }}
                   />
-                  <div className="flex-1 min-w-0">
+                  <Link href={`/dextrous/clients/${client.id}`} className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-stone-900 dark:text-stone-100 truncate">
                       {client.name}
                     </p>
@@ -146,13 +146,20 @@ export function ClientsView({ initialClients }: { initialClients: ClientRow[] })
                         <span className="ml-1">· since {client.start_date.slice(0, 7)}</span>
                       )}
                     </p>
-                  </div>
+                  </Link>
                   {client.contract_value != null && (
                     <span className="text-sm font-semibold text-stone-700 dark:text-stone-300 tabular-nums shrink-0">
                       {fmt(client.contract_value, client.currency ?? 'USD')}
                     </span>
                   )}
-                </button>
+                  <button
+                    onClick={() => openEdit(client)}
+                    title="Quick edit"
+                    className="p-1.5 rounded-md text-stone-300 hover:text-stone-600 dark:hover:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors shrink-0"
+                  >
+                    <Pencil size={13} />
+                  </button>
+                </div>
               ))}
             </div>
           </section>
