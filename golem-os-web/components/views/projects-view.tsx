@@ -113,8 +113,10 @@ export function ProjectsView({
     return order.filter(s => map.has(s)).map(s => [s, map.get(s)!] as const)
   }, [filtered])
 
+  // Clients only exist under Dextrous — an empty clients array (Work/Life)
+  // means "don't show client linkage here", even if a row has a stray client_id.
   const clientName = (id: number | null) =>
-    id ? (clients.find(c => c.id === id)?.name ?? `#${id}`) : null
+    clients.length > 0 && id ? (clients.find(c => c.id === id)?.name ?? `#${id}`) : null
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
