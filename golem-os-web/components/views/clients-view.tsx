@@ -8,13 +8,13 @@ import { Button, Input, Select, Textarea } from '@/components/ui'
 import { ItemDrawer } from '@/components/data/item-drawer'
 import type { ClientRow } from '@/types/entities'
 
-const STATUSES = ['Active', 'Prospective', 'Past', 'Archived']
+const STATUSES = ['Prospect', 'Active', 'Paused', 'Closed']
 const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD']
 const STATUS_COLOR: Record<string, string> = {
-  'Active':      '#7FA98A',
-  'Prospective': '#DA6B51',
-  'Past':        '#A8A39A',
-  'Archived':    '#A8A39A',
+  'Prospect': '#DA6B51',
+  'Active':   '#7FA98A',
+  'Paused':   '#D9B45C',
+  'Closed':   '#A8A39A',
 }
 
 type Form = Partial<Omit<ClientRow, 'id' | 'user_id' | 'created_at' | 'updated_at'>>
@@ -35,7 +35,7 @@ export function ClientsView({ initialClients }: { initialClients: ClientRow[] })
 
   const openNew = () => {
     setEditItem(null)
-    setForm({ status: 'Prospective', currency: 'USD' })
+    setForm({ status: 'Prospect', currency: 'USD' })
     setDrawerOpen(true)
   }
   const openEdit = (item: ClientRow) => {
@@ -84,10 +84,10 @@ export function ClientsView({ initialClients }: { initialClients: ClientRow[] })
   }
 
   const byStatus = useMemo(() => {
-    const order = ['Active', 'Prospective', 'Past', 'Archived']
+    const order = ['Active', 'Prospect', 'Paused', 'Closed']
     const map = new Map<string, ClientRow[]>()
     items.forEach(c => {
-      const s = c.status ?? 'Prospective'
+      const s = c.status ?? 'Prospect'
       const arr = map.get(s) ?? []
       arr.push(c)
       map.set(s, arr)
@@ -134,7 +134,7 @@ export function ClientsView({ initialClients }: { initialClients: ClientRow[] })
                   {/* Status dot */}
                   <div
                     className="w-2 h-2 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: STATUS_COLOR[client.status ?? 'Prospective'] }}
+                    style={{ backgroundColor: STATUS_COLOR[client.status ?? 'Prospect'] }}
                   />
                   <Link href={`/dextrous/clients/${client.id}`} className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-stone-900 dark:text-stone-100 truncate">
