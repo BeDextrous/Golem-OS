@@ -26,6 +26,7 @@
 
 -- Extensions
 create extension if not exists "pgcrypto";
+create extension if not exists "vector" with schema extensions;
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- PHASE 1 TABLES
@@ -258,7 +259,7 @@ create table if not exists public.projects (
   id            bigserial primary key,
   user_id       uuid not null references auth.users(id) on delete cascade,
   name          text not null,
-  pillar        text not null check (pillar in ('life','dextrous','work')),
+  pillar        text not null check (pillar in ('life','dextrous','work','pagemaster')),
   project_type  text default 'personal' check (project_type in ('client','personal','work')),
   client_id     bigint references public.clients(id) on delete set null,
   status        text default 'Active' check (status in ('Planned','Active','On Hold','Done','Cancelled')),
@@ -271,6 +272,72 @@ create table if not exists public.projects (
 );
 create index if not exists projects_user_idx on public.projects(user_id);
 create index if not exists projects_pillar_idx on public.projects(pillar);
+
+-- ─── LEGAL DOCUMENTS ─────────────────────────────────────────────────────────
+-- Drive-ingested (or manually added) legal work product, filed against the
+-- existing clients/projects tables.
+CREATE TABLE IF NOT EXISTS public.legal_documents (
+  id                bigserial PRIMARY KEY,
+  user_id           uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  client_id         bigint REFERENCES public.clients(id) ON DELETE SET NULL,
+  project_id        bigint REFERENCES public.projects(id) ON DELETE SET NULL,
+  drive_file_id     text NOT NULL,
+  drive_file_url    text,
+  title             text NOT NULL,
+  ingestion_source  text NOT NULL CHECK (ingestion_source IN ('drive_watch','manual','cowork')),
+  created_at        timestamptz NOT NULL DEFAULT now(),
+  updated_at        timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS legal_documents_user_idx ON public.legal_documents(user_id);
+CREATE INDEX IF NOT EXISTS legal_documents_client_idx ON public.legal_documents(client_id);
+CREATE INDEX IF NOT EXISTS legal_documents_project_idx ON public.legal_documents(project_id);
+CREATE UNIQUE INDEX IF NOT EXISTS legal_documents_drive_file_idx ON public.legal_documents(drive_file_id);
+
+-- ─── KNOWLEDGE MEMORY ────────────────────────────────────────────────────────
+-- Extracted knowledge + embeddings. Embedding dimension (1536) is
+-- provisional — sub-project 2 picks the actual embedding model and may
+-- need `ALTER COLUMN embedding TYPE extensions.vector(N)` if it differs.
+CREATE TABLE IF NOT EXISTS public.knowledge_memory (
+  id                  bigserial PRIMARY KEY,
+  user_id             uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  legal_document_id   bigint REFERENCES public.legal_documents(id) ON DELETE CASCADE,
+  client_id           bigint REFERENCES public.clients(id) ON DELETE SET NULL,
+  content             text NOT NULL,
+  embedding           extensions.vector(1536),
+  created_at          timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS knowledge_memory_user_idx ON public.knowledge_memory(user_id);
+CREATE INDEX IF NOT EXISTS knowledge_memory_client_idx ON public.knowledge_memory(client_id);
+
+-- ─── DEADLINES ───────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.deadlines (
+  id                   bigserial PRIMARY KEY,
+  user_id              uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  client_id            bigint REFERENCES public.clients(id) ON DELETE SET NULL,
+  project_id           bigint REFERENCES public.projects(id) ON DELETE SET NULL,
+  title                text NOT NULL,
+  due_date             date NOT NULL,
+  source_document_id   bigint REFERENCES public.legal_documents(id) ON DELETE SET NULL,
+  status               text NOT NULL DEFAULT 'open' CHECK (status IN ('open','done','waived')),
+  created_at           timestamptz NOT NULL DEFAULT now(),
+  updated_at           timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS deadlines_user_idx ON public.deadlines(user_id);
+CREATE INDEX IF NOT EXISTS deadlines_due_idx ON public.deadlines(due_date);
+
+-- ─── INGESTION LOG ───────────────────────────────────────────────────────────
+-- Audit trail of ingestion activity. Written by the worker's service-role
+-- key (bypasses RLS); users only need read access.
+CREATE TABLE IF NOT EXISTS public.ingestion_log (
+  id          bigserial PRIMARY KEY,
+  user_id     uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  source      text NOT NULL,
+  status      text NOT NULL DEFAULT 'ok',
+  detail      jsonb,
+  created_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS ingestion_log_user_idx ON public.ingestion_log(user_id);
+CREATE INDEX IF NOT EXISTS ingestion_log_created_idx ON public.ingestion_log(created_at DESC);
 
 -- ─── INVOICES ────────────────────────────────────────────────────────────────
 create table if not exists public.invoices (
@@ -382,7 +449,7 @@ begin
     'goals','objectives','tasks','reading','notes','links','finances','crm',
     'job_applications','target_companies',
     'health_entries','clients','projects','invoices','knowledge_items',
-    'user_dashboard_config','user_pages'
+    'user_dashboard_config','user_pages','legal_documents','deadlines'
   ]
   loop
     execute format('drop trigger if exists %I_set_updated_at on public.%I', t, t);
@@ -403,7 +470,8 @@ begin
     'goals','objectives','tasks','reading','notes','links','finances','crm',
     'job_applications','target_companies',
     'health_entries','clients','projects','invoices','knowledge_items',
-    'cross_links','integration_cache','user_dashboard_config','user_pages'
+    'cross_links','integration_cache','user_dashboard_config','user_pages',
+    'legal_documents','knowledge_memory','deadlines'
   ]
   loop
     execute format('alter table public.%I enable row level security', t);
@@ -431,6 +499,15 @@ begin
     $f$, t);
   end loop;
 end $$;
+
+-- ─── INGESTION LOG RLS ───────────────────────────────────────────────────────
+-- Read-only for the owner; writes come from the worker's service_role key,
+-- which bypasses RLS entirely (not in the generic loop above — it deliberately
+-- gets no insert/update/delete policies for the authenticated role).
+ALTER TABLE public.ingestion_log ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "owner_select" ON public.ingestion_log;
+CREATE POLICY "owner_select" ON public.ingestion_log FOR SELECT USING (auth.uid() = user_id);
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- GRANTS

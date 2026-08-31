@@ -154,6 +154,67 @@ export type Database = {
         }
         Relationships: []
       }
+      deadlines: {
+        Row: {
+          client_id: number | null
+          created_at: string
+          due_date: string
+          id: number
+          project_id: number | null
+          source_document_id: number | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client_id?: number | null
+          created_at?: string
+          due_date: string
+          id?: number
+          project_id?: number | null
+          source_document_id?: number | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          client_id?: number | null
+          created_at?: string
+          due_date?: string
+          id?: number
+          project_id?: number | null
+          source_document_id?: number | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deadlines_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deadlines_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deadlines_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "legal_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dextrous_leads: {
         Row: {
           created_at: string
@@ -298,6 +359,33 @@ export type Database = {
           updated_at?: string
           user_id?: string
           value?: number | null
+        }
+        Relationships: []
+      }
+      ingestion_log: {
+        Row: {
+          created_at: string
+          detail: Json | null
+          id: number
+          source: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          detail?: Json | null
+          id?: number
+          source: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          detail?: Json | null
+          id?: number
+          source?: string
+          status?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -486,6 +574,105 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "knowledge_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      knowledge_memory: {
+        Row: {
+          client_id: number | null
+          content: string
+          created_at: string
+          embedding: string | null
+          id: number
+          legal_document_id: number | null
+          user_id: string
+        }
+        Insert: {
+          client_id?: number | null
+          content: string
+          created_at?: string
+          embedding?: string | null
+          id?: number
+          legal_document_id?: number | null
+          user_id: string
+        }
+        Update: {
+          client_id?: number | null
+          content?: string
+          created_at?: string
+          embedding?: string | null
+          id?: number
+          legal_document_id?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_memory_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_memory_legal_document_id_fkey"
+            columns: ["legal_document_id"]
+            isOneToOne: false
+            referencedRelation: "legal_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_documents: {
+        Row: {
+          client_id: number | null
+          created_at: string
+          drive_file_id: string
+          drive_file_url: string | null
+          id: number
+          ingestion_source: string
+          project_id: number | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client_id?: number | null
+          created_at?: string
+          drive_file_id: string
+          drive_file_url?: string | null
+          id?: number
+          ingestion_source: string
+          project_id?: number | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          client_id?: number | null
+          created_at?: string
+          drive_file_id?: string
+          drive_file_url?: string | null
+          id?: number
+          ingestion_source?: string
+          project_id?: number | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_documents_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_documents_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
