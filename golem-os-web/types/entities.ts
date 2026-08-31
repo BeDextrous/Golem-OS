@@ -19,6 +19,11 @@ export type HealthRow    = T['health_entries']['Row']
 export type InvoiceRow   = T['invoices']['Row']
 export type LeadRow      = T['dextrous_leads']['Row']
 
+export type LegalDocumentRow   = T['legal_documents']['Row']
+export type KnowledgeMemoryRow = T['knowledge_memory']['Row']
+export type DeadlineRow        = T['deadlines']['Row']
+export type IngestionLogRow    = T['ingestion_log']['Row']
+
 export type TaskInsert    = T['tasks']['Insert']
 export type GoalInsert    = T['goals']['Insert']
 export type ReadingInsert = T['reading']['Insert']

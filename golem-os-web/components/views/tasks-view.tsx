@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 import { Button, Input, Select, Badge } from '@/components/ui'
 import { StatusFilter, initStatuses, saveStatuses } from '@/components/data/status-filter'
 import { ItemDrawer } from '@/components/data/item-drawer'
-import type { TaskRow, GoalRow, ObjectiveRow } from '@/types/entities'
+import type { TaskRow, GoalRow, ObjectiveRow, ProjectRow, ClientRow } from '@/types/entities'
 
 const STATUSES = ['To Do', 'Active', 'On Hold', 'Done']
 const PRIORITIES = ['High', 'Medium', 'Low']
@@ -33,9 +33,15 @@ interface Props {
   goals:         GoalRow[]
   objectives:    ObjectiveRow[]
   defaultPillar?: string
+  projects?: ProjectRow[]
+  clients?: ClientRow[]
+  defaultProjectId?: number
 }
 
-export function TasksView({ initialTasks, goals, objectives, defaultPillar }: Props) {
+export function TasksView({
+  initialTasks, goals, objectives, defaultPillar,
+  projects = [], clients = [], defaultProjectId,
+}: Props) {
   const [items, setItems] = useState(initialTasks)
   const [activeStatuses, setActiveStatuses] = useState<string[]>([])
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -51,7 +57,7 @@ export function TasksView({ initialTasks, goals, objectives, defaultPillar }: Pr
 
   const openNew = () => {
     setEditItem(null)
-    setForm({ status: 'To Do', pillar: defaultPillar ?? null })
+    setForm({ status: 'To Do', pillar: defaultPillar ?? null, project_id: defaultProjectId ?? null })
     setDrawerOpen(true)
   }
 
@@ -65,6 +71,7 @@ export function TasksView({ initialTasks, goals, objectives, defaultPillar }: Pr
       due_date: item.due_date,
       objective_id: item.objective_id,
       pillar: item.pillar,
+      project_id: item.project_id,
     })
     setDrawerOpen(true)
   }
@@ -142,6 +149,27 @@ export function TasksView({ initialTasks, goals, objectives, defaultPillar }: Pr
     [goals]
   )
 
+  const clientName = useMemo(() =>
+    Object.fromEntries(clients.map(c => [String(c.id), c.name])),
+    [clients]
+  )
+
+  const projectName = useMemo(() =>
+    Object.fromEntries(projects.map(p => [String(p.id), p.name])),
+    [projects]
+  )
+
+  const projectsByClient = useMemo(() => {
+    const map = new Map<string, { id: number; name: string }[]>()
+    projects.forEach(p => {
+      const k = p.client_id ? clientName[String(p.client_id)] ?? `Client #${p.client_id}` : 'No Client'
+      const entry = map.get(k) ?? []
+      entry.push({ id: p.id, name: p.name })
+      map.set(k, entry)
+    })
+    return map
+  }, [projects, clientName])
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-5">
       <div className="flex items-center justify-between">
@@ -197,6 +225,11 @@ export function TasksView({ initialTasks, goals, objectives, defaultPillar }: Pr
                     )}
                     {task.due_date && (
                       <span className="text-xs text-stone-400">{task.due_date}</span>
+                    )}
+                    {task.project_id && projectName[String(task.project_id)] && (
+                      <span className="text-xs text-stone-400 truncate">
+                        {projectName[String(task.project_id)]}
+                      </span>
                     )}
                   </div>
                 </button>
@@ -273,6 +306,18 @@ export function TasksView({ initialTasks, goals, objectives, defaultPillar }: Pr
             { value: 'work', label: 'Work' },
           ]}
         />
+        {projects.length > 0 && (
+          <Select
+            label="Project"
+            value={form.project_id ? String(form.project_id) : ''}
+            onChange={e => upd('project_id', e.target.value ? Number(e.target.value) : null)}
+            placeholder="— None —"
+            groups={[...projectsByClient.entries()].map(([client, projs]) => ({
+              label: client,
+              options: projs.map(p => ({ value: String(p.id), label: p.name })),
+            }))}
+          />
+        )}
       </ItemDrawer>
     </div>
   )

@@ -1,4 +1,4 @@
-export type Pillar = 'life' | 'dextrous' | 'work'
+export type Pillar = 'life' | 'dextrous' | 'work' | 'pagemaster'
 
 export type PillarConfig = {
   id: Pillar
@@ -69,7 +69,6 @@ export const PILLARS = {
         { label: 'Projects', href: '/dextrous/projects' },
         { label: 'Knowledge', href: '/dextrous/knowledge' },
         { label: 'Jobs', href: '/dextrous/jobs' },
-        { label: 'Mike', href: '/dextrous/mike' },
         { label: 'Drive', href: '/dextrous/drive' },
         { label: 'Calendar', href: '/dextrous/calendar' },
         { label: 'Gmail', href: '/dextrous/gmail' },
@@ -97,6 +96,31 @@ export const PILLARS = {
         { label: 'Tasks', href: '/work/tasks' },
         { label: 'Goals', href: '/work/goals' },
         { label: 'Projects', href: '/work/projects' },
+        { label: 'Clients', href: '/work/clients' },
+      ],
+    },
+  },
+  pagemaster: {
+    id: 'pagemaster' as const,
+    label: 'Pagemaster',
+    color: '#3C6E71',
+    bg: 'bg-pagemaster-50',
+    text: 'text-pagemaster-800',
+    accent: 'text-pagemaster-400',
+    border: 'border-pagemaster-400',
+    badge: 'bg-pagemaster-100 text-pagemaster-800',
+    activePill: 'bg-pagemaster-400 text-white',
+    hoverPill: 'hover:bg-pagemaster-50 hover:text-pagemaster-800',
+    icon: 'Scale',
+    routes: {
+      root: '/pagemaster',
+      subnav: [
+        { label: 'Overview', href: '/pagemaster' },
+        { label: 'Mike', href: '/pagemaster/mike' },
+        { label: 'Knowledge', href: '/pagemaster/knowledge' },
+        { label: 'Deadlines', href: '/pagemaster/deadlines' },
+        { label: 'Clients', href: '/pagemaster/clients' },
+        { label: 'Projects', href: '/pagemaster/projects' },
       ],
     },
   },

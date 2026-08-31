@@ -257,7 +257,7 @@ hydration.
 
 ## 11. Mike (AI legal assistant)
 
-Mike is a streaming chat widget at `/dextrous/mike`, backed by:
+Mike is a streaming chat widget at `/pagemaster/mike`, backed by:
 - **API route:** `app/api/mike/route.ts` — server-side only, uses Anthropic SDK
   with `claude-opus-4-5` and prompt caching on the system prompt
 - **Widget:** `components/widgets/mike-widget.tsx` — streaming UI with copy

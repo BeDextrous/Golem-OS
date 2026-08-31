@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { getTasks, getGoals, getObjectives, getProjects } from '@/lib/queries'
+import { getTasks, getGoals, getObjectives, getProjects, getClients } from '@/lib/queries'
 import { ClickableTaskList } from '@/components/dashboard/clickable-task-list'
 
 function StatCard({
@@ -38,8 +38,8 @@ function StatCard({
 }
 
 export default async function WorkOverviewPage() {
-  const [tasks, goals, objectives, projects] = await Promise.all([
-    getTasks(), getGoals(), getObjectives(), getProjects(),
+  const [tasks, goals, objectives, projects, clients] = await Promise.all([
+    getTasks(), getGoals(), getObjectives(), getProjects(), getClients(),
   ])
 
   const workTasks      = tasks.filter(t => t.pillar === 'work')
@@ -49,6 +49,9 @@ export default async function WorkOverviewPage() {
   const workGoals      = goals.filter(g => g.pillar === 'work' && g.status === 'Active')
   const allActiveGoals = goals.filter(g => g.status === 'Active')
   const workProjects   = projects.filter(p => p.pillar === 'work' && p.status === 'Active')
+  const activeClients  = clients.filter(c => c.status === 'Active')
+  const dexClients     = activeClients.filter(c => c.workspace_group === 'dextrous')
+  const standaloneClients = activeClients.filter(c => !c.workspace_group)
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
@@ -85,6 +88,15 @@ export default async function WorkOverviewPage() {
             { label: 'total', value: projects.filter(p => p.pillar === 'work').length },
           ]}
           items={workProjects.slice(0, 3).map(p => p.name)}
+        />
+        <StatCard
+          title="Clients"
+          href="/work/clients"
+          stats={[
+            { label: 'active', value: activeClients.length },
+            { label: 'dextrous', value: dexClients.length },
+          ]}
+          items={[...dexClients, ...standaloneClients].slice(0, 3).map(c => c.name)}
         />
       </div>
 
