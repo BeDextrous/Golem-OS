@@ -32,3 +32,4 @@ supabase/.temp/
 **/.venv/
 # Runtime scratch
 /data/
+.worktrees/
