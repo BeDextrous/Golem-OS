@@ -12,9 +12,10 @@ const PILLAR_OPTS = [
   { value: 'life', label: 'Life' },
   { value: 'dextrous', label: 'Dextrous' },
   { value: 'work', label: 'Work' },
+  { value: 'pagemaster', label: 'Pagemaster' },
 ]
 const PILLAR_COLORS: Record<string, string> = {
-  life: '#7FA98A', dextrous: '#DA6B51', work: '#5B5F8D',
+  life: '#7FA98A', dextrous: '#DA6B51', work: '#5B5F8D', pagemaster: '#3C6E71',
 }
 const STATUS_COLOR: Record<string, string> = {
   'Active':   '#7FA98A',

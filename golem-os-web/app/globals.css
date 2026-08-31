@@ -40,6 +40,15 @@
   --color-work-800: #313353;
   --color-work-900: #1F2037;
 
+  /* Pagemaster pillar — deep teal */
+  --color-pagemaster-50: #E9F1F1;
+  --color-pagemaster-100: #C6DBDD;
+  --color-pagemaster-200: #97C1C3;
+  --color-pagemaster-400: #3C6E71;
+  --color-pagemaster-600: #2C5658;
+  --color-pagemaster-800: #1D3D3E;
+  --color-pagemaster-900: #13292A;
+
   /* Typography */
   --font-sans: var(--font-inter), system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
