@@ -308,6 +308,7 @@ CREATE TABLE IF NOT EXISTS public.knowledge_memory (
 );
 CREATE INDEX IF NOT EXISTS knowledge_memory_user_idx ON public.knowledge_memory(user_id);
 CREATE INDEX IF NOT EXISTS knowledge_memory_client_idx ON public.knowledge_memory(client_id);
+CREATE INDEX IF NOT EXISTS knowledge_memory_document_idx ON public.knowledge_memory(legal_document_id);
 
 -- ─── DEADLINES ───────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.deadlines (
@@ -324,6 +325,9 @@ CREATE TABLE IF NOT EXISTS public.deadlines (
 );
 CREATE INDEX IF NOT EXISTS deadlines_user_idx ON public.deadlines(user_id);
 CREATE INDEX IF NOT EXISTS deadlines_due_idx ON public.deadlines(due_date);
+CREATE INDEX IF NOT EXISTS deadlines_client_idx ON public.deadlines(client_id);
+CREATE INDEX IF NOT EXISTS deadlines_project_idx ON public.deadlines(project_id);
+CREATE INDEX IF NOT EXISTS deadlines_source_document_idx ON public.deadlines(source_document_id);
 
 -- ─── INGESTION LOG ───────────────────────────────────────────────────────────
 -- Audit trail of ingestion activity. Written by the worker's service-role
@@ -518,5 +522,23 @@ grant select, insert, update, delete
      public.job_applications, public.target_companies,
      public.health_entries, public.clients, public.projects, public.invoices,
      public.knowledge_items, public.cross_links, public.integration_cache,
-     public.user_dashboard_config, public.user_pages
+     public.user_dashboard_config, public.user_pages,
+     public.legal_documents, public.knowledge_memory, public.deadlines
+  to authenticated;
+
+-- ingestion_log: select-only grant, matching its select-only RLS policy
+-- (writes come from the worker's service_role key, which bypasses RLS).
+grant select
+  on public.ingestion_log
+  to authenticated;
+
+-- Explicit sequence grants required on a fresh Supabase project (post
+-- 2026-05-30, new projects get zero default privileges), so inserts into
+-- the bigserial-keyed new tables can advance their sequences.
+grant usage, select
+  on sequence
+    public.legal_documents_id_seq,
+    public.knowledge_memory_id_seq,
+    public.deadlines_id_seq,
+    public.ingestion_log_id_seq
   to authenticated;

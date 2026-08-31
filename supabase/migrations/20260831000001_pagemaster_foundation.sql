@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS public.knowledge_memory (
 );
 CREATE INDEX IF NOT EXISTS knowledge_memory_user_idx ON public.knowledge_memory(user_id);
 CREATE INDEX IF NOT EXISTS knowledge_memory_client_idx ON public.knowledge_memory(client_id);
+CREATE INDEX IF NOT EXISTS knowledge_memory_document_idx ON public.knowledge_memory(legal_document_id);
 
 CREATE TABLE IF NOT EXISTS public.deadlines (
   id                   bigserial PRIMARY KEY,
@@ -57,6 +58,9 @@ CREATE TABLE IF NOT EXISTS public.deadlines (
 );
 CREATE INDEX IF NOT EXISTS deadlines_user_idx ON public.deadlines(user_id);
 CREATE INDEX IF NOT EXISTS deadlines_due_idx ON public.deadlines(due_date);
+CREATE INDEX IF NOT EXISTS deadlines_client_idx ON public.deadlines(client_id);
+CREATE INDEX IF NOT EXISTS deadlines_project_idx ON public.deadlines(project_id);
+CREATE INDEX IF NOT EXISTS deadlines_source_document_idx ON public.deadlines(source_document_id);
 
 -- Audit trail of ingestion activity. Written by the worker's service-role
 -- key (bypasses RLS); users only need read access.
@@ -120,3 +124,25 @@ CREATE POLICY "owner_delete" ON public.deadlines FOR DELETE USING (auth.uid() = 
 -- service_role key, which bypasses RLS entirely.
 DROP POLICY IF EXISTS "owner_select" ON public.ingestion_log;
 CREATE POLICY "owner_select" ON public.ingestion_log FOR SELECT USING (auth.uid() = user_id);
+
+-- ─── Grants for new tables ────────────────────────────────────────────────────
+-- Supabase revokes default public-schema privileges on existing projects
+-- starting 2026-10-30 (see 20260514000000_grant_data_api_access.sql); without
+-- explicit grants these tables would become inaccessible via the Data API.
+GRANT SELECT, INSERT, UPDATE, DELETE
+  ON public.legal_documents,
+     public.knowledge_memory,
+     public.deadlines
+  TO authenticated;
+
+GRANT SELECT
+  ON public.ingestion_log
+  TO authenticated;
+
+GRANT USAGE, SELECT
+  ON SEQUENCE
+    public.legal_documents_id_seq,
+    public.knowledge_memory_id_seq,
+    public.deadlines_id_seq,
+    public.ingestion_log_id_seq
+  TO authenticated;
