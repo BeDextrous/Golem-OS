@@ -21,12 +21,9 @@ export type Database = {
           contract_value: number | null
           created_at: string
           currency: string | null
-          drive_folder_id: string | null
-          drive_folder_url: string | null
           end_date: string | null
           id: number
-          latest_update: string | null
-          latest_update_at: string | null
+          memory_doc_file_id: string | null
           name: string
           notes: string | null
           start_date: string | null
@@ -41,12 +38,9 @@ export type Database = {
           contract_value?: number | null
           created_at?: string
           currency?: string | null
-          drive_folder_id?: string | null
-          drive_folder_url?: string | null
           end_date?: string | null
           id?: number
-          latest_update?: string | null
-          latest_update_at?: string | null
+          memory_doc_file_id?: string | null
           name: string
           notes?: string | null
           start_date?: string | null
@@ -61,12 +55,9 @@ export type Database = {
           contract_value?: number | null
           created_at?: string
           currency?: string | null
-          drive_folder_id?: string | null
-          drive_folder_url?: string | null
           end_date?: string | null
           id?: number
-          latest_update?: string | null
-          latest_update_at?: string | null
+          memory_doc_file_id?: string | null
           name?: string
           notes?: string | null
           start_date?: string | null
@@ -644,6 +635,7 @@ export type Database = {
           created_at: string
           drive_file_id: string
           drive_file_url: string | null
+          extraction_status: string
           id: number
           ingestion_source: string
           project_id: number | null
@@ -656,6 +648,7 @@ export type Database = {
           created_at?: string
           drive_file_id: string
           drive_file_url?: string | null
+          extraction_status?: string
           id?: number
           ingestion_source: string
           project_id?: number | null
@@ -668,6 +661,7 @@ export type Database = {
           created_at?: string
           drive_file_id?: string
           drive_file_url?: string | null
+          extraction_status?: string
           id?: number
           ingestion_source?: string
           project_id?: number | null
@@ -894,6 +888,7 @@ export type Database = {
           client_id: number | null
           created_at: string
           description: string | null
+          drive_folder_id: string | null
           end_date: string | null
           id: number
           name: string
@@ -909,6 +904,7 @@ export type Database = {
           client_id?: number | null
           created_at?: string
           description?: string | null
+          drive_folder_id?: string | null
           end_date?: string | null
           id?: number
           name: string
@@ -924,6 +920,7 @@ export type Database = {
           client_id?: number | null
           created_at?: string
           description?: string | null
+          drive_folder_id?: string | null
           end_date?: string | null
           id?: number
           name?: string

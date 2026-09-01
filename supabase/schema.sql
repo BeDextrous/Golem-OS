@@ -251,6 +251,7 @@ create table if not exists public.clients (
   contact_id      bigint references public.crm(id) on delete set null,
   drive_folder_url text,
   drive_folder_id   text,
+  memory_doc_file_id text,
   latest_update     text,
   latest_update_at  timestamptz,
   created_at      timestamptz not null default now(),
@@ -271,6 +272,7 @@ create table if not exists public.projects (
   end_date      date,
   description   text,
   notes         text,
+  drive_folder_id text,
   created_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now()
 );
@@ -289,6 +291,7 @@ CREATE TABLE IF NOT EXISTS public.legal_documents (
   drive_file_url    text,
   title             text NOT NULL,
   ingestion_source  text NOT NULL CHECK (ingestion_source IN ('drive_watch','manual','cowork')),
+  extraction_status text NOT NULL DEFAULT 'pending' CHECK (extraction_status IN ('pending','done','failed')),
   created_at        timestamptz NOT NULL DEFAULT now(),
   updated_at        timestamptz NOT NULL DEFAULT now()
 );
@@ -296,18 +299,20 @@ CREATE INDEX IF NOT EXISTS legal_documents_user_idx ON public.legal_documents(us
 CREATE INDEX IF NOT EXISTS legal_documents_client_idx ON public.legal_documents(client_id);
 CREATE INDEX IF NOT EXISTS legal_documents_project_idx ON public.legal_documents(project_id);
 CREATE UNIQUE INDEX IF NOT EXISTS legal_documents_drive_file_idx ON public.legal_documents(drive_file_id);
+CREATE INDEX IF NOT EXISTS legal_documents_extraction_status_idx
+  ON public.legal_documents(extraction_status) WHERE extraction_status = 'pending';
 
 -- ─── KNOWLEDGE MEMORY ────────────────────────────────────────────────────────
--- Extracted knowledge + embeddings. Embedding dimension (1536) is
--- provisional — sub-project 2 picks the actual embedding model and may
--- need `ALTER COLUMN embedding TYPE extensions.vector(N)` if it differs.
+-- Extracted knowledge + embeddings. 768 dims matches Gemini's
+-- text-embedding-004 (chosen in sub-project 2, migration
+-- 20260901000001_pagemaster_knowledge_engine.sql).
 CREATE TABLE IF NOT EXISTS public.knowledge_memory (
   id                  bigserial PRIMARY KEY,
   user_id             uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   legal_document_id   bigint REFERENCES public.legal_documents(id) ON DELETE CASCADE,
   client_id           bigint REFERENCES public.clients(id) ON DELETE SET NULL,
   content             text NOT NULL,
-  embedding           extensions.vector(1536),
+  embedding           extensions.vector(768),
   created_at          timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS knowledge_memory_user_idx ON public.knowledge_memory(user_id);
@@ -323,7 +328,7 @@ CREATE TABLE IF NOT EXISTS public.deadlines (
   title                text NOT NULL,
   due_date             date NOT NULL,
   source_document_id   bigint REFERENCES public.legal_documents(id) ON DELETE SET NULL,
-  status               text NOT NULL DEFAULT 'open' CHECK (status IN ('open','done','waived')),
+  status               text NOT NULL DEFAULT 'open' CHECK (status IN ('needs_review','open','done','waived')),
   created_at           timestamptz NOT NULL DEFAULT now(),
   updated_at           timestamptz NOT NULL DEFAULT now()
 );
