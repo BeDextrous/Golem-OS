@@ -33,24 +33,29 @@ export function PagemasterAddDocument({ clients, projects }: { clients: ClientRo
       return
     }
     setSaving(true)
-    const supabase = createClient()
-    const { data: userData } = await supabase.auth.getUser()
-    const { error } = await supabase.from('legal_documents').insert({
-      user_id: userData.user!.id,
-      client_id: clientId ? Number(clientId) : null,
-      project_id: projectId ? Number(projectId) : null,
-      drive_file_id: fileId,
-      drive_file_url: driveUrl,
-      title: title.trim(),
-      ingestion_source: 'manual',
-    })
-    setSaving(false)
-    if (error) {
-      toast.error(error.message)
-      return
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not authenticated')
+      const { error } = await supabase.from('legal_documents').insert({
+        user_id: user.id,
+        client_id: clientId ? Number(clientId) : null,
+        project_id: projectId ? Number(projectId) : null,
+        drive_file_id: fileId,
+        drive_file_url: driveUrl,
+        title: title.trim(),
+        // extraction_status defaults to 'pending' at the DB level — no need to set it here
+        ingestion_source: 'manual',
+      })
+      if (error) {
+        toast.error(error.message)
+        return
+      }
+      toast.success('Document queued for extraction')
+      reset()
+    } finally {
+      setSaving(false)
     }
-    toast.success('Document queued for extraction')
-    reset()
   }
 
   if (!open) {
