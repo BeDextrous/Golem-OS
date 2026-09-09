@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       clients: {
         Row: {
+          billing_type: string
           company: string | null
           contact_id: number | null
           contract_value: number | null
@@ -24,6 +25,7 @@ export type Database = {
           drive_folder_id: string | null
           drive_folder_url: string | null
           end_date: string | null
+          hourly_rate: number | null
           id: number
           latest_update: string | null
           latest_update_at: string | null
@@ -37,6 +39,7 @@ export type Database = {
           workspace_group: string | null
         }
         Insert: {
+          billing_type?: string
           company?: string | null
           contact_id?: number | null
           contract_value?: number | null
@@ -45,6 +48,7 @@ export type Database = {
           drive_folder_id?: string | null
           drive_folder_url?: string | null
           end_date?: string | null
+          hourly_rate?: number | null
           id?: number
           latest_update?: string | null
           latest_update_at?: string | null
@@ -58,6 +62,7 @@ export type Database = {
           workspace_group?: string | null
         }
         Update: {
+          billing_type?: string
           company?: string | null
           contact_id?: number | null
           contract_value?: number | null
@@ -66,6 +71,7 @@ export type Database = {
           drive_folder_id?: string | null
           drive_folder_url?: string | null
           end_date?: string | null
+          hourly_rate?: number | null
           id?: number
           latest_update?: string | null
           latest_update_at?: string | null
@@ -431,6 +437,7 @@ export type Database = {
       invoices: {
         Row: {
           amount: number
+          billing_period: string | null
           client_id: number | null
           created_at: string
           currency: string | null
@@ -442,9 +449,12 @@ export type Database = {
           status: string | null
           updated_at: string
           user_id: string
+          wave_invoice_id: string | null
+          wave_synced_at: string | null
         }
         Insert: {
           amount: number
+          billing_period?: string | null
           client_id?: number | null
           created_at?: string
           currency?: string | null
@@ -456,9 +466,12 @@ export type Database = {
           status?: string | null
           updated_at?: string
           user_id: string
+          wave_invoice_id?: string | null
+          wave_synced_at?: string | null
         }
         Update: {
           amount?: number
+          billing_period?: string | null
           client_id?: number | null
           created_at?: string
           currency?: string | null
@@ -470,6 +483,8 @@ export type Database = {
           status?: string | null
           updated_at?: string
           user_id?: string
+          wave_invoice_id?: string | null
+          wave_synced_at?: string | null
         }
         Relationships: [
           {
