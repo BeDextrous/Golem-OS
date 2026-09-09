@@ -16,6 +16,12 @@ const STATUS_COLOR: Record<string, string> = {
   'Paused':   '#D9B45C',
   'Closed':   '#A8A39A',
 }
+const BILLING_TYPES = ['none', 'flat', 'hourly'] as const
+const BILLING_TYPE_LABELS: Record<string, string> = {
+  none: 'None',
+  flat: 'Flat (monthly)',
+  hourly: 'Hourly',
+}
 
 type Form = Partial<Omit<ClientRow, 'id' | 'user_id' | 'created_at' | 'updated_at'>>
 
@@ -35,7 +41,7 @@ export function ClientsView({ initialClients }: { initialClients: ClientRow[] })
 
   const openNew = () => {
     setEditItem(null)
-    setForm({ status: 'Prospect', currency: 'USD' })
+    setForm({ status: 'Prospect', currency: 'USD', billing_type: 'none' })
     setDrawerOpen(true)
   }
   const openEdit = (item: ClientRow) => {
@@ -46,6 +52,8 @@ export function ClientsView({ initialClients }: { initialClients: ClientRow[] })
       status:         item.status         ?? undefined,
       contract_value: item.contract_value ?? undefined,
       currency:       item.currency       ?? undefined,
+      billing_type:   item.billing_type   ?? undefined,
+      hourly_rate:    item.hourly_rate    ?? undefined,
       start_date:     item.start_date     ?? undefined,
       end_date:       item.end_date       ?? undefined,
       notes:          item.notes          ?? undefined,
@@ -213,6 +221,24 @@ export function ClientsView({ initialClients }: { initialClients: ClientRow[] })
             onChange={e => upd('currency', e.target.value || undefined)}
             options={CURRENCIES.map(c => ({ value: c, label: c }))}
           />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Select
+            label="Billing Type"
+            value={form.billing_type ?? 'none'}
+            onChange={e => upd('billing_type', e.target.value || undefined)}
+            options={BILLING_TYPES.map(b => ({ value: b, label: BILLING_TYPE_LABELS[b] }))}
+          />
+          {form.billing_type === 'hourly' && (
+            <Input
+              label="Hourly Rate"
+              type="number"
+              step="25"
+              value={form.hourly_rate ?? ''}
+              onChange={e => upd('hourly_rate', e.target.value ? Number(e.target.value) : undefined)}
+              placeholder="400"
+            />
+          )}
         </div>
         <div className="grid grid-cols-2 gap-3">
           <Input
