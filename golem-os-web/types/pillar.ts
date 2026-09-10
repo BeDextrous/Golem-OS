@@ -121,6 +121,7 @@ export const PILLARS = {
         { label: 'Deadlines', href: '/pagemaster/deadlines' },
         { label: 'Clients', href: '/pagemaster/clients' },
         { label: 'Projects', href: '/pagemaster/projects' },
+        { label: 'Billing', href: '/pagemaster/billing' },
       ],
     },
   },
