@@ -1,4 +1,5 @@
 import { getDeadlines } from '@/lib/queries'
+import { PagemasterDeadlinesView } from '@/components/views/pagemaster-deadlines-view'
 
 export default async function PagemasterDeadlinesPage() {
   const deadlines = await getDeadlines()
@@ -10,23 +11,7 @@ export default async function PagemasterDeadlinesPage() {
           Client and matter deadlines
         </p>
       </div>
-      {deadlines.length === 0 ? (
-        <p className="text-sm text-stone-400 dark:text-stone-500">
-          No deadlines tracked yet.
-        </p>
-      ) : (
-        <div className="space-y-2">
-          {deadlines.map(d => (
-            <div
-              key={d.id}
-              className="flex items-center justify-between bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-lg px-4 py-3"
-            >
-              <span className="text-sm text-stone-900 dark:text-stone-50">{d.title}</span>
-              <span className="text-xs text-stone-400 dark:text-stone-500">{d.due_date}</span>
-            </div>
-          ))}
-        </div>
-      )}
+      <PagemasterDeadlinesView initialDeadlines={deadlines} />
     </div>
   )
 }
