@@ -451,6 +451,7 @@ export type Database = {
           user_id: string
           wave_invoice_id: string | null
           wave_synced_at: string | null
+          wave_view_url: string | null
         }
         Insert: {
           amount: number
@@ -468,6 +469,7 @@ export type Database = {
           user_id: string
           wave_invoice_id?: string | null
           wave_synced_at?: string | null
+          wave_view_url?: string | null
         }
         Update: {
           amount?: number
@@ -485,6 +487,7 @@ export type Database = {
           user_id?: string
           wave_invoice_id?: string | null
           wave_synced_at?: string | null
+          wave_view_url?: string | null
         }
         Relationships: [
           {
