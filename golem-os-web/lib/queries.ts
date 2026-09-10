@@ -149,3 +149,30 @@ export async function getDeadlines(): Promise<DeadlineRow[]> {
   const { data } = await sb.from('deadlines').select('*').order('due_date', { ascending: true })
   return data ?? []
 }
+
+export async function getClientsWithBilling(): Promise<
+  { client: ClientRow; currentInvoice: InvoiceRow | null }[]
+> {
+  const sb = await createServerSupabaseClient()
+  const { data: clients } = await sb
+    .from('clients')
+    .select('*')
+    .neq('billing_type', 'none')
+    .order('name', { ascending: true })
+  const clientList = clients ?? []
+  if (clientList.length === 0) return []
+
+  const period = new Date().toISOString().slice(0, 7) // 'YYYY-MM'
+  const clientIds = clientList.map(c => c.id)
+  const { data: invoices } = await sb
+    .from('invoices')
+    .select('*')
+    .eq('billing_period', period)
+    .in('client_id', clientIds)
+  const invoiceByClientId = new Map((invoices ?? []).map(i => [i.client_id, i]))
+
+  return clientList.map(client => ({
+    client,
+    currentInvoice: invoiceByClientId.get(client.id) ?? null,
+  }))
+}
