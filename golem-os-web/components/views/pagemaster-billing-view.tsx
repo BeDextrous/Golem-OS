@@ -56,6 +56,11 @@ function statusInfo(row: BillingRow): { label: string; color: string } {
   return { label: STATUS_LABEL[status] ?? status, color: STATUS_COLOR[status] ?? '#A8A39A' }
 }
 
+export function needsAttention(row: BillingRow): boolean {
+  const { label } = statusInfo(row)
+  return label === NO_INVOICE_LABEL || label === 'Draft — not yet sent' || label === 'Overdue'
+}
+
 export function PagemasterBillingView({ rows }: { rows: BillingRow[] }) {
   if (rows.length === 0) {
     return (
