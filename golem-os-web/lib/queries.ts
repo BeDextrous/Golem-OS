@@ -9,6 +9,18 @@ import type {
   DeadlineRow,
 } from '@/types/entities'
 
+export type DeadlineWithClient = DeadlineRow & { client_name: string | null }
+
+export type KnowledgeMemoryItem = {
+  id: number
+  content: string
+  client_id: number | null
+  legal_document_id: number | null
+  created_at: string
+  client_name: string | null
+  document_title: string | null
+}
+
 export async function getTasks(): Promise<TaskRow[]> {
   const sb = await createServerSupabaseClient()
   const { data } = await sb.from('tasks').select('*').order('created_at', { ascending: false })
@@ -87,6 +99,30 @@ export async function getKnowledge(): Promise<KnowledgeRow[]> {
   return data ?? []
 }
 
+// The Pagemaster worker (worker/extraction.py) writes extracted per-document
+// knowledge into knowledge_memory, not knowledge_items (that table is the
+// separate, manually-maintained Dextrous notes tab). This is the query that
+// actually surfaces what the worker extracts.
+export async function getKnowledgeMemory(): Promise<KnowledgeMemoryItem[]> {
+  const sb = await createServerSupabaseClient()
+  const [{ data: items }, { data: clients }, { data: docs }] = await Promise.all([
+    sb
+      .from('knowledge_memory')
+      .select('id, content, client_id, legal_document_id, created_at')
+      .order('created_at', { ascending: false }),
+    sb.from('clients').select('id, name'),
+    sb.from('legal_documents').select('id, title'),
+  ])
+  const clientNameById = new Map((clients ?? []).map(c => [c.id, c.name]))
+  const titleById = new Map((docs ?? []).map(d => [d.id, d.title]))
+
+  return (items ?? []).map(item => ({
+    ...item,
+    client_name: item.client_id != null ? clientNameById.get(item.client_id) ?? null : null,
+    document_title: item.legal_document_id != null ? titleById.get(item.legal_document_id) ?? null : null,
+  }))
+}
+
 export async function getLifeFinances(): Promise<FinanceRow[]> {
   const sb = await createServerSupabaseClient()
   const { data } = await sb.from('finances').select('*')
@@ -144,10 +180,17 @@ export async function getInvoicesByClient(clientId: number): Promise<InvoiceRow[
   return data ?? []
 }
 
-export async function getDeadlines(): Promise<DeadlineRow[]> {
+export async function getDeadlines(): Promise<DeadlineWithClient[]> {
   const sb = await createServerSupabaseClient()
-  const { data } = await sb.from('deadlines').select('*').order('due_date', { ascending: true })
-  return data ?? []
+  const [{ data }, { data: clients }] = await Promise.all([
+    sb.from('deadlines').select('*').order('due_date', { ascending: true }),
+    sb.from('clients').select('id, name'),
+  ])
+  const clientNameById = new Map((clients ?? []).map(c => [c.id, c.name]))
+  return (data ?? []).map(d => ({
+    ...d,
+    client_name: d.client_id != null ? clientNameById.get(d.client_id) ?? null : null,
+  }))
 }
 
 export async function getClientsWithBilling(): Promise<
