@@ -33,3 +33,8 @@ supabase/.temp/
 # Runtime scratch
 /data/
 .worktrees/
+.env*
+!.env.example
+.vercel/
+*.pem
+venv/
