@@ -1,12 +1,13 @@
 'use client'
 import { useState, useEffect, useMemo } from 'react'
-import { Plus, ChevronDown } from 'lucide-react'
+import { Plus, ChevronDown, LayoutGrid, List } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import { Button, Input, Select, Textarea } from '@/components/ui'
 import { StatusFilter, initStatuses, saveStatuses } from '@/components/data/status-filter'
 import { ItemDrawer } from '@/components/data/item-drawer'
+import { TasksBoard } from './tasks-board'
 import type { TaskRow, GoalRow, ObjectiveRow } from '@/types/entities'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -18,6 +19,8 @@ const GOAL_STATUSES  = ['Active', 'Paused', 'Done', 'Archived']
 const ALL_STATUSES   = ['To Do', 'Active', 'On Hold', 'Paused', 'Done', 'Archived']
 const PRIORITIES     = ['High', 'Medium', 'Low']
 const FILTER_KEY     = 'golem:filter:focus'
+const VIEW_KEY       = 'golem:view:focus'
+type ViewMode = 'list' | 'board'
 const PILLAR_OPTS    = [
   { value: 'life',      label: 'Life',      color: '#7FA98A' },
   { value: 'dextrous',  label: 'Dextrous',  color: '#DA6B51' },
@@ -124,10 +127,20 @@ export function FocusView({ initialTasks, initialGoals, initialObjectives }: Pro
   const [pillarFilter, setPillarFilter] = useState<string | null>(null)
   const [sortBy,       setSortBy]       = useState<string>('created')
   const [activeStatuses, setActiveStatuses] = useState<string[]>([])
+  const [view, setView] = useState<ViewMode>('list')
 
   useEffect(() => {
     setActiveStatuses(initStatuses(FILTER_KEY, ALL_STATUSES, ['Done', 'Archived']))
+    try { if (localStorage.getItem(VIEW_KEY) === 'board') setView('board') } catch { /* private mode */ }
   }, [])
+
+  const changeView = (next: ViewMode) => {
+    setView(next)
+    try { localStorage.setItem(VIEW_KEY, next) } catch { /* private mode */ }
+  }
+
+  // The board only applies when looking at tasks alone
+  const boardMode = typeFilter === 'task' && view === 'board'
 
   // ── Task drawer ────────────────────────────────────────────────────────────
   const [taskOpen,  setTaskOpen]  = useState(false)
@@ -257,6 +270,26 @@ export function FocusView({ initialTasks, initialGoals, initialObjectives }: Pro
     toast.success('Deleted')
   }
 
+  // ── Board ──────────────────────────────────────────────────────────────────
+  const boardTasks = useMemo(() =>
+    tasks.filter(t =>
+      (!pillarFilter || t.pillar === pillarFilter) &&
+      (!t.status || activeStatuses.includes(t.status))
+    ),
+    [tasks, pillarFilter, activeStatuses]
+  )
+
+  // Optimistic status change; revert and toast if the write fails
+  const moveTask = async (task: TaskRow, status: string | null) => {
+    const previous = task.status
+    setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status } : t))
+    const { error } = await createClient().from('tasks').update({ status }).eq('id', task.id)
+    if (error) {
+      setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: previous } : t))
+      toast.error(`Couldn't move task: ${error.message}`)
+    }
+  }
+
   // ── Click handler dispatcher ──────────────────────────────────────────────
   const openItem = (item: FocusItem) => {
     if (item.type === 'task')      openEditTask(item.raw as TaskRow)
@@ -334,7 +367,7 @@ export function FocusView({ initialTasks, initialGoals, initialObjectives }: Pro
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6 space-y-5">
+    <div className={cn('mx-auto px-4 py-6 space-y-5', boardMode ? 'max-w-7xl' : 'max-w-4xl')}>
 
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -399,6 +432,27 @@ export function FocusView({ initialTasks, initialGoals, initialObjectives }: Pro
             )
           })}
         </div>
+        <div className="flex items-center gap-3">
+        {typeFilter === 'task' && (
+          <div role="group" aria-label="View" className="inline-flex rounded-lg border border-stone-200 dark:border-stone-700 overflow-hidden">
+            {([['list', 'List', List], ['board', 'Board', LayoutGrid]] as const).map(([mode, label, Icon]) => (
+              <button
+                key={mode}
+                onClick={() => changeView(mode)}
+                aria-pressed={view === mode}
+                className={cn(
+                  'inline-flex items-center gap-1.5 px-2.5 h-7 pointer-coarse:h-11 text-xs font-medium transition-colors',
+                  view === mode
+                    ? 'bg-stone-800 text-white dark:bg-stone-200 dark:text-stone-900'
+                    : 'text-muted hover:bg-stone-100 dark:hover:bg-stone-800'
+                )}
+              >
+                <Icon size={13} aria-hidden="true" /> {label}
+              </button>
+            ))}
+          </div>
+        )}
+        {!boardMode && (
         <div className="flex items-center gap-1.5">
           <span className="text-xs text-muted">Sort:</span>
           <select
@@ -410,6 +464,8 @@ export function FocusView({ initialTasks, initialGoals, initialObjectives }: Pro
               <option key={o.value} value={o.value}>{o.label}</option>
             ))}
           </select>
+        </div>
+        )}
         </div>
       </div>
 
@@ -423,7 +479,18 @@ export function FocusView({ initialTasks, initialGoals, initialObjectives }: Pro
         />
       )}
 
+      {boardMode && (
+        <TasksBoard
+          tasks={boardTasks}
+          statuses={TASK_STATUSES.filter(s => activeStatuses.includes(s))}
+          projectName={{}}
+          onOpen={openEditTask}
+          onMove={moveTask}
+        />
+      )}
+
       {/* Item list */}
+      {!boardMode && (
       <div className="space-y-1.5">
         {sorted.map(item => {
           const pillarConf = PILLAR_OPTS.find(p => p.value === item.pillar)
@@ -493,8 +560,9 @@ export function FocusView({ initialTasks, initialGoals, initialObjectives }: Pro
           )
         })}
       </div>
+      )}
 
-      {sorted.length === 0 && (
+      {!boardMode && sorted.length === 0 && (
         <div className="text-center py-16 text-muted">
           <p className="text-sm">No items match the current filters.</p>
         </div>
