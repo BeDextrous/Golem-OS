@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { Plus, ChevronDown, LayoutGrid, List } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
+import { createRow, deleteRow, updateRow } from '@/app/actions/crud'
 import { cn } from '@/lib/utils'
 import { Button, Input, Select, Textarea } from '@/components/ui'
 import { StatusFilter, initStatuses, saveStatuses } from '@/components/data/status-filter'
@@ -162,27 +163,23 @@ export function FocusView({ initialTasks, initialGoals, initialObjectives }: Pro
   }
   const handleSaveTask = async () => {
     if (!taskForm.name?.trim()) { toast.error('Name is required'); return }
-    const sb = createClient()
-    const { data: { user } } = await sb.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
     if (editTask) {
-      const { error } = await sb.from('tasks').update(taskForm).eq('id', editTask.id)
-      if (error) throw error
-      setTasks(prev => prev.map(t => t.id === editTask.id ? { ...t, ...taskForm } : t))
+      const result = await updateRow('tasks', editTask.id, taskForm)
+      if (!result.ok) throw new Error(result.error)
+      setTasks(prev => prev.map(t => t.id === editTask.id ? { ...t, ...result.data } as TaskRow : t))
       toast.success('Task updated')
     } else {
-      const { data, error } = await sb.from('tasks').insert({ ...taskForm, name: taskForm.name!, user_id: user.id }).select().single()
-      if (error) throw error
-      if (data) setTasks(prev => [data, ...prev])
+      const result = await createRow('tasks', taskForm)
+      if (!result.ok) throw new Error(result.error)
+      setTasks(prev => [result.data as TaskRow, ...prev])
       toast.success('Task created')
     }
     setTaskOpen(false)
   }
   const handleDeleteTask = async () => {
     if (!editTask) return
-    const sb = createClient()
-    const { error } = await sb.from('tasks').delete().eq('id', editTask.id)
-    if (error) throw error
+    const result = await deleteRow('tasks', editTask.id)
+    if (!result.ok) throw new Error(result.error)
     setTasks(prev => prev.filter(t => t.id !== editTask.id))
     setTaskOpen(false)
     toast.success('Deleted')
@@ -283,10 +280,10 @@ export function FocusView({ initialTasks, initialGoals, initialObjectives }: Pro
   const moveTask = async (task: TaskRow, status: string | null) => {
     const previous = task.status
     setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status } : t))
-    const { error } = await createClient().from('tasks').update({ status }).eq('id', task.id)
-    if (error) {
+    const result = await updateRow('tasks', task.id, { status })
+    if (!result.ok) {
       setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: previous } : t))
-      toast.error(`Couldn't move task: ${error.message}`)
+      toast.error(`Couldn't move task: ${result.error}`)
     }
   }
 
