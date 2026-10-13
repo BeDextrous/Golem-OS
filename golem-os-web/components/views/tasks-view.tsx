@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Plus, LayoutGrid, List } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { createClient } from '@/lib/supabase/client'
+import { updateRow } from '@/app/actions/crud'
 import { TasksBoard } from './tasks-board'
 import { useCrudDrawer } from '@/lib/use-crud-drawer'
 import { TASK_STATUSES, TASK_PRIORITIES, TASK_STATUS_COLOR, TASK_PRIORITY_COLOR, groupObjectivesByGoal } from '@/lib/task-constants'
@@ -76,10 +76,10 @@ export function TasksView({
   const moveTask = async (task: TaskRow, status: string | null) => {
     const previous = task.status
     setItems(prev => prev.map(t => t.id === task.id ? { ...t, status } : t))
-    const { error } = await createClient().from('tasks').update({ status }).eq('id', task.id)
-    if (error) {
+    const result = await updateRow('tasks', task.id, { status })
+    if (!result.ok) {
       setItems(prev => prev.map(t => t.id === task.id ? { ...t, status: previous } : t))
-      toast.error(`Couldn't move task: ${error.message}`)
+      toast.error(`Couldn't move task: ${result.error}`)
     }
   }
 

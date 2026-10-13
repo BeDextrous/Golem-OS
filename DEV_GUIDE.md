@@ -225,6 +225,23 @@ Project: `Golem` (enabled APIs: Google Drive API, Google Picker API)
 OAuth 2.0 client: `Golem Local` (web application)
 Authorized origins: `http://localhost:3000`, `https://golems.bedextrous.com`
 
+## 8b. Writes: server actions and validation
+
+Tasks and finances write through Server Functions in
+`golem-os-web/app/actions/crud.ts` (`createRow`, `updateRow`, `deleteRow`),
+not directly from the browser. Each call re-checks the session, validates
+input with a Zod schema from `lib/validation.ts`, stamps `user_id` from the
+session (never from the client), and scopes updates/deletes to the signed-in
+user. RLS is still the final guard.
+
+To move another table onto this path:
+1. Add a strict Zod schema to `lib/validation.ts` mirroring its CHECK constraints.
+2. Register it in `TABLE_SCHEMAS`.
+3. Call the actions (or `useCrudDrawer({ table: ... })`) instead of `createClient()`.
+
+Tables not yet migrated (goals, objectives, notes, links, clients, jobs, ...)
+still write from the browser.
+
 ## 9. Running locally
 
 ```bash
