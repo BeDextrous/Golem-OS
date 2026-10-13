@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { CalendarDays, RefreshCw, ExternalLink } from 'lucide-react'
 import { format, isToday, isTomorrow, parseISO } from 'date-fns'
 import {
-  getAccessToken, googleApiFetch, isConnected, disconnect, type ConnectionKey,
+  getAccessToken, googleApiFetch, resolveConnected, disconnect, GoogleReconnectError, type ConnectionKey,
 } from '@/lib/google-auth'
 import { GoogleNotConfigured, GoogleConnectPrompt, GoogleWidgetError } from './google-widget-states'
 
@@ -46,7 +46,9 @@ export function CalendarWidget({
   const [error, setError]           = useState<string | null>(null)
 
   useEffect(() => {
-    setConnected(isConnected(connection, SCOPE))
+    let alive = true
+    resolveConnected(connection, SCOPE).then(c => { if (alive) setConnected(c) })
+    return () => { alive = false }
   }, [connection])
 
   const fetchEvents = useCallback(async (forceAccountPicker = false) => {
@@ -68,6 +70,7 @@ export function CalendarWidget({
       )
       setEvents(data.items ?? [])
     } catch (e) {
+      if (e instanceof GoogleReconnectError) { setConnected(false); return }
       setError((e as Error).message)
     } finally {
       setLoading(false)

@@ -15,6 +15,8 @@
 // years; GIS's token client is the current supported pattern for
 // client-side-only apps like this one.
 
+import { disconnectGoogle, getGoogleAccessToken, getGoogleStatus, type GoogleStatus } from '@/app/actions/google'
+
 export type ConnectionKey = 'life' | 'dextrous'
 
 export const CONNECTION_LABEL: Record<ConnectionKey, string> = {
@@ -118,6 +120,69 @@ function clearCachedToken(connection: ConnectionKey, scope: string) {
   try { sessionStorage.removeItem(storageKey(connection, scope)) } catch { /* ignore */ }
 }
 
+// ── Server-side mode ─────────────────────────────────────────────────────────
+// When GOOGLE_CLIENT_SECRET + GOOGLE_TOKEN_KEY are configured, the refresh token lives
+// encrypted in Supabase and the server mints short-lived access tokens on request.
+// Otherwise everything below falls back to the browser-only GIS flow.
+
+/** The stored connection is dead or missing; the user has to reconnect. */
+export class GoogleReconnectError extends Error {
+  constructor(message = 'Reconnect your Google account') {
+    super(message)
+    this.name = 'GoogleReconnectError'
+  }
+}
+
+let statusPromise: Promise<GoogleStatus> | null = null
+function serverStatus(): Promise<GoogleStatus> {
+  if (!statusPromise) {
+    statusPromise = getGoogleStatus().catch(() => ({ enabled: false, connections: {} }) as GoogleStatus)
+  }
+  return statusPromise
+}
+const resetServerStatus = () => { statusPromise = null }
+
+const memoryTokens = new Map<string, { token: string; expiresAt: number }>()
+
+/** Full-page hop to Google's consent screen; resolves never because the page is navigating away. */
+function startServerConnect(connection: ConnectionKey, selectAccount: boolean): Promise<never> {
+  const here = new URL(window.location.href)
+  here.searchParams.delete('google')
+  const params = new URLSearchParams({ connection, next: here.pathname + here.search })
+  if (selectAccount) params.set('select', '1')
+  window.location.assign(`/api/google/connect?${params.toString()}`)
+  return new Promise<never>(() => {})
+}
+
+async function serverAccessToken(connection: ConnectionKey, scope: string, forceAccountPicker: boolean, st: GoogleStatus): Promise<string> {
+  const key = `${connection}:${scope}`
+  const hit = memoryTokens.get(key)
+  if (!forceAccountPicker && hit && hit.expiresAt - 60_000 > Date.now()) return hit.token
+
+  const connected = Boolean(st.connections[connection]?.scopes.includes(scope))
+  // Not connected: this is the user's own "Connect" click, so take them to Google
+  if (forceAccountPicker || !connected) return startServerConnect(connection, forceAccountPicker)
+
+  const r = await getGoogleAccessToken(connection, scope)
+  if (r.ok) {
+    memoryTokens.set(key, { token: r.accessToken, expiresAt: r.expiresAt })
+    return r.accessToken
+  }
+  if (r.reconnect) {
+    resetServerStatus()
+    memoryTokens.delete(key)
+    throw new GoogleReconnectError(r.error)
+  }
+  throw new Error(r.error)
+}
+
+/** Async "is this connection usable right now?", aware of which mode is active. */
+export async function resolveConnected(connection: ConnectionKey, scope: string): Promise<boolean> {
+  const st = await serverStatus()
+  if (!st.enabled) return isConnected(connection, scope)
+  return Boolean(st.connections[connection]?.scopes.includes(scope))
+}
+
 /**
  * Returns a cached access token for (connection, scope) if still valid,
  * otherwise runs the GIS token flow. Pass `forceAccountPicker` for an
@@ -131,6 +196,9 @@ export async function getAccessToken(opts: {
   forceAccountPicker?: boolean
 }): Promise<string> {
   const { connection, clientId, scope, forceAccountPicker } = opts
+  const st = await serverStatus()
+  if (st.enabled) return serverAccessToken(connection, scope, Boolean(forceAccountPicker), st)
+
   const cached = readCachedToken(connection, scope)
   if (cached && !forceAccountPicker) return cached.accessToken
 
@@ -165,6 +233,12 @@ export function isConnected(connection: ConnectionKey, scope: string): boolean {
 
 export function disconnect(connection: ConnectionKey, scope: string) {
   clearCachedToken(connection, scope)
+  // In server mode this removes the whole account connection (all widgets) and revokes it at Google
+  void serverStatus().then(st => {
+    if (!st.enabled) return
+    memoryTokens.delete(`${connection}:${scope}`)
+    return disconnectGoogle(connection).then(resetServerStatus)
+  }).catch(() => {})
 }
 
 /** Thin fetch wrapper for Google REST APIs — throws with the API's own error message on failure. */

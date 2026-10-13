@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Mail, RefreshCw, ExternalLink } from 'lucide-react'
 import {
-  getAccessToken, googleApiFetch, isConnected, disconnect, type ConnectionKey,
+  getAccessToken, googleApiFetch, resolveConnected, disconnect, GoogleReconnectError, type ConnectionKey,
 } from '@/lib/google-auth'
 import { GoogleNotConfigured, GoogleConnectPrompt, GoogleWidgetError } from './google-widget-states'
 
@@ -56,7 +56,9 @@ export function GmailWidget({
   const [error, setError]           = useState<string | null>(null)
 
   useEffect(() => {
-    setConnected(isConnected(connection, SCOPE))
+    let alive = true
+    resolveConnected(connection, SCOPE).then(c => { if (alive) setConnected(c) })
+    return () => { alive = false }
   }, [connection])
 
   const fetchMessages = useCallback(async (forceAccountPicker = false) => {
@@ -97,6 +99,7 @@ export function GmailWidget({
         unread: (m.labelIds ?? []).includes('UNREAD'),
       })))
     } catch (e) {
+      if (e instanceof GoogleReconnectError) { setConnected(false); return }
       setError((e as Error).message)
     } finally {
       setLoading(false)
