@@ -40,5 +40,6 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  // Public PWA assets must not be auth-redirected: sw.js, manifest and icons are fetched by the browser
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|sw.js|manifest.webmanifest|icon-\\d+\\.png).*)'],
 }
