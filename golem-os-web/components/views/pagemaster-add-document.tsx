@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
-import { createClient } from '@/lib/supabase/client'
+import { createRow } from '@/app/actions/crud'
 import { Button, Input, Select } from '@/components/ui'
 import { ItemDrawer } from '@/components/data/item-drawer'
 import type { ClientRow, ProjectRow } from '@/types/entities'
@@ -31,11 +31,7 @@ export function PagemasterAddDocument({ clients, projects }: { clients: ClientRo
       toast.error('Title and a valid Drive file link are required')
       return
     }
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
-    const { error } = await supabase.from('legal_documents').insert({
-      user_id: user.id,
+    const result = await createRow('legal_documents', {
       client_id: clientId ? Number(clientId) : null,
       project_id: projectId ? Number(projectId) : null,
       drive_file_id: fileId,
@@ -44,8 +40,8 @@ export function PagemasterAddDocument({ clients, projects }: { clients: ClientRo
       // extraction_status defaults to 'pending' at the DB level — no need to set it here
       ingestion_source: 'manual',
     })
-    if (error) {
-      toast.error(error.message)
+    if (!result.ok) {
+      toast.error(result.error)
       return
     }
     toast.success('Document queued for extraction')

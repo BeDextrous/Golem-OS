@@ -17,6 +17,7 @@ vi.mock('@/lib/supabase/server', () => ({
         update: (p: unknown) => { call.op = 'update'; call.payload = p; return chain },
         delete: () => { call.op = 'delete'; return chain },
         eq: (k: string, v: unknown) => { call.filters.push([k, v]); return chain },
+        in: (k: string, v: unknown) => { call.filters.push([k, v]); return chain },
         select: () => chain,
         single: async () => state.result,
         then: (res: (v: unknown) => void) => res(state.result), // awaiting delete().eq().eq()
@@ -26,7 +27,7 @@ vi.mock('@/lib/supabase/server', () => ({
   }),
 }))
 
-import { createRow, deleteRow, updateRow } from './crud'
+import { createRow, deleteRow, updateMany, updateRow } from './crud'
 
 beforeEach(() => {
   state.user = { id: 'user-1' }
@@ -42,7 +43,7 @@ describe('createRow', () => {
   })
 
   it('refuses unregistered tables', async () => {
-    const r = await createRow('auth.users', { name: 'x' })
+    const r = await createRow('auth.users' as never, { name: 'x' })
     expect(r.ok).toBe(false)
     expect(state.calls).toHaveLength(0)
   })
@@ -103,5 +104,37 @@ describe('deleteRow', () => {
     state.user = null
     expect((await deleteRow('tasks', 9)).ok).toBe(false)
     expect(state.calls).toHaveLength(0)
+  })
+})
+
+describe('updateMany', () => {
+  it('applies one validated patch to the listed ids, scoped to the user', async () => {
+    const r = await updateMany('links', [1, 2, 3], { pillar: 'life' })
+    expect(r).toEqual({ ok: true, data: { ids: [1, 2, 3] } })
+    expect(state.calls[0]).toMatchObject({ op: 'update', payload: { pillar: 'life' }, filters: [['id', [1, 2, 3]], ['user_id', 'user-1']] })
+  })
+
+  it('rejects empty, oversized or non-integer id lists and bad patches', async () => {
+    expect((await updateMany('links', [], { pillar: 'life' })).ok).toBe(false)
+    expect((await updateMany('links', Array.from({ length: 501 }, (_, i) => i + 1), { pillar: 'life' })).ok).toBe(false)
+    expect((await updateMany('links', [1, 2.5], { pillar: 'life' })).ok).toBe(false)
+    expect((await updateMany('links', [1], { pillar: 'nope' })).ok).toBe(false)
+    expect(state.calls).toHaveLength(0)
+  })
+
+  it('requires a session', async () => {
+    state.user = null
+    expect((await updateMany('links', [1], { pillar: 'life' })).ok).toBe(false)
+  })
+})
+
+describe('other tables', () => {
+  it('creates a goal and stamps user_id', async () => {
+    const r = await createRow('goals', { title: 'Ship it', status: 'Active' })
+    expect(r.ok).toBe(true)
+    expect(state.calls[0]).toMatchObject({ table: 'goals', payload: { title: 'Ship it', user_id: 'user-1' } })
+  })
+  it('creates a blank note with just a pillar', async () => {
+    expect((await createRow('notes', { pillar: null })).ok).toBe(true)
   })
 })

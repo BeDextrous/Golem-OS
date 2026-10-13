@@ -3,7 +3,8 @@ import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { Plus, Pencil } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { createClient } from '@/lib/supabase/client'
+import { createRow, updateRow, deleteRow } from '@/app/actions/crud'
+import { unwrap } from '@/lib/action-result'
 import { Button, Input, Select, Textarea } from '@/components/ui'
 import { ItemDrawer } from '@/components/data/item-drawer'
 import type { ClientRow } from '@/types/entities'
@@ -63,18 +64,13 @@ export function ClientsView({ initialClients }: { initialClients: ClientRow[] })
 
   const handleSave = async () => {
     if (!form.name?.trim()) { toast.error('Name is required'); return }
-    const sb = createClient()
-    const { data: { user } } = await sb.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
     const payload = { ...form, name: form.name! }
     if (editItem) {
-      const { error } = await sb.from('clients').update(payload).eq('id', editItem.id)
-      if (error) throw error
+      unwrap(await updateRow('clients', editItem.id, payload))
       setItems(prev => prev.map(c => c.id === editItem.id ? { ...c, ...payload } : c))
       toast.success('Updated')
     } else {
-      const { data, error } = await sb.from('clients').insert({ ...payload, user_id: user.id }).select().single()
-      if (error) throw error
+      const data = unwrap(await createRow('clients', payload))
       if (data) setItems(prev => [data, ...prev])
       toast.success('Client added')
     }
@@ -83,9 +79,7 @@ export function ClientsView({ initialClients }: { initialClients: ClientRow[] })
 
   const handleDelete = async () => {
     if (!editItem) return
-    const sb = createClient()
-    const { error } = await sb.from('clients').delete().eq('id', editItem.id)
-    if (error) throw error
+    unwrap(await deleteRow('clients', editItem.id))
     setItems(prev => prev.filter(c => c.id !== editItem.id))
     setDrawerOpen(false)
     toast.success('Deleted')

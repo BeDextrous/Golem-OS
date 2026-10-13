@@ -2,7 +2,8 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Plus, ExternalLink, Briefcase, User, Building2, FileText } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { createClient } from '@/lib/supabase/client'
+import { createRow, deleteRow, updateRow } from '@/app/actions/crud'
+import { unwrap } from '@/lib/action-result'
 import { cn } from '@/lib/utils'
 import { Button, Input, Select, Textarea } from '@/components/ui'
 import { StatusFilter, initStatuses, saveStatuses } from '@/components/data/status-filter'
@@ -306,53 +307,38 @@ export function JobsView({ initialApps, initialContacts, initialTargets }: Props
 
   // ── Save ──────────────────────────────────────────────────────────────────
   const handleSave = async () => {
-    const sb = createClient()
-    const { data: { user } } = await sb.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
 
     if (drawerType === 'app') {
       if (!appForm.company?.trim()) { toast.error('Company is required'); return }
       if (editId) {
-        const { error } = await sb.from('job_applications').update(appForm).eq('id', editId)
-        if (error) throw error
+        unwrap(await updateRow('job_applications', editId, appForm))
         setApps(prev => prev.map(a => a.id === editId ? { ...a, ...appForm } : a))
         toast.success('Application updated')
       } else {
-        const { data, error } = await sb.from('job_applications')
-          .insert({ ...appForm, company: appForm.company!, user_id: user.id })
-          .select().single()
-        if (error) throw error
-        if (data) setApps(prev => [data, ...prev])
+        const data = unwrap(await createRow('job_applications', appForm))
+        setApps(prev => [data, ...prev])
         toast.success('Application added')
       }
     } else if (drawerType === 'contact') {
       if (!crmForm.name?.trim()) { toast.error('Name is required'); return }
       if (editId) {
-        const { error } = await sb.from('crm').update(crmForm).eq('id', editId)
-        if (error) throw error
+        unwrap(await updateRow('crm', editId, crmForm))
         setContacts(prev => prev.map(c => c.id === editId ? { ...c, ...crmForm } : c))
         toast.success('Contact updated')
       } else {
-        const { data, error } = await sb.from('crm')
-          .insert({ ...crmForm, name: crmForm.name!, user_id: user.id })
-          .select().single()
-        if (error) throw error
-        if (data) setContacts(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
+        const data = unwrap(await createRow('crm', crmForm))
+        setContacts(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
         toast.success('Contact added')
       }
     } else {
       if (!targetForm.company_name?.trim()) { toast.error('Company is required'); return }
       if (editId) {
-        const { error } = await sb.from('target_companies').update(targetForm).eq('id', editId)
-        if (error) throw error
+        unwrap(await updateRow('target_companies', editId, targetForm))
         setTargets(prev => prev.map(t => t.id === editId ? { ...t, ...targetForm } : t))
         toast.success('Updated')
       } else {
-        const { data, error } = await sb.from('target_companies')
-          .insert({ ...targetForm, company_name: targetForm.company_name!, user_id: user.id })
-          .select().single()
-        if (error) throw error
-        if (data) setTargets(prev => [...prev, data])
+        const data = unwrap(await createRow('target_companies', targetForm))
+        setTargets(prev => [...prev, data])
         toast.success('Added')
       }
     }
@@ -361,18 +347,14 @@ export function JobsView({ initialApps, initialContacts, initialTargets }: Props
 
   const handleDelete = async () => {
     if (!editId) return
-    const sb = createClient()
     if (drawerType === 'app') {
-      const { error } = await sb.from('job_applications').delete().eq('id', editId)
-      if (error) throw error
+      unwrap(await deleteRow('job_applications', editId))
       setApps(prev => prev.filter(a => a.id !== editId))
     } else if (drawerType === 'contact') {
-      const { error } = await sb.from('crm').delete().eq('id', editId)
-      if (error) throw error
+      unwrap(await deleteRow('crm', editId))
       setContacts(prev => prev.filter(c => c.id !== editId))
     } else {
-      const { error } = await sb.from('target_companies').delete().eq('id', editId)
-      if (error) throw error
+      unwrap(await deleteRow('target_companies', editId))
       setTargets(prev => prev.filter(t => t.id !== editId))
     }
     setDrawerOpen(false)

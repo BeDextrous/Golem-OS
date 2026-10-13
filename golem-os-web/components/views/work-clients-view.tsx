@@ -3,7 +3,8 @@ import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { Plus, ChevronRight } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { createClient } from '@/lib/supabase/client'
+import { createRow } from '@/app/actions/crud'
+import { unwrap } from '@/lib/action-result'
 import { Button, Input, Select, Textarea } from '@/components/ui'
 import { ItemDrawer } from '@/components/data/item-drawer'
 import type { ClientRow } from '@/types/entities'
@@ -40,12 +41,8 @@ export function WorkClientsView({ initialClients }: { initialClients: ClientRow[
 
   const handleSave = async () => {
     if (!form.name?.trim()) { toast.error('Name is required'); return }
-    const sb = createClient()
-    const { data: { user } } = await sb.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
     const payload = { ...form, name: form.name! }
-    const { data, error } = await sb.from('clients').insert({ ...payload, user_id: user.id }).select().single()
-    if (error) throw error
+    const data = unwrap(await createRow('clients', payload))
     if (data) setItems(prev => [...prev, data])
     toast.success('Client workspace added')
     setDrawerOpen(false)

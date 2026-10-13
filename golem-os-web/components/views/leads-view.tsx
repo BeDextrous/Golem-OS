@@ -1,7 +1,7 @@
 'use client'
 import { useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
-import { createClient } from '@/lib/supabase/client'
+import { updateRow } from '@/app/actions/crud'
 import { Select } from '@/components/ui'
 import type { LeadRow } from '@/types/entities'
 
@@ -21,9 +21,8 @@ export function LeadsView({ initialLeads }: { initialLeads: LeadRow[] }) {
   const [items, setItems] = useState(initialLeads)
 
   const updateStatus = async (lead: LeadRow, status: string) => {
-    const sb = createClient()
-    const { error } = await sb.from('dextrous_leads').update({ status }).eq('id', lead.id)
-    if (error) { toast.error('Could not update status'); return }
+    const result = await updateRow('dextrous_leads', lead.id, { status })
+    if (!result.ok) { toast.error(`Could not update status: ${result.error}`); return }
     setItems(prev => prev.map(l => (l.id === lead.id ? { ...l, status } : l)))
   }
 

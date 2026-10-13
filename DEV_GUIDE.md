@@ -227,20 +227,32 @@ Authorized origins: `http://localhost:3000`, `https://golems.bedextrous.com`
 
 ## 8b. Writes: server actions and validation
 
-Tasks and finances write through Server Functions in
-`golem-os-web/app/actions/crud.ts` (`createRow`, `updateRow`, `deleteRow`),
-not directly from the browser. Each call re-checks the session, validates
-input with a Zod schema from `lib/validation.ts`, stamps `user_id` from the
-session (never from the client), and scopes updates/deletes to the signed-in
-user. RLS is still the final guard.
+All app writes go through Server Functions in `golem-os-web/app/actions/crud.ts`
+(`createRow`, `updateRow`, `updateMany`, `deleteRow`), not directly from the
+browser. Each call re-checks the session, validates input with a strict Zod
+schema from `lib/validation.ts`, stamps `user_id` from the session (never from
+the client), and scopes updates/deletes to the signed-in user. RLS is still the
+final guard. Client code calls them and unwraps the `{ ok, data | error }`
+result with `unwrap()` from `lib/action-result.ts` (or `useCrudDrawer`).
 
-To move another table onto this path:
-1. Add a strict Zod schema to `lib/validation.ts` mirroring its CHECK constraints.
-2. Register it in `TABLE_SCHEMAS`.
-3. Call the actions (or `useCrudDrawer({ table: ... })`) instead of `createClient()`.
+Registered tables (`TABLE_SCHEMAS`): tasks, finances, goals, objectives, notes,
+links, reading, health_entries, projects, clients, knowledge_items, invoices,
+job_applications, crm, target_companies, dextrous_leads, deadlines,
+legal_documents. Anything else is refused.
 
-Tables not yet migrated (goals, objectives, notes, links, clients, jobs, ...)
-still write from the browser.
+Rules baked into the schemas:
+- Unknown keys are rejected (so `user_id`/`id` can't be smuggled in).
+- Blank select/text values become `null`.
+- Link-like fields refuse non-http(s) schemes (`javascript:`, `data:`) and turn
+  `site.com/x` into `https://site.com/x`.
+- Enums mirror the DB CHECK constraints; the database stays the backstop.
+
+To add a table: write a strict schema in `lib/validation.ts` (a test there
+fails if a registered table has no realistic sample payload), add it to
+`TABLE_SCHEMAS`, and call the actions.
+
+Still outside this path: the Python Pagemaster worker and Drafts sync edge
+function (service role), the `notes.drafts_uuid` column, and reads.
 
 ## 9. Running locally
 

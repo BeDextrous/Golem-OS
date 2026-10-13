@@ -2,7 +2,8 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Plus, BookOpen } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { createClient } from '@/lib/supabase/client'
+import { createRow, deleteRow, updateRow } from '@/app/actions/crud'
+import { unwrap } from '@/lib/action-result'
 import { cn } from '@/lib/utils'
 import { Button, Input, Select } from '@/components/ui'
 import { StatusFilter, initStatuses, saveStatuses } from '@/components/data/status-filter'
@@ -54,23 +55,14 @@ export function ReadingView({ initialItems }: { initialItems: ReadingRow[] }) {
 
   const handleSave = async () => {
     if (!form.book_title?.trim()) { toast.error('Title is required'); return }
-    const sb = createClient()
-    const { data: { user } } = await sb.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
 
     if (editItem) {
-      const { error } = await sb.from('reading').update(form).eq('id', editItem.id)
-      if (error) throw error
+      unwrap(await updateRow('reading', editItem.id, form))
       setItems(prev => prev.map(r => r.id === editItem.id ? { ...r, ...form } : r))
       toast.success('Updated')
     } else {
-      const { data, error } = await sb
-        .from('reading')
-        .insert({ ...form, book_title: form.book_title!, user_id: user.id })
-        .select()
-        .single()
-      if (error) throw error
-      if (data) setItems(prev => [data, ...prev])
+      const data = unwrap(await createRow('reading', form))
+      setItems(prev => [data, ...prev])
       toast.success('Added to reading list')
     }
     setDrawerOpen(false)
@@ -78,9 +70,7 @@ export function ReadingView({ initialItems }: { initialItems: ReadingRow[] }) {
 
   const handleDelete = async () => {
     if (!editItem) return
-    const sb = createClient()
-    const { error } = await sb.from('reading').delete().eq('id', editItem.id)
-    if (error) throw error
+    unwrap(await deleteRow('reading', editItem.id))
     setItems(prev => prev.filter(r => r.id !== editItem.id))
     setDrawerOpen(false)
     toast.success('Removed')

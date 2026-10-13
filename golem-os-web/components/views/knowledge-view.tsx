@@ -2,7 +2,8 @@
 import { useState, useMemo } from 'react'
 import { Plus, Search, ExternalLink } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { createClient } from '@/lib/supabase/client'
+import { createRow, updateRow, deleteRow } from '@/app/actions/crud'
+import { unwrap } from '@/lib/action-result'
 import { Button, Input, Textarea } from '@/components/ui'
 import { ItemDrawer } from '@/components/data/item-drawer'
 import type { KnowledgeRow, ProjectRow } from '@/types/entities'
@@ -45,21 +46,16 @@ export function KnowledgeView({
 
   const handleSave = async () => {
     if (!form.title?.trim()) { toast.error('Title is required'); return }
-    const sb = createClient()
-    const { data: { user } } = await sb.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
     const payload = { ...form, title: form.title! }
     if (editItem) {
-      const { error } = await sb.from('knowledge_items').update(payload).eq('id', editItem.id)
-      if (error) throw error
+      unwrap(await updateRow('knowledge_items', editItem.id, payload))
       setItems(prev => prev.map(k => k.id === editItem.id
         ? { ...k, ...payload, updated_at: new Date().toISOString() }
         : k
       ))
       toast.success('Updated')
     } else {
-      const { data, error } = await sb.from('knowledge_items').insert({ ...payload, user_id: user.id }).select().single()
-      if (error) throw error
+      const data = unwrap(await createRow('knowledge_items', payload))
       if (data) setItems(prev => [data, ...prev])
       toast.success('Added to knowledge base')
     }
@@ -68,9 +64,7 @@ export function KnowledgeView({
 
   const handleDelete = async () => {
     if (!editItem) return
-    const sb = createClient()
-    const { error } = await sb.from('knowledge_items').delete().eq('id', editItem.id)
-    if (error) throw error
+    unwrap(await deleteRow('knowledge_items', editItem.id))
     setItems(prev => prev.filter(k => k.id !== editItem.id))
     setDrawerOpen(false)
     toast.success('Deleted')

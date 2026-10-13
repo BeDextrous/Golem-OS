@@ -3,7 +3,8 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Pencil, Check, X as XIcon, FolderPlus } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { createClient } from '@/lib/supabase/client'
+import { updateRow } from '@/app/actions/crud'
+import { unwrap } from '@/lib/action-result'
 import { Button, Select, Textarea, Input } from '@/components/ui'
 import { DriveWidget } from '@/components/widgets/drive-widget'
 import { extractDriveFolderId } from '@/lib/utils'
@@ -98,9 +99,7 @@ export function ClientDetailView({
   const saveField = async (patch: Partial<ClientRow>) => {
     setSaving(true)
     try {
-      const sb = createClient()
-      const { error } = await sb.from('clients').update(patch).eq('id', current.id)
-      if (error) throw error
+      unwrap(await updateRow('clients', current.id, patch))
       setCurrent(prev => ({ ...prev, ...patch }))
       toast.success('Updated')
     } catch (e) {
