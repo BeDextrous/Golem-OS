@@ -2,7 +2,8 @@
 import { useState, useMemo } from 'react'
 import { Plus } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { createClient } from '@/lib/supabase/client'
+import { createRow, updateRow, deleteRow } from '@/app/actions/crud'
+import { unwrap } from '@/lib/action-result'
 import { Button, Input, Textarea } from '@/components/ui'
 import { ItemDrawer } from '@/components/data/item-drawer'
 import type { HealthRow } from '@/types/entities'
@@ -42,18 +43,13 @@ export function HealthView({ initialItems }: { initialItems: HealthRow[] }) {
 
   const handleSave = async () => {
     if (!form.category?.trim()) { toast.error('Category is required'); return }
-    const sb = createClient()
-    const { data: { user } } = await sb.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
     const payload = { ...form, category: form.category!, entry_date: form.entry_date || today() }
     if (editItem) {
-      const { error } = await sb.from('health_entries').update(payload).eq('id', editItem.id)
-      if (error) throw error
+      unwrap(await updateRow('health_entries', editItem.id, payload))
       setItems(prev => prev.map(h => h.id === editItem.id ? { ...h, ...payload } : h))
       toast.success('Updated')
     } else {
-      const { data, error } = await sb.from('health_entries').insert({ ...payload, user_id: user.id }).select().single()
-      if (error) throw error
+      const data = unwrap(await createRow('health_entries', payload))
       if (data) setItems(prev => [data, ...prev])
       toast.success('Entry added')
     }
@@ -62,9 +58,7 @@ export function HealthView({ initialItems }: { initialItems: HealthRow[] }) {
 
   const handleDelete = async () => {
     if (!editItem) return
-    const sb = createClient()
-    const { error } = await sb.from('health_entries').delete().eq('id', editItem.id)
-    if (error) throw error
+    unwrap(await deleteRow('health_entries', editItem.id))
     setItems(prev => prev.filter(h => h.id !== editItem.id))
     setDrawerOpen(false)
     toast.success('Deleted')

@@ -58,12 +58,12 @@ export function useCrudDrawer<Row extends { id: number }, Form extends object>({
     if (editItem) {
       const result = await updateRow(table, editItem.id, payload)
       if (!result.ok) throw new Error(result.error)
-      setItems(prev => prev.map(r => r.id === editItem.id ? { ...r, ...result.data } as Row : r))
+      setItems(prev => prev.map(r => r.id === editItem.id ? { ...r, ...result.data } as unknown as Row : r))
       toast.success(messages?.updated ?? 'Updated')
     } else if (canCreate) {
       const result = await createRow(table, payload)
       if (!result.ok) throw new Error(result.error)
-      setItems(prev => [result.data as Row, ...prev])
+      setItems(prev => [result.data as unknown as Row, ...prev])
       toast.success(messages?.created ?? 'Created')
     }
     setDrawerOpen(false)

@@ -1,6 +1,9 @@
 'use server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { firstIssue, isCrudTable, TABLE_SCHEMAS } from '@/lib/validation'
+import type { Database } from '@/types/supabase'
+import { firstIssue, isCrudTable, TABLE_SCHEMAS, type CrudTable } from '@/lib/validation'
+
+type RowOf<T extends CrudTable> = Database['public']['Tables'][T]['Row']
 
 export type ActionResult<T = Record<string, unknown>> =
   | { ok: true; data: T }
@@ -22,7 +25,7 @@ async function context(table: string) {
 
 const validId = (id: unknown): id is number => typeof id === 'number' && Number.isInteger(id) && id > 0
 
-export async function createRow(table: string, input: unknown): Promise<ActionResult> {
+export async function createRow<T extends CrudTable>(table: T, input: unknown): Promise<ActionResult<RowOf<T>>> {
   const ctx = await context(table)
   if (!ctx.ok) return fail(ctx.error)
 
@@ -36,10 +39,10 @@ export async function createRow(table: string, input: unknown): Promise<ActionRe
     .select()
     .single()
   if (error) return fail(error.message)
-  return { ok: true, data }
+  return { ok: true, data: data as RowOf<T> }
 }
 
-export async function updateRow(table: string, id: number, input: unknown): Promise<ActionResult> {
+export async function updateRow<T extends CrudTable>(table: T, id: number, input: unknown): Promise<ActionResult<RowOf<T>>> {
   const ctx = await context(table)
   if (!ctx.ok) return fail(ctx.error)
   if (!validId(id)) return fail('Invalid id')
@@ -56,10 +59,10 @@ export async function updateRow(table: string, id: number, input: unknown): Prom
     .select()
     .single()
   if (error) return fail(error.message)
-  return { ok: true, data }
+  return { ok: true, data: data as RowOf<T> }
 }
 
-export async function deleteRow(table: string, id: number): Promise<ActionResult<{ id: number }>> {
+export async function deleteRow(table: CrudTable, id: number): Promise<ActionResult<{ id: number }>> {
   const ctx = await context(table)
   if (!ctx.ok) return fail(ctx.error)
   if (!validId(id)) return fail('Invalid id')
@@ -67,4 +70,19 @@ export async function deleteRow(table: string, id: number): Promise<ActionResult
   const { error } = await ctx.sb.from(table).delete().eq('id', id).eq('user_id', ctx.user.id)
   if (error) return fail(error.message)
   return { ok: true, data: { id } }
+}
+
+/** Apply the same partial update to several rows (bulk edit). */
+export async function updateMany(table: CrudTable, ids: number[], input: unknown): Promise<ActionResult<{ ids: number[] }>> {
+  const ctx = await context(table)
+  if (!ctx.ok) return fail(ctx.error)
+  if (!Array.isArray(ids) || ids.length === 0 || ids.length > 500 || !ids.every(validId)) return fail('Invalid ids')
+
+  const parsed = ctx.schema.partial().safeParse(input)
+  if (!parsed.success) return fail(firstIssue(parsed.error))
+  if (Object.keys(parsed.data).length === 0) return fail('Nothing to update')
+
+  const { error } = await ctx.sb.from(table).update(parsed.data).in('id', ids).eq('user_id', ctx.user.id)
+  if (error) return fail(error.message)
+  return { ok: true, data: { ids } }
 }

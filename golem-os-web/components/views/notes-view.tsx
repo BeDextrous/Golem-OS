@@ -3,7 +3,8 @@ import { useState, useMemo } from 'react'
 import { Plus, Search, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { createRow, deleteRow } from '@/app/actions/crud'
+import { unwrap } from '@/lib/action-result'
 import { Button } from '@/components/ui'
 import type { NoteRow } from '@/types/entities'
 
@@ -36,21 +37,11 @@ export function NotesView({
     if (creating) return
     setCreating(true)
     try {
-      const sb = createClient()
-      const { data: { user } } = await sb.auth.getUser()
-      if (!user) { toast.error('Not signed in'); return }
-      const { data, error } = await sb
-        .from('notes')
-        .insert({ user_id: user.id, pillar: pillarFilter ?? null })
-        .select()
-        .single()
-      if (error) throw error
-      if (data) {
-        setItems(prev => [data, ...prev])
-        router.push(`/life/notes/${data.id}`)
-      }
-    } catch {
-      toast.error('Could not create note')
+      const data = unwrap(await createRow('notes', { pillar: pillarFilter ?? null }))
+      setItems(prev => [data, ...prev])
+      router.push(`/life/notes/${data.id}`)
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not create note')
     } finally {
       setCreating(false)
     }
@@ -59,9 +50,7 @@ export function NotesView({
   const deleteNote = async (id: number) => {
     setDeletingIds(prev => new Set(prev).add(id))
     try {
-      const sb = createClient()
-      const { error } = await sb.from('notes').delete().eq('id', id)
-      if (error) throw error
+      unwrap(await deleteRow('notes', id))
       setItems(prev => prev.filter(n => n.id !== id))
       setConfirmId(null)
       toast.success('Note deleted')

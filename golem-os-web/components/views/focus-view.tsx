@@ -2,8 +2,8 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Plus, ChevronDown, LayoutGrid, List } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { createClient } from '@/lib/supabase/client'
-import { createRow, deleteRow, updateRow } from '@/app/actions/crud'
+import { createRow, updateRow, deleteRow } from '@/app/actions/crud'
+import { unwrap } from '@/lib/action-result'
 import { cn } from '@/lib/utils'
 import { Button, Input, Select, Textarea } from '@/components/ui'
 import { StatusFilter, initStatuses, saveStatuses } from '@/components/data/status-filter'
@@ -205,18 +205,13 @@ export function FocusView({ initialTasks, initialGoals, initialObjectives }: Pro
   }
   const handleSaveGoal = async () => {
     if (!goalForm.title?.trim()) { toast.error('Title is required'); return }
-    const sb = createClient()
-    const { data: { user } } = await sb.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
     const payload = { ...goalForm, title: goalForm.title! }
     if (editGoal) {
-      const { error } = await sb.from('goals').update(payload).eq('id', editGoal.id)
-      if (error) throw error
+      unwrap(await updateRow('goals', editGoal.id, payload))
       setGoals(prev => prev.map(g => g.id === editGoal.id ? { ...g, ...payload } : g))
       toast.success('Updated')
     } else {
-      const { data, error } = await sb.from('goals').insert({ ...payload, user_id: user.id }).select().single()
-      if (error) throw error
+      const data = unwrap(await createRow('goals', payload))
       if (data) setGoals(prev => [data, ...prev])
       toast.success('Goal added')
     }
@@ -224,9 +219,7 @@ export function FocusView({ initialTasks, initialGoals, initialObjectives }: Pro
   }
   const handleDeleteGoal = async () => {
     if (!editGoal) return
-    const sb = createClient()
-    const { error } = await sb.from('goals').delete().eq('id', editGoal.id)
-    if (error) throw error
+    unwrap(await deleteRow('goals', editGoal.id))
     setGoals(prev => prev.filter(g => g.id !== editGoal.id))
     setObjectives(prev => prev.filter(o => o.goal_id !== editGoal.id))
     setGoalOpen(false)
@@ -248,10 +241,8 @@ export function FocusView({ initialTasks, initialGoals, initialObjectives }: Pro
   }
   const handleSaveObj = async () => {
     if (!objForm.title?.trim()) { toast.error('Title is required'); return }
-    const sb = createClient()
     if (editObj) {
-      const { error } = await sb.from('objectives').update(objForm).eq('id', editObj.id)
-      if (error) throw error
+      unwrap(await updateRow('objectives', editObj.id, objForm))
       setObjectives(prev => prev.map(o => o.id === editObj.id ? { ...o, ...objForm } : o))
       toast.success('Updated')
     }
@@ -259,9 +250,7 @@ export function FocusView({ initialTasks, initialGoals, initialObjectives }: Pro
   }
   const handleDeleteObj = async () => {
     if (!editObj) return
-    const sb = createClient()
-    const { error } = await sb.from('objectives').delete().eq('id', editObj.id)
-    if (error) throw error
+    unwrap(await deleteRow('objectives', editObj.id))
     setObjectives(prev => prev.filter(o => o.id !== editObj.id))
     setObjOpen(false)
     toast.success('Deleted')

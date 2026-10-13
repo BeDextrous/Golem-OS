@@ -2,7 +2,8 @@
 import { useState, useMemo } from 'react'
 import { Plus, ChevronRight, ChevronDown } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { createClient } from '@/lib/supabase/client'
+import { createRow, updateRow, deleteRow } from '@/app/actions/crud'
+import { unwrap } from '@/lib/action-result'
 import { Button, Input, Select, Textarea } from '@/components/ui'
 import { ItemDrawer } from '@/components/data/item-drawer'
 import type { GoalRow, ObjectiveRow } from '@/types/entities'
@@ -87,18 +88,13 @@ export function GoalsView({
 
   const handleSaveGoal = async () => {
     if (!goalForm.title?.trim()) { toast.error('Title is required'); return }
-    const sb = createClient()
-    const { data: { user } } = await sb.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
     const payload = { ...goalForm, title: goalForm.title! }
     if (editGoal) {
-      const { error } = await sb.from('goals').update(payload).eq('id', editGoal.id)
-      if (error) throw error
+      unwrap(await updateRow('goals', editGoal.id, payload))
       setGoals(prev => prev.map(g => g.id === editGoal.id ? { ...g, ...payload } : g))
       toast.success('Updated')
     } else {
-      const { data, error } = await sb.from('goals').insert({ ...payload, user_id: user.id }).select().single()
-      if (error) throw error
+      const data = unwrap(await createRow('goals', payload))
       if (data) setGoals(prev => [data, ...prev])
       toast.success('Goal added')
     }
@@ -107,9 +103,7 @@ export function GoalsView({
 
   const handleDeleteGoal = async () => {
     if (!editGoal) return
-    const sb = createClient()
-    const { error } = await sb.from('goals').delete().eq('id', editGoal.id)
-    if (error) throw error
+    unwrap(await deleteRow('goals', editGoal.id))
     setGoals(prev => prev.filter(g => g.id !== editGoal.id))
     setObjectives(prev => prev.filter(o => o.goal_id !== editGoal.id))
     setGoalOpen(false)
@@ -118,18 +112,13 @@ export function GoalsView({
 
   const handleSaveObj = async () => {
     if (!objForm.title?.trim()) { toast.error('Title is required'); return }
-    const sb = createClient()
-    const { data: { user } } = await sb.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
     const payload = { ...objForm, title: objForm.title!, goal_id: objGoalId }
     if (editObj) {
-      const { error } = await sb.from('objectives').update(payload).eq('id', editObj.id)
-      if (error) throw error
+      unwrap(await updateRow('objectives', editObj.id, payload))
       setObjectives(prev => prev.map(o => o.id === editObj.id ? { ...o, ...payload } : o))
       toast.success('Updated')
     } else {
-      const { data, error } = await sb.from('objectives').insert({ ...payload, user_id: user.id }).select().single()
-      if (error) throw error
+      const data = unwrap(await createRow('objectives', payload))
       if (data) setObjectives(prev => [...prev, data])
       toast.success('Objective added')
     }
@@ -138,9 +127,7 @@ export function GoalsView({
 
   const handleDeleteObj = async () => {
     if (!editObj) return
-    const sb = createClient()
-    const { error } = await sb.from('objectives').delete().eq('id', editObj.id)
-    if (error) throw error
+    unwrap(await deleteRow('objectives', editObj.id))
     setObjectives(prev => prev.filter(o => o.id !== editObj.id))
     setObjOpen(false)
     toast.success('Deleted')

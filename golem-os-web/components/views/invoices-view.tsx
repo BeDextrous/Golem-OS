@@ -2,7 +2,8 @@
 import { useState, useMemo } from 'react'
 import { Plus } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { createClient } from '@/lib/supabase/client'
+import { createRow, updateRow, deleteRow } from '@/app/actions/crud'
+import { unwrap } from '@/lib/action-result'
 import { Button, Input, Select, Textarea } from '@/components/ui'
 import { ItemDrawer } from '@/components/data/item-drawer'
 import type { InvoiceRow, ClientRow } from '@/types/entities'
@@ -63,18 +64,13 @@ export function InvoicesView({
 
   const handleSave = async () => {
     if (form.amount == null) { toast.error('Amount is required'); return }
-    const sb = createClient()
-    const { data: { user } } = await sb.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
     const payload = { ...form, amount: form.amount! }
     if (editItem) {
-      const { error } = await sb.from('invoices').update(payload).eq('id', editItem.id)
-      if (error) throw error
+      unwrap(await updateRow('invoices', editItem.id, payload))
       setItems(prev => prev.map(i => i.id === editItem.id ? { ...i, ...payload } : i))
       toast.success('Updated')
     } else {
-      const { data, error } = await sb.from('invoices').insert({ ...payload, user_id: user.id }).select().single()
-      if (error) throw error
+      const data = unwrap(await createRow('invoices', payload))
       if (data) setItems(prev => [data, ...prev])
       toast.success('Invoice created')
     }
@@ -83,9 +79,7 @@ export function InvoicesView({
 
   const handleDelete = async () => {
     if (!editItem) return
-    const sb = createClient()
-    const { error } = await sb.from('invoices').delete().eq('id', editItem.id)
-    if (error) throw error
+    unwrap(await deleteRow('invoices', editItem.id))
     setItems(prev => prev.filter(i => i.id !== editItem.id))
     setDrawerOpen(false)
     toast.success('Deleted')

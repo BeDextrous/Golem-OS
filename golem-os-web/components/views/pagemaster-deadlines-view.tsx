@@ -1,7 +1,7 @@
 'use client'
 import { useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
-import { createClient } from '@/lib/supabase/client'
+import { updateRow } from '@/app/actions/crud'
 import type { DeadlineWithClient } from '@/lib/queries'
 
 const STATUS_LABEL: Record<string, string> = {
@@ -41,10 +41,9 @@ export function PagemasterDeadlinesView({ initialDeadlines }: { initialDeadlines
   }
 
   const setStatus = async (id: number, status: 'open' | 'waived') => {
-    const supabase = createClient()
-    const { error } = await supabase.from('deadlines').update({ status }).eq('id', id)
-    if (error) {
-      toast.error(error.message)
+    const result = await updateRow('deadlines', id, { status })
+    if (!result.ok) {
+      toast.error(result.error)
       return
     }
     setDeadlines(prev => prev.map(d => (d.id === id ? { ...d, status } : d)))

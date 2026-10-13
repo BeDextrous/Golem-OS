@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { createClient } from '@/lib/supabase/client'
+import { updateRow, deleteRow } from '@/app/actions/crud'
 import type { NoteRow } from '@/types/entities'
 
 const PILLAR_OPTS = [
@@ -37,19 +37,18 @@ export function NoteEditor({ note: initial }: { note: NoteRow }) {
   // ── Save ──────────────────────────────────────────────────────────────
   const save = useCallback(async (data: NoteRow) => {
     setSaveStatus('saving')
-    const sb = createClient()
-    const { error } = await sb.from('notes').update({
+    const result = await updateRow('notes', data.id, {
       title:      data.title   ?? null,
       content:    data.content ?? null,
       pillar:     data.pillar  ?? null,
       tags:       data.tags    ?? null,
       updated_at: new Date().toISOString(),
-    }).eq('id', data.id)
+    })
 
-    if (error) {
-      console.error(error)
+    if (!result.ok) {
+      console.error(result.error)
       setSaveStatus('error')
-      toast.error('Save failed')
+      toast.error(`Save failed: ${result.error}`)
     } else {
       setSaveStatus('saved')
     }
@@ -72,9 +71,8 @@ export function NoteEditor({ note: initial }: { note: NoteRow }) {
 
   // ── Delete ────────────────────────────────────────────────────────────
   const handleDelete = async () => {
-    const sb = createClient()
-    const { error } = await sb.from('notes').delete().eq('id', note.id)
-    if (error) { toast.error('Delete failed'); return }
+    const result = await deleteRow('notes', note.id)
+    if (!result.ok) { toast.error(`Delete failed: ${result.error}`); return }
     router.push('/life/notes')
   }
 

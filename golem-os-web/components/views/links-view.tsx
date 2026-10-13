@@ -2,7 +2,8 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Plus, ExternalLink, Pencil, Check, Trash2, Tag, X } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { createClient } from '@/lib/supabase/client'
+import { createRow, deleteRow, updateMany, updateRow } from '@/app/actions/crud'
+import { unwrap } from '@/lib/action-result'
 import { Button, Input, Select } from '@/components/ui'
 import { ItemDrawer } from '@/components/data/item-drawer'
 import type { LinkRow, NoteRow, TaskRow } from '@/types/entities'
@@ -77,18 +78,13 @@ export function LinksView({
 
   const handleSave = async () => {
     if (!form.url?.trim()) { toast.error('URL is required'); return }
-    const sb = createClient()
-    const { data: { user } } = await sb.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
     const payload = { ...form, url: form.url! }
     if (editItem) {
-      const { error } = await sb.from('links').update(payload).eq('id', editItem.id)
-      if (error) throw error
+      unwrap(await updateRow('links', editItem.id, payload))
       setItems(prev => prev.map(l => l.id === editItem.id ? { ...l, ...payload } : l))
       toast.success('Updated')
     } else {
-      const { data, error } = await sb.from('links').insert({ ...payload, user_id: user.id }).select().single()
-      if (error) throw error
+      const data = unwrap(await createRow('links', payload))
       if (data) setItems(prev => [data, ...prev])
       toast.success('Link saved')
     }
@@ -97,9 +93,7 @@ export function LinksView({
 
   const handleDelete = async () => {
     if (!editItem) return
-    const sb = createClient()
-    const { error } = await sb.from('links').delete().eq('id', editItem.id)
-    if (error) throw error
+    unwrap(await deleteRow('links', editItem.id))
     setItems(prev => prev.filter(l => l.id !== editItem.id))
     setDrawerOpen(false)
     toast.success('Deleted')
@@ -109,9 +103,8 @@ export function LinksView({
   const handleInlineDelete = useCallback(async (id: number, e: React.MouseEvent) => {
     e.stopPropagation()
     if (!confirm('Delete this link?')) return
-    const sb = createClient()
-    const { error } = await sb.from('links').delete().eq('id', id)
-    if (error) { toast.error('Delete failed'); return }
+    const result = await deleteRow('links', id)
+    if (!result.ok) { toast.error(`Delete failed: ${result.error}`); return }
     setItems(prev => prev.filter(l => l.id !== id))
     toast.success('Deleted')
   }, [])
@@ -119,10 +112,9 @@ export function LinksView({
   // Mark read / unread
   const handleToggleRead = useCallback(async (link: LinkRow, e: React.MouseEvent) => {
     e.stopPropagation()
-    const sb = createClient()
     const read_at = link.read_at ? null : new Date().toISOString()
-    const { error } = await sb.from('links').update({ read_at }).eq('id', link.id)
-    if (error) { toast.error('Update failed'); return }
+    const result = await updateRow('links', link.id, { read_at })
+    if (!result.ok) { toast.error(`Update failed: ${result.error}`); return }
     setItems(prev => prev.map(l => l.id === link.id ? { ...l, read_at } : l))
   }, [])
 
@@ -138,13 +130,12 @@ export function LinksView({
   const handleBulkApply = async () => {
     if (!selected.size) return
     if (!bulkCategory && !bulkPillar) { toast.error('Set a category or pillar to apply'); return }
-    const sb = createClient()
     const payload: Partial<LinkRow> = {}
     if (bulkCategory) payload.website = bulkCategory
     if (bulkPillar)   payload.pillar  = bulkPillar
     const ids = [...selected]
-    const { error } = await sb.from('links').update(payload).in('id', ids)
-    if (error) { toast.error('Bulk update failed'); return }
+    const result = await updateMany('links', ids, payload)
+    if (!result.ok) { toast.error(`Bulk update failed: ${result.error}`); return }
     setItems(prev => prev.map(l => ids.includes(l.id) ? { ...l, ...payload } : l))
     toast.success(`Updated ${ids.length} link${ids.length > 1 ? 's' : ''}`)
     setSelected(new Set())
