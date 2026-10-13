@@ -82,11 +82,11 @@ export function WorkClientsView({ initialClients }: { initialClients: ClientRow[
         <p className="text-sm font-medium text-stone-900 dark:text-stone-100 truncate">
           {client.name}
         </p>
-        <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
+        <p className="text-xs text-muted mt-0.5">
           {client.company ?? client.status ?? '—'}
         </p>
       </div>
-      <ChevronRight size={16} className="text-stone-300 dark:text-stone-600 shrink-0" />
+      <ChevronRight size={16} className="text-muted shrink-0" />
     </Link>
   )
 
@@ -95,7 +95,7 @@ export function WorkClientsView({ initialClients }: { initialClients: ClientRow[
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-stone-900 dark:text-stone-50">Clients</h1>
-          <p className="text-xs text-stone-400 mt-0.5">
+          <p className="text-xs text-muted mt-0.5">
             {items.length} client workspace{items.length === 1 ? '' : 's'}
           </p>
         </div>
@@ -107,7 +107,7 @@ export function WorkClientsView({ initialClients }: { initialClients: ClientRow[
       <div className="space-y-6">
         {groups.map(([key, clients]) => (
           <section key={key}>
-            <p className="text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500 mb-2">
+            <p className="text-xs font-bold uppercase tracking-widest text-muted mb-2">
               {groupLabel(key)}
             </p>
             <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-lg overflow-hidden">
@@ -119,7 +119,7 @@ export function WorkClientsView({ initialClients }: { initialClients: ClientRow[
         {standalone.length > 0 && (
           <section>
             {groups.length > 0 && (
-              <p className="text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500 mb-2">
+              <p className="text-xs font-bold uppercase tracking-widest text-muted mb-2">
                 Standalone
               </p>
             )}
@@ -131,7 +131,7 @@ export function WorkClientsView({ initialClients }: { initialClients: ClientRow[
       </div>
 
       {items.length === 0 && (
-        <div className="text-center py-16 text-stone-400 dark:text-stone-500">
+        <div className="text-center py-16 text-muted">
           <p className="text-sm">No client workspaces yet.</p>
         </div>
       )}

@@ -183,7 +183,7 @@ export function GoalsView({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-stone-900 dark:text-stone-50">Goals</h1>
-          <p className="text-xs text-stone-400 mt-0.5">
+          <p className="text-xs text-muted mt-0.5">
             {goals.length} goals · {objectives.length} objectives
           </p>
         </div>
@@ -201,7 +201,7 @@ export function GoalsView({
             className={`px-3 py-1 text-xs rounded-full border transition-colors ${
               pillarFilter === p
                 ? 'text-white border-transparent'
-                : 'bg-white dark:bg-stone-900 text-stone-500 border-stone-200 dark:border-stone-700 hover:border-stone-400'
+                : 'bg-white dark:bg-stone-900 text-muted border-stone-200 dark:border-stone-700 hover:border-stone-400'
             }`}
             style={pillarFilter === p
               ? p ? { backgroundColor: PILLAR_COLORS[p], borderColor: PILLAR_COLORS[p] }
@@ -216,7 +216,7 @@ export function GoalsView({
       <div className="space-y-6">
         {byStatus.map(([status, statusGoals]) => (
           <section key={status}>
-            <p className="text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500 mb-2">
+            <p className="text-xs font-bold uppercase tracking-widest text-muted mb-2">
               {status}
             </p>
             <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-lg overflow-hidden">
@@ -233,7 +233,7 @@ export function GoalsView({
                     <div className="flex items-center gap-2 px-4 py-3">
                       <button
                         onClick={() => toggleExpand(goal.id)}
-                        className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 flex-shrink-0 p-0.5"
+                        className="text-muted hover:text-stone-600 dark:hover:text-stone-300 flex-shrink-0 p-0.5"
                         aria-label={isOpen ? 'Collapse' : 'Expand'}
                       >
                         {isOpen ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
@@ -245,7 +245,7 @@ export function GoalsView({
                         <p className="text-sm font-medium text-stone-900 dark:text-stone-100 truncate">
                           {goal.title}
                         </p>
-                        <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
+                        <p className="text-xs text-muted mt-0.5">
                           {goal.area && <span>{goal.area}</span>}
                           {goal.area && goal.pillar && <span className="mx-1">·</span>}
                           {goal.pillar && (
@@ -254,7 +254,7 @@ export function GoalsView({
                             </span>
                           )}
                           {goalObjs.length > 0 && (
-                            <span className="ml-2 text-stone-300 dark:text-stone-600">
+                            <span className="ml-2 text-muted">
                               {goalObjs.length} obj{goalObjs.length !== 1 ? 's' : ''}
                             </span>
                           )}
@@ -280,7 +280,7 @@ export function GoalsView({
                               <div className="flex items-center justify-between gap-3">
                                 <p className="text-sm text-stone-700 dark:text-stone-300">{obj.title}</p>
                                 {fmtProgress(obj) && (
-                                  <span className="text-xs text-stone-400 shrink-0">{fmtProgress(obj)}</span>
+                                  <span className="text-xs text-muted shrink-0">{fmtProgress(obj)}</span>
                                 )}
                               </div>
                               {pct !== null && (
@@ -292,17 +292,17 @@ export function GoalsView({
                                 </div>
                               )}
                               {obj.deadline && (
-                                <p className="text-xs text-stone-400 mt-1">Due {obj.deadline}</p>
+                                <p className="text-xs text-muted mt-1">Due {obj.deadline}</p>
                               )}
                             </button>
                           )
                         }) : (
-                          <p className="px-10 py-2.5 text-xs text-stone-400 italic">No objectives yet.</p>
+                          <p className="px-10 py-2.5 text-xs text-muted italic">No objectives yet.</p>
                         )}
                         <div className="px-10 py-2 border-t border-stone-100 dark:border-stone-800">
                           <button
                             onClick={() => openNewObj(goal.id)}
-                            className="flex items-center gap-1 text-xs text-stone-400 hover:text-stone-600 dark:hover:text-stone-300"
+                            className="flex items-center gap-1 text-xs text-muted hover:text-stone-600 dark:hover:text-stone-300"
                           >
                             <Plus size={12} /> Add objective
                           </button>
@@ -318,7 +318,7 @@ export function GoalsView({
       </div>
 
       {filteredGoals.length === 0 && (
-        <div className="text-center py-16 text-stone-400 dark:text-stone-500">
+        <div className="text-center py-16 text-muted">
           <p className="text-sm">No goals yet.</p>
         </div>
       )}

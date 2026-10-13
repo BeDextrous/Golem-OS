@@ -94,7 +94,7 @@ export function NotesView({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-stone-900 dark:text-stone-50">Notes</h1>
-          <p className="text-xs text-stone-400 mt-0.5">{items.length} notes</p>
+          <p className="text-xs text-muted mt-0.5">{items.length} notes</p>
         </div>
         <Button onClick={openNew} size="sm" disabled={creating}>
           <Plus size={14} /> {creating ? 'Creating…' : 'New Note'}
@@ -104,12 +104,12 @@ export function NotesView({
       {/* Filters */}
       <div className="flex items-center gap-2 flex-wrap">
         <div className="relative flex-1 min-w-48">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search notes…"
-            className="w-full pl-8 pr-3 h-8 text-sm bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-md outline-none focus:ring-2 focus:ring-stone-300 dark:focus:ring-stone-600 text-stone-900 dark:text-stone-100 placeholder:text-stone-400"
+            className="w-full pl-8 pr-3 h-8 text-sm bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-md outline-none focus:ring-2 focus:ring-stone-300 dark:focus:ring-stone-600 text-stone-900 dark:text-stone-100 placeholder:text-muted"
           />
         </div>
         <div className="flex gap-1 flex-shrink-0">
@@ -120,7 +120,7 @@ export function NotesView({
               className={`px-3 py-1 text-xs rounded-full border transition-colors ${
                 pillarFilter === p
                   ? 'text-white border-transparent'
-                  : 'bg-white dark:bg-stone-900 text-stone-500 border-stone-200 dark:border-stone-700 hover:border-stone-400'
+                  : 'bg-white dark:bg-stone-900 text-muted border-stone-200 dark:border-stone-700 hover:border-stone-400'
               }`}
               style={pillarFilter === p
                 ? p
@@ -173,10 +173,10 @@ export function NotesView({
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-stone-900 dark:text-stone-100">
-                          {note.title || <span className="text-stone-400 italic font-normal">Untitled</span>}
+                          {note.title || <span className="text-muted italic font-normal">Untitled</span>}
                         </p>
                         {note.content && (
-                          <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 line-clamp-2 whitespace-pre-line">
+                          <p className="text-xs text-muted mt-0.5 line-clamp-2 whitespace-pre-line">
                             {note.content}
                           </p>
                         )}
@@ -185,7 +185,7 @@ export function NotesView({
                             {note.tags.split(',').map(t => t.trim()).filter(Boolean).map(tag => (
                               <span
                                 key={tag}
-                                className="px-1.5 py-0.5 text-xs bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 rounded"
+                                className="px-1.5 py-0.5 text-xs bg-stone-100 dark:bg-stone-800 text-muted rounded"
                               >
                                 {tag}
                               </span>
@@ -199,11 +199,11 @@ export function NotesView({
                             {PILLAR_OPTS.find(p => p.value === note.pillar)?.label}
                           </p>
                         )}
-                        <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
+                        <p className="text-xs text-muted mt-0.5">
                           {fmt(note.updated_at)}
                         </p>
                         {note.drafts_uuid && (
-                          <p className="text-xs text-stone-300 dark:text-stone-600 mt-0.5">Drafts ✓</p>
+                          <p className="text-xs text-muted mt-0.5">Drafts ✓</p>
                         )}
                       </div>
                     </div>
@@ -211,7 +211,7 @@ export function NotesView({
                   {/* ── Delete button (appears on hover) ── */}
                   <button
                     onClick={() => setConfirmId(note.id)}
-                    className="px-3 flex items-center text-stone-300 dark:text-stone-700 hover:text-red-500 dark:hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+                    className="px-3 flex items-center text-muted hover:text-red-500 dark:hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
                     aria-label="Delete note"
                   >
                     <Trash2 size={14} />
@@ -224,7 +224,7 @@ export function NotesView({
       )}
 
       {filtered.length === 0 && (
-        <div className="text-center py-16 text-stone-400 dark:text-stone-500">
+        <div className="text-center py-16 text-muted">
           <p className="text-sm">{search || pillarFilter ? 'No notes match.' : 'No notes yet.'}</p>
         </div>
       )}

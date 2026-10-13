@@ -5,7 +5,7 @@ import { billingTypeLabel, statusInfo, URGENCY_RANK } from '@/lib/pagemaster/bil
 export function PagemasterBillingView({ rows }: { rows: BillingRow[] }) {
   if (rows.length === 0) {
     return (
-      <p className="text-sm text-stone-400 dark:text-stone-500">
+      <p className="text-sm text-muted">
         No clients with billing configured yet.
       </p>
     )
@@ -30,7 +30,7 @@ export function PagemasterBillingView({ rows }: { rows: BillingRow[] }) {
               <p className="text-sm font-medium text-stone-900 dark:text-stone-100 truncate">
                 {row.client.name}
               </p>
-              <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
+              <p className="text-xs text-muted mt-0.5">
                 {billingTypeLabel(row.client)}
               </p>
             </div>
@@ -46,7 +46,7 @@ export function PagemasterBillingView({ rows }: { rows: BillingRow[] }) {
                   href={row.currentInvoice.wave_view_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs font-medium text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200 underline"
+                  className="text-xs font-medium text-muted hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200 underline"
                 >
                   View in Wave ↗
                 </a>

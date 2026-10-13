@@ -36,7 +36,7 @@ export function PagemasterKnowledgeView({
     <div className="space-y-6">
       <div>
         {grouped.length === 0 ? (
-          <p className="text-sm text-stone-400 dark:text-stone-500">
+          <p className="text-sm text-muted">
             No extracted knowledge yet — it appears here once the worker processes client documents.
           </p>
         ) : (
@@ -53,7 +53,7 @@ export function PagemasterKnowledgeView({
                     className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-stone-50 dark:hover:bg-stone-800/50"
                   >
                     <p className="text-sm font-semibold text-stone-900 dark:text-stone-50">{client}</p>
-                    <span className="text-xs text-stone-400 dark:text-stone-500 shrink-0">
+                    <span className="text-xs text-muted shrink-0">
                       {clientItems.length} item{clientItems.length === 1 ? '' : 's'} {isOpen ? '▲' : '▼'}
                     </span>
                   </button>
@@ -63,7 +63,7 @@ export function PagemasterKnowledgeView({
                         <div key={item.id} className="px-4 py-3">
                           <p className="text-sm text-stone-700 dark:text-stone-300">{item.content}</p>
                           {item.document_title && (
-                            <p className="text-xs text-stone-400 dark:text-stone-500 mt-1">
+                            <p className="text-xs text-muted mt-1">
                               Source: {item.document_title}
                             </p>
                           )}
@@ -79,11 +79,11 @@ export function PagemasterKnowledgeView({
       </div>
 
       <div>
-        <p className="text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500 mb-2">
+        <p className="text-xs font-bold uppercase tracking-widest text-muted mb-2">
           Dextrous knowledge items
         </p>
         {items.length === 0 ? (
-          <p className="text-sm text-stone-400 dark:text-stone-500">
+          <p className="text-sm text-muted">
             No knowledge items yet. Add them from Dextrous → Knowledge.
           </p>
         ) : (
@@ -95,10 +95,10 @@ export function PagemasterKnowledgeView({
               >
                 <p className="text-sm font-semibold text-stone-900 dark:text-stone-50">{item.title}</p>
                 {item.content && (
-                  <p className="text-xs text-stone-500 dark:text-stone-400 mt-1 line-clamp-2">{item.content}</p>
+                  <p className="text-xs text-muted mt-1 line-clamp-2">{item.content}</p>
                 )}
                 {item.tags && (
-                  <p className="text-xs text-stone-400 dark:text-stone-500 mt-2">{item.tags}</p>
+                  <p className="text-xs text-muted mt-2">{item.tags}</p>
                 )}
               </div>
             ))}

@@ -40,7 +40,7 @@ function MessageBubble({ msg, isLast }: { msg: Message; isLast: boolean }) {
         {!isUser && (
           <button
             onClick={copy}
-            className="absolute -top-2 -right-2 p-1 rounded-full bg-stone-100 dark:bg-stone-700 text-stone-400 dark:text-stone-500 opacity-0 group-hover:opacity-100 transition-opacity hover:text-stone-600 dark:hover:text-stone-300"
+            className="absolute -top-2 -right-2 p-1 rounded-full bg-stone-100 dark:bg-stone-700 text-muted opacity-0 group-hover:opacity-100 transition-opacity hover:text-stone-600 dark:hover:text-stone-300"
             aria-label="Copy"
           >
             {copied ? <Check size={11} /> : <Copy size={11} />}
@@ -161,12 +161,12 @@ export function MikeWidget() {
           </div>
           <div>
             <p className="text-sm font-semibold text-stone-900 dark:text-stone-100">Mike</p>
-            <p className="text-xs text-stone-400">Legal &amp; business assistant</p>
+            <p className="text-xs text-muted">Legal &amp; business assistant</p>
           </div>
         </div>
         <button
           onClick={reset}
-          className="p-1.5 rounded-md text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+          className="p-1.5 rounded-md text-muted hover:text-stone-600 dark:hover:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
           aria-label="New conversation"
           title="New conversation"
         >
@@ -183,7 +183,7 @@ export function MikeWidget() {
                 <span className="text-2xl font-bold text-[#DA6B51]">M</span>
               </div>
               <p className="text-sm font-medium text-stone-700 dark:text-stone-300">Ask Mike anything</p>
-              <p className="text-xs text-stone-400 mt-1">Legal guidance, contracts, business strategy</p>
+              <p className="text-xs text-muted mt-1">Legal guidance, contracts, business strategy</p>
             </div>
             <div className="flex flex-col gap-2 w-full max-w-sm">
               {STARTERS.map((s) => (
@@ -232,7 +232,7 @@ export function MikeWidget() {
             onKeyDown={handleKeyDown}
             placeholder="Ask Mike… (Enter to send, Shift+Enter for new line)"
             rows={1}
-            className="flex-1 resize-none px-3 py-2 text-sm bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-700 rounded-lg outline-none focus:ring-2 focus:ring-[#DA6B51]/40 focus:border-[#DA6B51] text-stone-900 dark:text-stone-100 placeholder:text-stone-400 transition-all max-h-32 overflow-y-auto"
+            className="flex-1 resize-none px-3 py-2 text-sm bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-700 rounded-lg outline-none focus:ring-2 focus:ring-[#DA6B51]/40 focus:border-[#DA6B51] text-stone-900 dark:text-stone-100 placeholder:text-muted transition-all max-h-32 overflow-y-auto"
             style={{ minHeight: '38px' }}
             onInput={e => {
               const el = e.currentTarget
@@ -250,7 +250,7 @@ export function MikeWidget() {
             <Send size={14} />
           </Button>
         </div>
-        <p className="text-xs text-stone-400 mt-1.5 text-center">
+        <p className="text-xs text-muted mt-1.5 text-center">
           Mike may make mistakes — verify legal advice with a qualified attorney.
         </p>
       </div>

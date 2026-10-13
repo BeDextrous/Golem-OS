@@ -7,8 +7,10 @@ import { Sun, Moon, Search } from 'lucide-react'
 import { PILLARS } from '@/types/pillar'
 import { createClient } from '@/lib/supabase/client'
 import { GlobalSearch } from './global-search'
+import { AccountMenu } from './account-menu'
+import { MobileNav } from './mobile-nav'
 
-export function GlobalNav() {
+export function GlobalNav({ email = null }: { email?: string | null }) {
   const pathname = usePathname()
   const router   = useRouter()
   const { resolvedTheme, setTheme } = useTheme()
@@ -33,6 +35,11 @@ export function GlobalNav() {
   const handleSignOut = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
+    // Drop anything the service worker cached for this session
+    try {
+      if ('caches' in window) await Promise.all((await caches.keys()).map(k => caches.delete(k)))
+      sessionStorage.clear()
+    } catch { /* non-critical */ }
     router.push('/login')
   }
 
@@ -47,7 +54,7 @@ export function GlobalNav() {
             >
               Golem OS
             </Link>
-            <nav className="flex items-center gap-1">
+            <nav aria-label="Primary" className="hidden sm:flex items-center gap-1">
               {Object.values(PILLARS).map((pillar) => {
                 const isActive = pathname.startsWith(pillar.routes.root)
                 return (
@@ -81,7 +88,7 @@ export function GlobalNav() {
             {/* Search button */}
             <button
               onClick={() => setSearchOpen(true)}
-              className="hidden sm:flex items-center gap-2 px-3 h-8 text-sm text-stone-500 dark:text-stone-400 border border-stone-200 dark:border-stone-700 rounded-lg hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors"
+              className="hidden sm:flex items-center gap-2 px-3 h-8 text-sm text-muted border border-stone-200 dark:border-stone-700 rounded-lg hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors"
             >
               <Search size={13} />
               <span>Search</span>
@@ -91,7 +98,7 @@ export function GlobalNav() {
             {/* Mobile search icon */}
             <button
               onClick={() => setSearchOpen(true)}
-              className="sm:hidden w-8 h-8 flex items-center justify-center rounded-lg text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+              className="sm:hidden w-10 h-10 flex items-center justify-center rounded-lg text-muted hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
               aria-label="Search"
             >
               <Search size={16} />
@@ -101,25 +108,19 @@ export function GlobalNav() {
             {mounted && (
               <button
                 onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-stone-500 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+                className="w-8 h-8 pointer-coarse:w-11 pointer-coarse:h-11 flex items-center justify-center rounded-lg text-muted hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
                 aria-label="Toggle theme"
               >
                 {resolvedTheme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
               </button>
             )}
 
-            {/* Avatar / sign out */}
-            <button
-              onClick={handleSignOut}
-              className="w-8 h-8 rounded-full bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300 text-xs font-semibold flex items-center justify-center hover:bg-stone-300 dark:hover:bg-stone-600 transition-colors"
-              title="Sign out"
-            >
-              M
-            </button>
+            <AccountMenu email={email} onSignOut={handleSignOut} />
           </div>
         </div>
       </header>
 
+      <MobileNav />
       <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
     </>
   )

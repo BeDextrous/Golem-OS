@@ -12,14 +12,14 @@ export function GoogleNotConfigured({ apiName }: { apiName: string }) {
         <AlertCircle size={18} className="shrink-0 mt-0.5" />
         <div>
           <p className="text-sm font-medium">{apiName} not configured</p>
-          <p className="text-xs mt-1 text-stone-500 dark:text-stone-400 leading-relaxed">
+          <p className="text-xs mt-1 text-muted leading-relaxed">
             Add these to your <code className="bg-stone-100 dark:bg-stone-800 px-1 rounded">.env.local</code>:
           </p>
           <pre className="mt-2 text-xs bg-stone-100 dark:bg-stone-800 rounded-lg p-3 font-mono text-stone-700 dark:text-stone-300">
 {`NEXT_PUBLIC_GOOGLE_CLIENT_ID=<your-oauth-client-id>
 NEXT_PUBLIC_GOOGLE_API_KEY=<your-api-key>`}
           </pre>
-          <p className="text-xs mt-2 text-stone-400">
+          <p className="text-xs mt-2 text-muted">
             Create credentials at{' '}
             <a
               href="https://console.cloud.google.com/apis/credentials"
@@ -57,7 +57,7 @@ export function GoogleConnectPrompt({
         {icon}
       </div>
       <p className="text-sm font-medium text-stone-700 dark:text-stone-300">Connect {label}</p>
-      <p className="text-xs text-stone-400 mt-1 mb-4">{CONNECTION_LABEL[connection]}</p>
+      <p className="text-xs text-muted mt-1 mb-4">{CONNECTION_LABEL[connection]}</p>
       <Button onClick={onConnect} disabled={connecting} size="sm" variant="secondary">
         {connecting ? 'Connecting…' : 'Sign in with Google'}
       </Button>

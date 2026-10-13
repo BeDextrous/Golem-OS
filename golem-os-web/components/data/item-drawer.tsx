@@ -1,7 +1,9 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useId, useRef } from 'react'
 import { X, Trash2 } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { cn } from '@/lib/utils'
+import { useDialog } from '@/lib/use-dialog'
 import { Button } from '@/components/ui'
 
 interface ItemDrawerProps {
@@ -13,6 +15,12 @@ interface ItemDrawerProps {
   children: React.ReactNode
 }
 
+function errorMessage(err: unknown, fallback: string) {
+  if (err instanceof Error) return err.message
+  if (err && typeof err === 'object' && 'message' in err) return String((err as { message: unknown }).message)
+  return fallback
+}
+
 export function ItemDrawer({ open, onClose, title, onSave, onDelete, children }: ItemDrawerProps) {
   const [saving, setSaving] = useState(false)
   const [deleteStep, setDeleteStep] = useState(false)
@@ -22,22 +30,24 @@ export function ItemDrawer({ open, onClose, title, onSave, onDelete, children }:
     if (!open) { setDeleteStep(false) }
   }, [open])
 
-  useEffect(() => {
-    const handle = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    if (open) document.addEventListener('keydown', handle)
-    return () => document.removeEventListener('keydown', handle)
-  }, [open, onClose])
+  const panelRef = useRef<HTMLDivElement>(null)
+  const titleId = useId()
+  useDialog(open, panelRef, onClose)
 
   const handleSave = async () => {
     setSaving(true)
-    try { await onSave() } finally { setSaving(false) }
+    try { await onSave() }
+    catch (err) { toast.error(errorMessage(err, 'Save failed')) }
+    finally { setSaving(false) }
   }
 
   const handleDelete = async () => {
     if (!onDelete) return
     if (!deleteStep) { setDeleteStep(true); return }
     setDeleting(true)
-    try { await onDelete() } finally { setDeleting(false); setDeleteStep(false) }
+    try { await onDelete() }
+    catch (err) { toast.error(errorMessage(err, 'Delete failed')) }
+    finally { setDeleting(false); setDeleteStep(false) }
   }
 
   return (
@@ -48,9 +58,18 @@ export function ItemDrawer({ open, onClose, title, onSave, onDelete, children }:
           open ? 'opacity-100' : 'opacity-0 pointer-events-none'
         )}
         onClick={onClose}
+        aria-hidden="true"
       />
       <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal={open}
+        aria-labelledby={titleId}
+        aria-hidden={!open}
+        inert={!open}
+        tabIndex={-1}
         className={cn(
+          'outline-none',
           'fixed inset-y-0 right-0 z-50 flex flex-col w-full sm:max-w-md',
           'bg-white dark:bg-stone-950 border-l border-stone-200 dark:border-stone-800 shadow-2xl',
           'transition-transform duration-300',
@@ -59,7 +78,7 @@ export function ItemDrawer({ open, onClose, title, onSave, onDelete, children }:
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-stone-200 dark:border-stone-800 shrink-0">
-          <h2 className="text-sm font-semibold text-stone-900 dark:text-stone-50">{title}</h2>
+          <h2 id={titleId} className="text-sm font-semibold text-stone-900 dark:text-stone-50">{title}</h2>
           <div className="flex items-center gap-1.5">
             {onDelete && (
               deleteStep ? (
@@ -75,7 +94,8 @@ export function ItemDrawer({ open, onClose, title, onSave, onDelete, children }:
               ) : (
                 <button
                   onClick={handleDelete}
-                  className="w-7 h-7 flex items-center justify-center rounded-md text-stone-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
+                  aria-label="Delete"
+                  className="w-8 h-8 pointer-coarse:w-11 pointer-coarse:h-11 flex items-center justify-center rounded-md text-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
                 >
                   <Trash2 size={14} />
                 </button>
@@ -83,7 +103,8 @@ export function ItemDrawer({ open, onClose, title, onSave, onDelete, children }:
             )}
             <button
               onClick={onClose}
-              className="w-7 h-7 flex items-center justify-center rounded-md text-stone-400 hover:text-stone-600 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+              aria-label="Close"
+              className="w-8 h-8 pointer-coarse:w-11 pointer-coarse:h-11 flex items-center justify-center rounded-md text-muted hover:text-stone-600 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
             >
               <X size={14} />
             </button>

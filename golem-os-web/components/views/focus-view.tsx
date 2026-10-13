@@ -39,7 +39,7 @@ const STATUS_COLOR: Record<string, string> = {
 const PRIORITY_COLOR: Record<string, string> = {
   High:   'text-red-500',
   Medium: 'text-amber-500',
-  Low:    'text-stone-400',
+  Low:    'text-muted',
 }
 const SORT_OPTIONS = [
   { value: 'created', label: 'Created' },
@@ -340,7 +340,7 @@ export function FocusView({ initialTasks, initialGoals, initialObjectives }: Pro
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-stone-900 dark:text-stone-50">Focus</h1>
-          <p className="text-xs text-stone-400 mt-0.5">
+          <p className="text-xs text-muted mt-0.5">
             {counts.task} tasks · {counts.goal} goals · {counts.objective} objectives
           </p>
         </div>
@@ -367,12 +367,12 @@ export function FocusView({ initialTasks, initialGoals, initialObjectives }: Pro
               className={`px-3 py-1 text-xs rounded-full border transition-colors capitalize ${
                 isActive
                   ? 'text-white border-transparent'
-                  : 'bg-white dark:bg-stone-900 text-stone-500 border-stone-200 dark:border-stone-700 hover:border-stone-400'
+                  : 'bg-white dark:bg-stone-900 text-muted border-stone-200 dark:border-stone-700 hover:border-stone-400'
               }`}
               style={isActive ? { backgroundColor: color, borderColor: color } : undefined}
             >
               {t === 'all' ? 'All' : t === 'objective' ? 'Objectives' : `${t.charAt(0).toUpperCase() + t.slice(1)}s`}
-              <span className={`ml-1.5 ${isActive ? 'opacity-70' : 'text-stone-400'}`}>{count}</span>
+              <span className={`ml-1.5 ${isActive ? 'opacity-70' : 'text-muted'}`}>{count}</span>
             </button>
           )
         })}
@@ -390,7 +390,7 @@ export function FocusView({ initialTasks, initialGoals, initialObjectives }: Pro
                 className={`px-2.5 py-0.5 text-xs rounded-full border transition-colors ${
                   isActive
                     ? 'text-white border-transparent'
-                    : 'bg-white dark:bg-stone-900 text-stone-500 border-stone-200 dark:border-stone-700 hover:border-stone-400'
+                    : 'bg-white dark:bg-stone-900 text-muted border-stone-200 dark:border-stone-700 hover:border-stone-400'
                 }`}
                 style={isActive ? { backgroundColor: p ? p.color : '#292524', borderColor: p ? p.color : '#292524' } : undefined}
               >
@@ -400,7 +400,7 @@ export function FocusView({ initialTasks, initialGoals, initialObjectives }: Pro
           })}
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="text-xs text-stone-400">Sort:</span>
+          <span className="text-xs text-muted">Sort:</span>
           <select
             value={sortBy}
             onChange={e => setSortBy(e.target.value)}
@@ -457,7 +457,7 @@ export function FocusView({ initialTasks, initialGoals, initialObjectives }: Pro
                   {item.title}
                 </p>
                 {(item.goalTitle || item.progress) && (
-                  <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5 truncate">
+                  <p className="text-xs text-muted mt-0.5 truncate">
                     {item.goalTitle && <span>{item.goalTitle}</span>}
                     {item.goalTitle && item.progress && <span className="mx-1">·</span>}
                     {item.progress && <span>{item.progress}</span>}
@@ -468,7 +468,7 @@ export function FocusView({ initialTasks, initialGoals, initialObjectives }: Pro
               {/* Right meta */}
               <div className="flex items-center gap-2 shrink-0">
                 {item.priority && (
-                  <span className={cn('text-xs font-semibold', PRIORITY_COLOR[item.priority] ?? 'text-stone-400')}>
+                  <span className={cn('text-xs font-semibold', PRIORITY_COLOR[item.priority] ?? 'text-muted')}>
                     {item.priority}
                   </span>
                 )}
@@ -484,7 +484,7 @@ export function FocusView({ initialTasks, initialGoals, initialObjectives }: Pro
                   </span>
                 )}
                 {item.dueDate && (
-                  <span className="text-xs text-stone-400 dark:text-stone-500 font-mono">
+                  <span className="text-xs text-muted font-mono">
                     {item.dueDate}
                   </span>
                 )}
@@ -495,7 +495,7 @@ export function FocusView({ initialTasks, initialGoals, initialObjectives }: Pro
       </div>
 
       {sorted.length === 0 && (
-        <div className="text-center py-16 text-stone-400 dark:text-stone-500">
+        <div className="text-center py-16 text-muted">
           <p className="text-sm">No items match the current filters.</p>
         </div>
       )}

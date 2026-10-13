@@ -14,7 +14,7 @@ export default async function PagemasterKnowledgePage() {
       <div className="mb-5 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold text-stone-900 dark:text-stone-50">Knowledge</h1>
-          <p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+          <p className="text-sm text-muted mt-0.5">
             Knowledge extracted from client documents, grouped by client, plus Dextrous knowledge items below.
           </p>
         </div>

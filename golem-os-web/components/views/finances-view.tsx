@@ -1,13 +1,13 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useMemo } from 'react'
 import { Plus } from 'lucide-react'
-import toast from 'react-hot-toast'
-import { createClient } from '@/lib/supabase/client'
+import { useCrudDrawer } from '@/lib/use-crud-drawer'
 import { Button, Input, Select } from '@/components/ui'
 import { ItemDrawer } from '@/components/data/item-drawer'
 import type { FinanceRow } from '@/types/entities'
 
-const today = () => new Date().toISOString().slice(0, 10)
+import { todayStr } from '@/lib/utils'
+const today = () => todayStr()
 
 const PILLAR_OPTS = [
   { value: 'life',     label: 'Life' },
@@ -24,73 +24,30 @@ export function FinancesView({
   initialItems: FinanceRow[]
   defaultPillar?: string
 }) {
-  const [items, setItems]       = useState(initialItems)
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const [editItem, setEditItem] = useState<FinanceRow | null>(null)
-  const [form, setForm]         = useState<Form>({})
-
-  const upd = <K extends keyof Form>(k: K, v: Form[K]) =>
-    setForm(f => ({ ...f, [k]: v ?? null }))
-
-  const openNew = () => {
-    setEditItem(null)
-    setForm({ entry_date: today(), pillar: defaultPillar ?? undefined })
-    setDrawerOpen(true)
-  }
-
-  const openEdit = (item: FinanceRow) => {
-    setEditItem(item)
-    setForm({
+  const {
+    items, form, upd, drawerOpen, closeDrawer, editItem,
+    openNew, openEdit, save: handleSave, remove: handleDelete,
+  } = useCrudDrawer<FinanceRow, Form>({
+    table: 'finances',
+    initialItems,
+    newForm: () => ({ entry_date: today(), pillar: defaultPillar ?? undefined }),
+    toForm: item => ({
       entry_date: item.entry_date,
       label:      item.label,
       category:   item.category,
       amount:     item.amount,
       pillar:     item.pillar ?? undefined,
-    })
-    setDrawerOpen(true)
-  }
-
-  const handleSave = async () => {
-    if (!form.label?.trim()) { toast.error('Label is required'); return }
-    const sb = createClient()
-    const { data: { user } } = await sb.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
-
-    const payload: Form = {
-      ...form,
-      entry_date: form.entry_date || today(),
-      amount:     form.amount ?? 0,
+    }),
+    validate: f => (f.label?.trim() ? null : 'Label is required'),
+    toPayload: f => ({
+      ...f,
+      entry_date: f.entry_date || today(),
+      amount:     f.amount ?? 0,
       // Always stamp the pillar when defaultPillar is set
-      pillar:     defaultPillar ?? form.pillar,
-    }
-
-    if (editItem) {
-      const { error } = await sb.from('finances').update(payload).eq('id', editItem.id)
-      if (error) throw error
-      setItems(prev => prev.map(f => f.id === editItem.id ? { ...f, ...payload } : f))
-      toast.success('Updated')
-    } else {
-      const { data, error } = await sb
-        .from('finances')
-        .insert({ ...payload, label: form.label!, user_id: user.id })
-        .select()
-        .single()
-      if (error) throw error
-      if (data) setItems(prev => [data, ...prev])
-      toast.success('Entry added')
-    }
-    setDrawerOpen(false)
-  }
-
-  const handleDelete = async () => {
-    if (!editItem) return
-    const sb = createClient()
-    const { error } = await sb.from('finances').delete().eq('id', editItem.id)
-    if (error) throw error
-    setItems(prev => prev.filter(f => f.id !== editItem.id))
-    setDrawerOpen(false)
-    toast.success('Deleted')
-  }
+      pillar:     defaultPillar ?? f.pillar,
+    }),
+    messages: { created: 'Entry added', updated: 'Updated', deleted: 'Deleted' },
+  })
 
   const dynamicCategories = useMemo(() =>
     [...new Set(items.map(f => f.category).filter(Boolean) as string[])].sort(),
@@ -125,7 +82,7 @@ export function FinancesView({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-stone-900 dark:text-stone-50">{heading}</h1>
-          <p className="text-xs text-stone-400 mt-0.5">Total: {fmt(total)}</p>
+          <p className="text-xs text-muted mt-0.5">Total: {fmt(total)}</p>
         </div>
         <Button onClick={openNew} size="sm">
           <Plus size={14} /> New Entry
@@ -135,7 +92,7 @@ export function FinancesView({
       <div className="space-y-6">
         {byMonth.map(([month, entries]) => (
           <section key={month}>
-            <p className="text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500 mb-2">
+            <p className="text-xs font-bold uppercase tracking-widest text-muted mb-2">
               {month}
             </p>
             <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-lg overflow-hidden">
@@ -149,7 +106,7 @@ export function FinancesView({
                     <p className="text-sm font-medium text-stone-900 dark:text-stone-100 truncate">
                       {item.label}
                     </p>
-                    <p className="text-xs text-stone-400 dark:text-stone-500">
+                    <p className="text-xs text-muted">
                       {item.category}{item.entry_date ? ` · ${item.entry_date}` : ''}
                     </p>
                   </div>
@@ -164,14 +121,14 @@ export function FinancesView({
       </div>
 
       {items.length === 0 && (
-        <div className="text-center py-16 text-stone-400 dark:text-stone-500">
+        <div className="text-center py-16 text-muted">
           <p className="text-sm">No entries yet.</p>
         </div>
       )}
 
       <ItemDrawer
         open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
+        onClose={closeDrawer}
         title={editItem ? 'Edit Entry' : 'New Entry'}
         onSave={handleSave}
         onDelete={editItem ? handleDelete : undefined}

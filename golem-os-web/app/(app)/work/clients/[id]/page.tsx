@@ -38,7 +38,7 @@ export default async function ClientWorkspacePage({
       <div className="max-w-4xl mx-auto px-4 pt-6 space-y-3">
         <Link
           href="/work/clients"
-          className="inline-flex items-center gap-1 text-xs text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors"
+          className="inline-flex items-center gap-1 text-xs text-muted hover:text-stone-600 dark:hover:text-stone-300 transition-colors"
         >
           <ChevronLeft size={14} /> Clients
         </Link>
@@ -49,7 +49,7 @@ export default async function ClientWorkspacePage({
           />
           <div>
             <h1 className="text-xl font-semibold text-stone-900 dark:text-stone-50">{client.name}</h1>
-            <p className="text-xs text-stone-400 mt-0.5">
+            <p className="text-xs text-muted mt-0.5">
               {client.workspace_group === 'dextrous' ? 'Dextrous client' : 'Work'}
               {client.company && ` · ${client.company}`}
               {client.status && ` · ${client.status}`}

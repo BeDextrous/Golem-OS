@@ -1,67 +1,43 @@
-// Golem OS Service Worker — stale-while-revalidate strategy
-const CACHE = 'golem-v1'
+// Golem OS Service Worker
+//
+// Caches static, non-personal assets only (Next build output + icons).
+// Pages, RSC payloads and API responses carry private data and are never
+// stored; they always go to the network. Caches are also wiped on sign-out.
+const CACHE = 'golem-static-v2'
 
-// Pages to pre-cache on install
-const SHELL = [
-  '/',
-  '/life',
-  '/dextrous',
-  '/work',
-  '/focus',
-]
+const isStatic = (url) =>
+  url.pathname.startsWith('/_next/static/') ||
+  /^\/(icon-\d+\.png|favicon\.ico)$/.test(url.pathname)
 
-// ── Install: pre-cache app shell ──────────────────────────────────────────────
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE).then((cache) =>
-      // addAll fails if any request fails — use individual adds with fallback
-      Promise.allSettled(SHELL.map((url) => cache.add(url)))
-    )
-  )
+self.addEventListener('install', () => {
   self.skipWaiting()
 })
 
-// ── Activate: remove old caches ───────────────────────────────────────────────
+// Remove every older cache (including the v1 cache that held pages)
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
-    )
+    caches.keys()
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
   )
-  self.clients.claim()
 })
 
-// ── Fetch: stale-while-revalidate for navigation + GET assets ─────────────────
 self.addEventListener('fetch', (event) => {
   const { request } = event
-
-  // Only handle GET requests from our own origin
   if (request.method !== 'GET') return
-  if (!request.url.startsWith(self.location.origin)) return
 
-  // Skip Next.js internals (_next/webpack-hmr, etc.) in dev
-  if (request.url.includes('_next/webpack-hmr')) return
-  if (request.url.includes('__nextjs')) return
+  const url = new URL(request.url)
+  if (url.origin !== self.location.origin) return
+  if (!isStatic(url)) return // navigations, RSC, /api: network only
 
-  // For API routes — network-only, no caching
-  if (request.url.includes('/api/')) return
-
+  // Static assets are content-hashed: cache-first is safe
   event.respondWith(
     caches.open(CACHE).then(async (cache) => {
       const cached = await cache.match(request)
-
-      const networkFetch = fetch(request)
-        .then((response) => {
-          // Cache fresh successful responses
-          if (response && response.ok && response.status < 400) {
-            cache.put(request, response.clone())
-          }
-          return response
-        })
-        .catch(() => cached) // network failed → fall back to cache
-
-      // Return cached immediately if available, update in background
-      return cached || networkFetch
+      if (cached) return cached
+      const response = await fetch(request)
+      if (response.ok) cache.put(request, response.clone())
+      return response
     })
   )
 })

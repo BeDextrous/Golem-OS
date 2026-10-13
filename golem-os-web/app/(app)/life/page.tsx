@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { thisMonthStr } from '@/lib/utils'
 import { getReading, getFinances, getNotes, getLinks, getGoals, getTasks, getObjectives } from '@/lib/queries'
 import { ClickableTaskList } from '@/components/dashboard/clickable-task-list'
 import { CalendarWidget } from '@/components/widgets/calendar-widget'
@@ -18,14 +19,14 @@ function StatCard({
       href={href}
       className="block bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-lg p-4 hover:border-stone-300 dark:hover:border-stone-700 transition-colors"
     >
-      <p className="text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500 mb-3">
+      <p className="text-xs font-bold uppercase tracking-widest text-muted mb-3">
         {title}
       </p>
       <div className="flex gap-4 mb-3">
         {stats.map(s => (
           <div key={s.label}>
             <p className="text-2xl font-semibold text-stone-900 dark:text-stone-50 tabular-nums">{s.value}</p>
-            <p className="text-xs text-stone-400 dark:text-stone-500">{s.label}</p>
+            <p className="text-xs text-muted">{s.label}</p>
           </div>
         ))}
       </div>
@@ -45,7 +46,7 @@ export default async function LifeOverviewPage() {
     getReading(), getFinances(), getNotes(), getLinks(), getGoals(), getTasks(), getObjectives(),
   ])
 
-  const thisMonth     = new Date().toISOString().slice(0, 7)
+  const thisMonth     = thisMonthStr()
   const monthFinances = finances.filter(f => f.entry_date?.startsWith(thisMonth))
   const monthTotal    = monthFinances.reduce((s, f) => s + (f.amount ?? 0), 0)
   const fmt = (n: number) =>
@@ -61,7 +62,7 @@ export default async function LifeOverviewPage() {
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
       <div>
         <h1 className="text-xl font-semibold text-stone-900 dark:text-stone-50">Life</h1>
-        <p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+        <p className="text-sm text-muted mt-0.5">
           Health, finances, home, and relationships
         </p>
       </div>
@@ -129,10 +130,10 @@ export default async function LifeOverviewPage() {
       {lifeTasks.length > 0 && (
         <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-lg overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-stone-100 dark:border-stone-800">
-            <p className="text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500">
+            <p className="text-xs font-bold uppercase tracking-widest text-muted">
               Active Tasks
             </p>
-            <Link href="/life/tasks" className="text-xs text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors">
+            <Link href="/life/tasks" className="text-xs text-muted hover:text-stone-600 dark:hover:text-stone-300 transition-colors">
               View all →
             </Link>
           </div>
