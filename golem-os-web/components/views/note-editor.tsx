@@ -26,7 +26,7 @@ export function NoteEditor({ note: initial }: { note: NoteRow }) {
   const [showDelete, setShowDelete] = useState(false)
   const timerRef  = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const latestNote = useRef(note)
-  latestNote.current = note
+  useEffect(() => { latestNote.current = note }, [note])
 
   // ── Field updater ─────────────────────────────────────────────────────
   const upd = (field: keyof NoteRow, value: unknown) => {

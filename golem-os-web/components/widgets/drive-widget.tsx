@@ -70,12 +70,6 @@ export function DriveWidget({
   const [error, setError]           = useState<string | null>(null)
   const lastToken                   = useRef<string | null>(null)
 
-  useEffect(() => {
-    let alive = true
-    resolveConnected(connection, SCOPE).then(c => { if (alive) setConnected(c) })
-    return () => { alive = false }
-  }, [connection])
-
   const fetchFiles = useCallback(async (query?: string, forceAccountPicker = false) => {
     if (!clientId) return
     setLoading(true)
@@ -108,10 +102,17 @@ export function DriveWidget({
     }
   }, [clientId, connection, folderId, compact])
 
+  // Resolve the connection on mount and load straight away if it is already connected.
+  // (Connecting by click loads inside fetchFiles itself; state is only set in async callbacks.)
   useEffect(() => {
-    if (connected) fetchFiles()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connected, folderId])
+    let alive = true
+    resolveConnected(connection, SCOPE).then(c => {
+      if (!alive) return
+      setConnected(c)
+      if (c) fetchFiles()
+    })
+    return () => { alive = false }
+  }, [connection, fetchFiles])
 
   const handleConnect = useCallback(async (forceAccountPicker = false) => {
     setConnecting(true)

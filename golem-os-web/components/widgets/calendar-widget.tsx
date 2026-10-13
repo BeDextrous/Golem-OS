@@ -45,12 +45,6 @@ export function CalendarWidget({
   const [loading, setLoading]       = useState(false)
   const [error, setError]           = useState<string | null>(null)
 
-  useEffect(() => {
-    let alive = true
-    resolveConnected(connection, SCOPE).then(c => { if (alive) setConnected(c) })
-    return () => { alive = false }
-  }, [connection])
-
   const fetchEvents = useCallback(async (forceAccountPicker = false) => {
     if (!clientId) return
     setLoading(true)
@@ -77,10 +71,17 @@ export function CalendarWidget({
     }
   }, [clientId, connection, compact])
 
+  // Resolve the connection on mount and load straight away if it is already connected.
+  // (Connecting by click loads inside fetchEvents itself; state is only set in async callbacks.)
   useEffect(() => {
-    if (connected) fetchEvents()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connected])
+    let alive = true
+    resolveConnected(connection, SCOPE).then(c => {
+      if (!alive) return
+      setConnected(c)
+      if (c) fetchEvents()
+    })
+    return () => { alive = false }
+  }, [connection, fetchEvents])
 
   const handleConnect = useCallback(async (forceAccountPicker = false) => {
     setConnecting(true)

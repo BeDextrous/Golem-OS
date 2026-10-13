@@ -1,5 +1,7 @@
 'use client'
+import { useCallback, useMemo } from 'react'
 import { cn } from '@/lib/utils'
+import { useLocalStorage } from '@/lib/use-local-storage'
 
 interface StatusFilterProps {
   statuses: string[]
@@ -40,9 +42,8 @@ export function StatusFilter({ statuses, active, onChange, colorMap }: StatusFil
   )
 }
 
-export function initStatuses(storageKey: string, all: string[], defaultHide: string[]): string[] {
-  if (typeof window === 'undefined') return all.filter(s => !defaultHide.includes(s))
-  const raw = localStorage.getItem(storageKey)
+/** Which statuses are on: the stored selection, or everything except `defaultHide` when nothing is stored. */
+export function parseStatuses(raw: string | null, all: string[], defaultHide: string[]): string[] {
   if (raw == null) return all.filter(s => !defaultHide.includes(s))
   try {
     const parsed = JSON.parse(raw)
@@ -52,6 +53,10 @@ export function initStatuses(storageKey: string, all: string[], defaultHide: str
   }
 }
 
-export function saveStatuses(storageKey: string, active: string[]): void {
-  localStorage.setItem(storageKey, JSON.stringify(active))
+/** Status filter selection persisted in localStorage; hydration-safe (defaults first, stored value after mount). */
+export function usePersistedStatuses(storageKey: string, all: string[], defaultHide: string[]) {
+  const [raw, setRaw] = useLocalStorage(storageKey)
+  const active = useMemo(() => parseStatuses(raw, all, defaultHide), [raw, all, defaultHide])
+  const setActive = useCallback((next: string[]) => setRaw(JSON.stringify(next)), [setRaw])
+  return [active, setActive] as const
 }

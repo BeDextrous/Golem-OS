@@ -55,12 +55,6 @@ export function GmailWidget({
   const [loading, setLoading]       = useState(false)
   const [error, setError]           = useState<string | null>(null)
 
-  useEffect(() => {
-    let alive = true
-    resolveConnected(connection, SCOPE).then(c => { if (alive) setConnected(c) })
-    return () => { alive = false }
-  }, [connection])
-
   const fetchMessages = useCallback(async (forceAccountPicker = false) => {
     if (!clientId) return
     setLoading(true)
@@ -106,10 +100,17 @@ export function GmailWidget({
     }
   }, [clientId, connection, compact])
 
+  // Resolve the connection on mount and load straight away if it is already connected.
+  // (Connecting by click loads inside fetchMessages itself; state is only set in async callbacks.)
   useEffect(() => {
-    if (connected) fetchMessages()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connected])
+    let alive = true
+    resolveConnected(connection, SCOPE).then(c => {
+      if (!alive) return
+      setConnected(c)
+      if (c) fetchMessages()
+    })
+    return () => { alive = false }
+  }, [connection, fetchMessages])
 
   const handleConnect = useCallback(async (forceAccountPicker = false) => {
     setConnecting(true)
