@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { PillarHeader } from '@/components/layout/pillar-header'
 import { getJobApps, getTargetCompanies, getCRM, getGoals, getClients, getProjects, getKnowledge, getTasks, getObjectives } from '@/lib/queries'
 import { ClickableTaskList } from '@/components/dashboard/clickable-task-list'
 import { CalendarWidget } from '@/components/widgets/calendar-widget'
@@ -54,12 +55,7 @@ export default async function DextrousOverviewPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold text-stone-900 dark:text-stone-50">Dextrous</h1>
-        <p className="text-sm text-muted mt-0.5">
-          Clients, projects, knowledge, and career
-        </p>
-      </div>
+      <PillarHeader pillar="dextrous" subtitle="Clients, projects, knowledge, and career" />
 
       {/* Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
