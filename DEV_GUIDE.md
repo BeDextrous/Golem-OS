@@ -254,6 +254,36 @@ fails if a registered table has no realistic sample payload), add it to
 Still outside this path: the Python Pagemaster worker and Drafts sync edge
 function (service role), the `notes.drafts_uuid` column, and reads.
 
+## 8c. Google widgets: server-side token refresh
+
+Calendar, Gmail and Drive widgets get their Google access tokens one of two ways:
+
+- **Server mode** (when `GOOGLE_CLIENT_SECRET` and `GOOGLE_TOKEN_KEY` are set): a one-time
+  consent (`/api/google/connect`, auth code + PKCE, offline access) stores the refresh token
+  AES-256-GCM encrypted in `public.google_connections`. Widgets call the
+  `getGoogleAccessToken` server action, which mints a ~1h access token on demand. No more
+  reconnecting each session, and nothing long-lived in the browser. One consent covers
+  Calendar + Gmail + Drive (read-only) for that account; "Sign out" in any widget disconnects
+  and revokes the whole account connection.
+- **Browser mode** (default until the above is configured): the original Google Identity
+  Services flow with a 1h token in `sessionStorage`.
+
+Code: `app/api/google/{connect,callback}`, `app/actions/google.ts`, `lib/server/{google,crypto,google-oauth-cookie}.ts`,
+client side `lib/google-auth.ts` (mode-aware, `resolveConnected`, `GoogleReconnectError`).
+
+Setup (once):
+1. Google Cloud OAuth client: add authorized redirect URIs
+   `https://golems.bedextrous.com/api/google/callback` and `http://localhost:3000/api/google/callback`.
+2. Vercel env (Production, Sensitive): `GOOGLE_CLIENT_SECRET` (the same client's secret) and
+   `GOOGLE_TOKEN_KEY` = `openssl rand -base64 32`. `GOOGLE_CLIENT_ID` is optional (falls back to
+   `NEXT_PUBLIC_GOOGLE_CLIENT_ID`). Losing or rotating `GOOGLE_TOKEN_KEY` just forces a reconnect.
+3. Apply `supabase/migrations/20261013000001_google_connections.sql` (`supabase db push`).
+4. Redeploy, open a widget, click Connect once per account (Life, Dextrous).
+
+If the consent screen is "Internal", only bedextrous.com accounts can connect; the Life
+(personal Gmail) connection needs the screen set to External (or a different client).
+Apps in "Testing" publishing status expire refresh tokens after 7 days.
+
 ## 9. Running locally
 
 ```bash

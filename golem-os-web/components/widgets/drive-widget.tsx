@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { FolderOpen, Upload, ExternalLink, RefreshCw, Search } from 'lucide-react'
 import {
-  getAccessToken, googleApiFetch, isConnected, disconnect, loadPicker, type ConnectionKey,
+  getAccessToken, googleApiFetch, resolveConnected, disconnect, GoogleReconnectError, loadPicker, type ConnectionKey,
 } from '@/lib/google-auth'
 import { GoogleNotConfigured, GoogleConnectPrompt, GoogleWidgetError } from './google-widget-states'
 
@@ -71,7 +71,9 @@ export function DriveWidget({
   const lastToken                   = useRef<string | null>(null)
 
   useEffect(() => {
-    setConnected(isConnected(connection, SCOPE))
+    let alive = true
+    resolveConnected(connection, SCOPE).then(c => { if (alive) setConnected(c) })
+    return () => { alive = false }
   }, [connection])
 
   const fetchFiles = useCallback(async (query?: string, forceAccountPicker = false) => {
@@ -99,6 +101,7 @@ export function DriveWidget({
       )
       setFiles(data.files ?? [])
     } catch (e) {
+      if (e instanceof GoogleReconnectError) { setConnected(false); return }
       setError((e as Error).message)
     } finally {
       setLoading(false)
