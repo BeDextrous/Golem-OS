@@ -1,18 +1,19 @@
 'use client'
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { Plus, ExternalLink, Briefcase, User, Building2, FileText } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { createRow, deleteRow, updateRow } from '@/app/actions/crud'
 import { unwrap } from '@/lib/action-result'
 import { cn } from '@/lib/utils'
 import { Button, Input, Select, Textarea } from '@/components/ui'
-import { StatusFilter, initStatuses, saveStatuses } from '@/components/data/status-filter'
+import { StatusFilter, usePersistedStatuses } from '@/components/data/status-filter'
 import { ItemDrawer } from '@/components/data/item-drawer'
 import type { JobAppRow, CRMRow, TargetCoRow } from '@/types/entities'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const APP_STATUSES = ['Wishlist', 'Applied', 'Phone Screen', 'Interview', 'Offer', 'Accepted', 'Rejected']
+const APP_DEFAULT_HIDDEN = ['Accepted', 'Rejected']
 const APP_FILTER_KEY = 'golem:filter:job_applications'
 
 const APP_STATUS_COLOR: Record<string, string> = {
@@ -241,7 +242,7 @@ export function JobsView({ initialApps, initialContacts, initialTargets }: Props
 
   const [tab, setTab] = useState<Tab>('Applications')
   const [appView, setAppView] = useState<AppViewMode>('tiles')
-  const [activeStatuses, setActiveStatuses] = useState<string[]>([])
+  const [activeStatuses, setActiveStatuses] = usePersistedStatuses(APP_FILTER_KEY, APP_STATUSES, APP_DEFAULT_HIDDEN)
 
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [drawerType, setDrawerType] = useState<'app' | 'contact' | 'target'>('app')
@@ -249,10 +250,6 @@ export function JobsView({ initialApps, initialContacts, initialTargets }: Props
   const [appForm, setAppForm] = useState<AppForm>({})
   const [crmForm, setCrmForm] = useState<CRMForm>({})
   const [targetForm, setTargetForm] = useState<TargetForm>({})
-
-  useEffect(() => {
-    setActiveStatuses(initStatuses(APP_FILTER_KEY, APP_STATUSES, ['Accepted', 'Rejected']))
-  }, [])
 
   // Generic field updaters
   const updApp = <K extends keyof AppForm>(k: K, v: AppForm[K]) =>
@@ -406,7 +403,7 @@ export function JobsView({ initialApps, initialContacts, initialTargets }: Props
             <StatusFilter
               statuses={APP_STATUSES}
               active={activeStatuses}
-              onChange={(next) => { setActiveStatuses(next); saveStatuses(APP_FILTER_KEY, next) }}
+              onChange={setActiveStatuses}
               colorMap={APP_STATUS_COLOR}
             />
             <div className="flex items-center gap-2 ml-auto">

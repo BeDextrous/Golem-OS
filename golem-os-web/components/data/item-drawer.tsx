@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useId, useRef } from 'react'
+import { useState, useId, useRef } from 'react'
 import { X, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { cn } from '@/lib/utils'
@@ -26,19 +26,17 @@ export function ItemDrawer({ open, onClose, title, onSave, onDelete, children }:
   const [deleteStep, setDeleteStep] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
-  useEffect(() => {
-    if (!open) { setDeleteStep(false) }
-  }, [open])
-
   const panelRef = useRef<HTMLDivElement>(null)
   const titleId = useId()
-  useDialog(open, panelRef, onClose)
+  // Closing by any route (Escape, backdrop, X, save) disarms the delete confirmation
+  const close = () => { setDeleteStep(false); onClose() }
+  useDialog(open, panelRef, close)
 
   const handleSave = async () => {
     setSaving(true)
     try { await onSave() }
     catch (err) { toast.error(errorMessage(err, 'Save failed')) }
-    finally { setSaving(false) }
+    finally { setSaving(false); setDeleteStep(false) }
   }
 
   const handleDelete = async () => {
@@ -57,7 +55,7 @@ export function ItemDrawer({ open, onClose, title, onSave, onDelete, children }:
           'fixed inset-0 z-40 bg-black/40 transition-opacity duration-300',
           open ? 'opacity-100' : 'opacity-0 pointer-events-none'
         )}
-        onClick={onClose}
+        onClick={close}
         aria-hidden="true"
       />
       <div
@@ -102,7 +100,7 @@ export function ItemDrawer({ open, onClose, title, onSave, onDelete, children }:
               )
             )}
             <button
-              onClick={onClose}
+              onClick={close}
               aria-label="Close"
               className="w-8 h-8 pointer-coarse:w-11 pointer-coarse:h-11 flex items-center justify-center rounded-md text-muted hover:text-stone-600 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
             >

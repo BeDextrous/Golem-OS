@@ -1,16 +1,16 @@
 'use client'
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { Plus, BookOpen } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { createRow, deleteRow, updateRow } from '@/app/actions/crud'
 import { unwrap } from '@/lib/action-result'
-import { cn } from '@/lib/utils'
 import { Button, Input, Select } from '@/components/ui'
-import { StatusFilter, initStatuses, saveStatuses } from '@/components/data/status-filter'
+import { StatusFilter, usePersistedStatuses } from '@/components/data/status-filter'
 import { ItemDrawer } from '@/components/data/item-drawer'
 import type { ReadingRow } from '@/types/entities'
 
 const STATUSES = ['Want to Read', 'Reading', 'Paused', 'Read']
+const DEFAULT_HIDDEN = ['Read']
 const FILTER_KEY = 'golem:filter:reading'
 
 const STATUS_COLOR: Record<string, string> = {
@@ -24,14 +24,10 @@ type Form = Partial<Omit<ReadingRow, 'id' | 'user_id' | 'created_at' | 'updated_
 
 export function ReadingView({ initialItems }: { initialItems: ReadingRow[] }) {
   const [items, setItems] = useState(initialItems)
-  const [activeStatuses, setActiveStatuses] = useState<string[]>([])
+  const [activeStatuses, setActiveStatuses] = usePersistedStatuses(FILTER_KEY, STATUSES, DEFAULT_HIDDEN)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editItem, setEditItem] = useState<ReadingRow | null>(null)
   const [form, setForm] = useState<Form>({})
-
-  useEffect(() => {
-    setActiveStatuses(initStatuses(FILTER_KEY, STATUSES, ['Read']))
-  }, [])
 
   const upd = <K extends keyof Form>(k: K, v: Form[K]) =>
     setForm(f => ({ ...f, [k]: v ?? null }))
@@ -93,7 +89,7 @@ export function ReadingView({ initialItems }: { initialItems: ReadingRow[] }) {
       <StatusFilter
         statuses={STATUSES}
         active={activeStatuses}
-        onChange={(next) => { setActiveStatuses(next); saveStatuses(FILTER_KEY, next) }}
+        onChange={setActiveStatuses}
         colorMap={STATUS_COLOR}
       />
 

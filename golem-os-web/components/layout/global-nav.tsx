@@ -6,6 +6,7 @@ import { useTheme } from 'next-themes'
 import { Sun, Moon, Search } from 'lucide-react'
 import { PILLARS } from '@/types/pillar'
 import { createClient } from '@/lib/supabase/client'
+import { useMounted } from '@/lib/use-mounted'
 import { GlobalSearch } from './global-search'
 import { AccountMenu } from './account-menu'
 import { MobileNav } from './mobile-nav'
@@ -14,12 +15,10 @@ export function GlobalNav({ email = null }: { email?: string | null }) {
   const pathname = usePathname()
   const router   = useRouter()
   const { resolvedTheme, setTheme } = useTheme()
-  const [mounted, setMounted]       = useState(false)
+  const mounted = useMounted()
   const [searchOpen, setSearchOpen] = useState(false)
 
-  // Avoid hydration mismatch on theme toggle
-  useEffect(() => setMounted(true), [])
-
+  // `mounted` avoids a hydration mismatch on the theme toggle
   // ⌘K / Ctrl+K shortcut
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {

@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useMemo } from 'react'
+import { useMemo } from 'react'
 import { Plus, LayoutGrid, List } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { updateRow } from '@/app/actions/crud'
@@ -8,7 +8,8 @@ import { useCrudDrawer } from '@/lib/use-crud-drawer'
 import { TASK_STATUSES, TASK_PRIORITIES, TASK_STATUS_COLOR, TASK_PRIORITY_COLOR, groupObjectivesByGoal } from '@/lib/task-constants'
 import { cn } from '@/lib/utils'
 import { Button, Input, Select } from '@/components/ui'
-import { StatusFilter, initStatuses, saveStatuses } from '@/components/data/status-filter'
+import { StatusFilter, usePersistedStatuses } from '@/components/data/status-filter'
+import { useLocalStorage } from '@/lib/use-local-storage'
 import { ItemDrawer } from '@/components/data/item-drawer'
 import type { TaskRow, GoalRow, ObjectiveRow, ProjectRow, ClientRow } from '@/types/entities'
 
@@ -18,6 +19,7 @@ const STATUS_COLOR = TASK_STATUS_COLOR
 const PRIORITY_COLOR = TASK_PRIORITY_COLOR
 const FILTER_KEY = 'golem:filter:tasks'
 const VIEW_KEY = 'golem:view:tasks'
+const DEFAULT_HIDDEN = ['Done']
 type ViewMode = 'list' | 'board'
 
 
@@ -38,13 +40,9 @@ export function TasksView({
   initialTasks, goals, objectives, defaultPillar,
   projects = [], clients = [], defaultProjectId,
 }: Props) {
-  const [activeStatuses, setActiveStatuses] = useState<string[]>([])
-  const [view, setView] = useState<ViewMode>('list')
-
-  useEffect(() => {
-    setActiveStatuses(initStatuses(FILTER_KEY, STATUSES, ['Done']))
-    try { if (localStorage.getItem(VIEW_KEY) === 'board') setView('board') } catch { /* private mode */ }
-  }, [])
+  const [activeStatuses, setActiveStatuses] = usePersistedStatuses(FILTER_KEY, STATUSES, DEFAULT_HIDDEN)
+  const [viewRaw, setViewRaw] = useLocalStorage(VIEW_KEY)
+  const view: ViewMode = viewRaw === 'board' ? 'board' : 'list'
 
   const {
     items, setItems, form, upd, drawerOpen, closeDrawer, editItem,
@@ -67,10 +65,7 @@ export function TasksView({
     messages: { created: 'Task created', updated: 'Task updated', deleted: 'Task deleted' },
   })
 
-  const changeView = (next: ViewMode) => {
-    setView(next)
-    try { localStorage.setItem(VIEW_KEY, next) } catch { /* private mode */ }
-  }
+  const changeView = (next: ViewMode) => setViewRaw(next)
 
   // Optimistic status change from the board; revert and toast if the write fails
   const moveTask = async (task: TaskRow, status: string | null) => {
@@ -165,7 +160,7 @@ export function TasksView({
       <StatusFilter
         statuses={STATUSES}
         active={activeStatuses}
-        onChange={(next) => { setActiveStatuses(next); saveStatuses(FILTER_KEY, next) }}
+        onChange={setActiveStatuses}
         colorMap={STATUS_COLOR}
       />
 

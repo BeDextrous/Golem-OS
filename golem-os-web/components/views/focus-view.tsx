@@ -1,12 +1,13 @@
 'use client'
-import { useState, useEffect, useMemo } from 'react'
-import { Plus, ChevronDown, LayoutGrid, List } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { Plus, LayoutGrid, List } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { createRow, updateRow, deleteRow } from '@/app/actions/crud'
 import { unwrap } from '@/lib/action-result'
 import { cn } from '@/lib/utils'
 import { Button, Input, Select, Textarea } from '@/components/ui'
-import { StatusFilter, initStatuses, saveStatuses } from '@/components/data/status-filter'
+import { StatusFilter, usePersistedStatuses } from '@/components/data/status-filter'
+import { useLocalStorage } from '@/lib/use-local-storage'
 import { ItemDrawer } from '@/components/data/item-drawer'
 import { TasksBoard } from './tasks-board'
 import type { TaskRow, GoalRow, ObjectiveRow } from '@/types/entities'
@@ -21,6 +22,7 @@ const ALL_STATUSES   = ['To Do', 'Active', 'On Hold', 'Paused', 'Done', 'Archive
 const PRIORITIES     = ['High', 'Medium', 'Low']
 const FILTER_KEY     = 'golem:filter:focus'
 const VIEW_KEY       = 'golem:view:focus'
+const DEFAULT_HIDDEN = ['Done', 'Archived']
 type ViewMode = 'list' | 'board'
 const PILLAR_OPTS    = [
   { value: 'life',      label: 'Life',      color: '#7FA98A' },
@@ -127,18 +129,10 @@ export function FocusView({ initialTasks, initialGoals, initialObjectives }: Pro
   const [typeFilter,   setTypeFilter]   = useState<ItemType | 'all'>('all')
   const [pillarFilter, setPillarFilter] = useState<string | null>(null)
   const [sortBy,       setSortBy]       = useState<string>('created')
-  const [activeStatuses, setActiveStatuses] = useState<string[]>([])
-  const [view, setView] = useState<ViewMode>('list')
-
-  useEffect(() => {
-    setActiveStatuses(initStatuses(FILTER_KEY, ALL_STATUSES, ['Done', 'Archived']))
-    try { if (localStorage.getItem(VIEW_KEY) === 'board') setView('board') } catch { /* private mode */ }
-  }, [])
-
-  const changeView = (next: ViewMode) => {
-    setView(next)
-    try { localStorage.setItem(VIEW_KEY, next) } catch { /* private mode */ }
-  }
+  const [activeStatuses, setActiveStatuses] = usePersistedStatuses(FILTER_KEY, ALL_STATUSES, DEFAULT_HIDDEN)
+  const [viewRaw, setViewRaw] = useLocalStorage(VIEW_KEY)
+  const view: ViewMode = viewRaw === 'board' ? 'board' : 'list'
+  const changeView = (next: ViewMode) => setViewRaw(next)
 
   // The board only applies when looking at tasks alone
   const boardMode = typeFilter === 'task' && view === 'board'
@@ -460,7 +454,7 @@ export function FocusView({ initialTasks, initialGoals, initialObjectives }: Pro
         <StatusFilter
           statuses={typeFilter === 'task' ? TASK_STATUSES : typeFilter === 'goal' ? GOAL_STATUSES : ALL_STATUSES}
           active={activeStatuses}
-          onChange={(next) => { setActiveStatuses(next); saveStatuses(FILTER_KEY, next) }}
+          onChange={setActiveStatuses}
           colorMap={STATUS_COLOR}
         />
       )}

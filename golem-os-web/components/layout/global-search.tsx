@@ -23,30 +23,18 @@ const TYPE_COLOR: Record<string, string> = {
   Finance:   '#8B5CF6',
 }
 
-export function GlobalSearch({
-  open,
-  onClose,
-}: {
-  open: boolean
-  onClose: () => void
-}) {
+/** Mounted only while open, so every open starts with fresh state. */
+export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return open ? <SearchPanel onClose={onClose} /> : null
+}
+
+function SearchPanel({ onClose }: { onClose: () => void }) {
   const [query, setQuery]     = useState('')
   const [results, setResults] = useState<Result[]>([])
   const [loading, setLoading] = useState(false)
   const [selected, setSelected] = useState(0)
-  const inputRef = useRef<HTMLInputElement>(null)
   const dialogRef = useRef<HTMLDivElement>(null)
   const router   = useRouter()
-
-  useEffect(() => {
-    if (open) {
-      setQuery('')
-      setResults([])
-      setSelected(0)
-      // tiny delay so the element is mounted before focusing
-      requestAnimationFrame(() => inputRef.current?.focus())
-    }
-  }, [open])
 
   const doSearch = useCallback(async (q: string) => {
     if (q.trim().length < 2) { setResults([]); return }
@@ -123,7 +111,6 @@ export function GlobalSearch({
 
   // Keyboard nav
   useEffect(() => {
-    if (!open) return
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'ArrowDown') {
         e.preventDefault()
@@ -140,11 +127,9 @@ export function GlobalSearch({
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [open, results, selected, router, onClose])
+  }, [results, selected, router, onClose])
 
-  useDialog(open, dialogRef, onClose)
-
-  if (!open) return null
+  useDialog(true, dialogRef, onClose) // focuses the search input (first focusable) on mount
 
   return (
     <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Search" className="fixed inset-0 z-50">
@@ -161,7 +146,6 @@ export function GlobalSearch({
           <div className="flex items-center gap-3 px-4 py-3.5 border-b border-stone-100 dark:border-stone-800">
             <Search size={16} className="text-muted flex-shrink-0" />
             <input
-              ref={inputRef}
               value={query}
               onChange={e => setQuery(e.target.value)}
               placeholder="Search everything…"

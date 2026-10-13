@@ -16,7 +16,7 @@ const STARTERS = [
   'Review this offer letter',
 ]
 
-function MessageBubble({ msg, isLast }: { msg: Message; isLast: boolean }) {
+function MessageBubble({ msg }: { msg: Message }) {
   const [copied, setCopied] = useState(false)
   const isUser = msg.role === 'user'
 
@@ -200,7 +200,7 @@ export function MikeWidget() {
         ) : (
           <>
             {messages.map((msg, i) => (
-              <MessageBubble key={i} msg={msg} isLast={i === messages.length - 1} />
+              <MessageBubble key={i} msg={msg} />
             ))}
             {streaming && messages[messages.length - 1]?.content === '' && (
               <div className="flex justify-start mb-3">

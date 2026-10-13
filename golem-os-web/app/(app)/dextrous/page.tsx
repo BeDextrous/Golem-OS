@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { PillarHeader } from '@/components/layout/pillar-header'
-import { getJobApps, getTargetCompanies, getCRM, getGoals, getClients, getProjects, getKnowledge, getTasks, getObjectives } from '@/lib/queries'
+import { getJobApps, getGoals, getClients, getProjects, getKnowledge, getTasks, getObjectives } from '@/lib/queries'
 import { ClickableTaskList } from '@/components/dashboard/clickable-task-list'
 import { CalendarWidget } from '@/components/widgets/calendar-widget'
 import { GmailWidget } from '@/components/widgets/gmail-widget'
@@ -42,8 +42,8 @@ function StatCard({
 }
 
 export default async function DextrousOverviewPage() {
-  const [apps, targets, contacts, goals, clients, projects, knowledge, tasks, objectives] = await Promise.all([
-    getJobApps(), getTargetCompanies(), getCRM(), getGoals(), getClients(), getProjects(), getKnowledge(), getTasks(), getObjectives(),
+  const [apps, goals, clients, projects, knowledge, tasks, objectives] = await Promise.all([
+    getJobApps(), getGoals(), getClients(), getProjects(), getKnowledge(), getTasks(), getObjectives(),
   ])
 
   const ACTIVE_STATUSES = ['Applied', 'Phone Screen', 'Interview', 'Offer']
