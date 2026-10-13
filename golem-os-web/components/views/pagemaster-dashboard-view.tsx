@@ -22,7 +22,7 @@ export function PagemasterDashboardView({
     <div className="space-y-6">
       {hasAttention && (
         <section>
-          <p className="text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500 mb-2">
+          <p className="text-xs font-bold uppercase tracking-widest text-muted mb-2">
             Needs attention
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -32,7 +32,7 @@ export function PagemasterDashboardView({
                 className="block bg-white dark:bg-stone-900 border border-amber-300 dark:border-amber-800 rounded-lg p-4 hover:border-amber-400 dark:hover:border-amber-700 transition-colors"
               >
                 <p className="text-2xl font-semibold text-stone-900 dark:text-stone-50">{needsReviewCount}</p>
-                <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
+                <p className="text-xs text-muted mt-1">
                   deadline{needsReviewCount === 1 ? '' : 's'} to review
                 </p>
               </Link>
@@ -43,7 +43,7 @@ export function PagemasterDashboardView({
                 className="block bg-white dark:bg-stone-900 border border-amber-300 dark:border-amber-800 rounded-lg p-4 hover:border-amber-400 dark:hover:border-amber-700 transition-colors"
               >
                 <p className="text-2xl font-semibold text-stone-900 dark:text-stone-50">{billingAttentionRows.length}</p>
-                <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
+                <p className="text-xs text-muted mt-1">
                   invoice{billingAttentionRows.length === 1 ? '' : 's'} needing attention
                 </p>
               </Link>
@@ -54,7 +54,7 @@ export function PagemasterDashboardView({
 
       {upcomingDeadlines.length > 0 && (
         <section>
-          <p className="text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500 mb-2">
+          <p className="text-xs font-bold uppercase tracking-widest text-muted mb-2">
             Upcoming deadlines
           </p>
           <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-lg overflow-hidden">
@@ -67,7 +67,7 @@ export function PagemasterDashboardView({
                 }`}
               >
                 <p className="text-sm font-medium text-stone-900 dark:text-stone-100 truncate">{d.title}</p>
-                <p className="text-xs text-stone-400 dark:text-stone-500 shrink-0">{d.due_date}</p>
+                <p className="text-xs text-muted shrink-0">{d.due_date}</p>
               </Link>
             ))}
           </div>
@@ -76,7 +76,7 @@ export function PagemasterDashboardView({
 
       {recentKnowledge.length > 0 && (
         <section>
-          <p className="text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500 mb-2">
+          <p className="text-xs font-bold uppercase tracking-widest text-muted mb-2">
             Recent knowledge
           </p>
           <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-lg overflow-hidden">
@@ -90,9 +90,9 @@ export function PagemasterDashboardView({
               >
                 <p className="text-sm font-medium text-stone-900 dark:text-stone-100 truncate">{k.title}</p>
                 {k.content && (
-                  <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 line-clamp-1">{k.content}</p>
+                  <p className="text-xs text-muted mt-0.5 line-clamp-1">{k.content}</p>
                 )}
-                <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
+                <p className="text-xs text-muted mt-0.5">
                   {new Date(k.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                 </p>
               </Link>

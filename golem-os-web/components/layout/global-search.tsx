@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { useDialog } from '@/lib/use-dialog'
 
 type Result = {
   type: string
@@ -34,6 +35,7 @@ export function GlobalSearch({
   const [loading, setLoading] = useState(false)
   const [selected, setSelected] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
+  const dialogRef = useRef<HTMLDivElement>(null)
   const router   = useRouter()
 
   useEffect(() => {
@@ -123,7 +125,6 @@ export function GlobalSearch({
   useEffect(() => {
     if (!open) return
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { onClose(); return }
       if (e.key === 'ArrowDown') {
         e.preventDefault()
         setSelected(s => Math.min(s + 1, results.length - 1))
@@ -141,10 +142,12 @@ export function GlobalSearch({
     return () => window.removeEventListener('keydown', handler)
   }, [open, results, selected, router, onClose])
 
+  useDialog(open, dialogRef, onClose)
+
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50">
+    <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Search" className="fixed inset-0 z-50">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
@@ -156,23 +159,25 @@ export function GlobalSearch({
         <div className="w-full max-w-xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl shadow-2xl overflow-hidden">
           {/* Input row */}
           <div className="flex items-center gap-3 px-4 py-3.5 border-b border-stone-100 dark:border-stone-800">
-            <Search size={16} className="text-stone-400 flex-shrink-0" />
+            <Search size={16} className="text-muted flex-shrink-0" />
             <input
               ref={inputRef}
               value={query}
               onChange={e => setQuery(e.target.value)}
               placeholder="Search everything…"
-              className="flex-1 text-sm bg-transparent outline-none text-stone-900 dark:text-stone-100 placeholder:text-stone-400"
+              aria-label="Search everything"
+              className="flex-1 text-sm bg-transparent outline-none text-stone-900 dark:text-stone-100 placeholder:text-muted"
             />
             {query ? (
               <button
                 onClick={() => setQuery('')}
-                className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-300"
+                aria-label="Clear search"
+                className="text-muted hover:text-stone-600 dark:hover:text-stone-300"
               >
                 <X size={14} />
               </button>
             ) : (
-              <kbd className="text-xs bg-stone-100 dark:bg-stone-800 text-stone-500 px-1.5 py-0.5 rounded font-mono">
+              <kbd className="text-xs bg-stone-100 dark:bg-stone-800 text-muted px-1.5 py-0.5 rounded font-mono">
                 esc
               </kbd>
             )}
@@ -202,11 +207,11 @@ export function GlobalSearch({
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-stone-900 dark:text-stone-100 truncate">{r.title}</p>
                       {r.subtitle && (
-                        <p className="text-xs text-stone-400 dark:text-stone-500 truncate">{r.subtitle}</p>
+                        <p className="text-xs text-muted truncate">{r.subtitle}</p>
                       )}
                     </div>
                     {i === selected && (
-                      <span className="text-xs text-stone-300 dark:text-stone-600 shrink-0">↵</span>
+                      <span className="text-xs text-muted shrink-0">↵</span>
                     )}
                   </button>
                 </li>
@@ -216,12 +221,12 @@ export function GlobalSearch({
 
           {/* Empty / hint states */}
           {query.length >= 2 && !loading && results.length === 0 && (
-            <p className="px-4 py-6 text-sm text-center text-stone-400 dark:text-stone-500">
+            <p className="px-4 py-6 text-sm text-center text-muted">
               No results for &ldquo;{query}&rdquo;
             </p>
           )}
           {query.length < 2 && (
-            <p className="px-4 py-3 text-xs text-stone-400 dark:text-stone-500">
+            <p className="px-4 py-3 text-xs text-muted">
               Search tasks, notes, reading, goals, links, jobs, and knowledge
             </p>
           )}

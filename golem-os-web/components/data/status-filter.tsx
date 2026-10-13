@@ -14,7 +14,7 @@ export function StatusFilter({ statuses, active, onChange, colorMap }: StatusFil
 
   return (
     <div className="flex flex-wrap gap-1.5 items-center">
-      <span className="text-xs text-stone-400 dark:text-stone-500 shrink-0">Show:</span>
+      <span className="text-xs text-muted shrink-0">Show:</span>
       {statuses.map(s => {
         const on = active.includes(s)
         const customColor = on && colorMap?.[s]
@@ -27,7 +27,7 @@ export function StatusFilter({ statuses, active, onChange, colorMap }: StatusFil
               on && !customColor
                 ? 'bg-stone-800 text-white dark:bg-stone-200 dark:text-stone-900'
                 : !on
-                ? 'bg-stone-100 text-stone-400 dark:bg-stone-800 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-400'
+                ? 'bg-stone-100 text-muted dark:bg-stone-800 hover:text-stone-600 dark:hover:text-stone-400'
                 : ''
             )}
             style={customColor ? { backgroundColor: customColor + '22', color: customColor } : undefined}

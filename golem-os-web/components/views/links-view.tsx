@@ -192,7 +192,7 @@ export function LinksView({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-stone-900 dark:text-stone-50">Links</h1>
-          <p className="text-xs text-stone-400 mt-0.5">
+          <p className="text-xs text-muted mt-0.5">
             {filtered.length} link{filtered.length !== 1 ? 's' : ''}
             {readCount > 0 && !showRead && ` · ${readCount} read hidden`}
           </p>
@@ -201,7 +201,7 @@ export function LinksView({
           {readCount > 0 && (
             <button
               onClick={() => setShowRead(v => !v)}
-              className="text-xs text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 underline underline-offset-2"
+              className="text-xs text-muted hover:text-stone-600 dark:hover:text-stone-300 underline underline-offset-2"
             >
               {showRead ? 'Hide read' : 'Show read'}
             </button>
@@ -211,7 +211,7 @@ export function LinksView({
             className={`text-xs px-2.5 py-1 rounded border transition-colors ${
               selectMode
                 ? 'bg-stone-800 text-white border-stone-800 dark:bg-stone-200 dark:text-stone-900'
-                : 'text-stone-500 border-stone-200 dark:border-stone-700 hover:border-stone-400'
+                : 'text-muted border-stone-200 dark:border-stone-700 hover:border-stone-400'
             }`}
           >
             <Tag size={12} className="inline mr-1" />
@@ -232,7 +232,7 @@ export function LinksView({
             className={`px-3 py-1 text-xs rounded-full border transition-colors ${
               pillarFilter === p
                 ? 'text-white border-transparent'
-                : 'bg-white dark:bg-stone-900 text-stone-500 border-stone-200 dark:border-stone-700 hover:border-stone-400'
+                : 'bg-white dark:bg-stone-900 text-muted border-stone-200 dark:border-stone-700 hover:border-stone-400'
             }`}
             style={pillarFilter === p
               ? p
@@ -248,7 +248,7 @@ export function LinksView({
       {/* Bulk action bar */}
       {selectMode && (
         <div className="flex items-center gap-3 p-3 bg-stone-50 dark:bg-stone-800 rounded-lg border border-stone-200 dark:border-stone-700">
-          <span className="text-xs text-stone-500 shrink-0">
+          <span className="text-xs text-muted shrink-0">
             {selected.size} selected
           </span>
           <input
@@ -272,7 +272,7 @@ export function LinksView({
           <Button size="sm" onClick={handleBulkApply} disabled={!selected.size}>Apply</Button>
           <button
             onClick={() => { setSelectMode(false); setSelected(new Set()) }}
-            className="text-stone-400 hover:text-stone-600"
+            className="text-muted hover:text-stone-600"
           >
             <X size={14} />
           </button>
@@ -282,7 +282,7 @@ export function LinksView({
       <div className="space-y-6">
         {byWebsite.map(([website, links]) => (
           <section key={website}>
-            <p className="text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500 mb-2">
+            <p className="text-xs font-bold uppercase tracking-widest text-muted mb-2">
               {website}
             </p>
             <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-lg overflow-hidden">
@@ -315,14 +315,14 @@ export function LinksView({
                     <div className="flex-1 min-w-0">
                       <p className={`text-sm font-medium truncate ${
                         isRead
-                          ? 'text-stone-400 dark:text-stone-500 line-through'
+                          ? 'text-muted line-through'
                           : 'text-stone-900 dark:text-stone-100'
                       }`}>
                         {displayTitle(link)}
                       </p>
-                      <p className="text-xs text-stone-400 dark:text-stone-500 truncate">{link.url}</p>
+                      <p className="text-xs text-muted truncate">{link.url}</p>
                       {(link.parent_task_id || link.parent_note_id) && (
-                        <p className="text-xs text-stone-300 dark:text-stone-600 truncate mt-0.5">
+                        <p className="text-xs text-muted truncate mt-0.5">
                           {link.parent_task_id && `→ task #${link.parent_task_id}`}
                           {link.parent_note_id && `→ note #${link.parent_note_id}`}
                         </p>
@@ -344,7 +344,7 @@ export function LinksView({
                             className={`p-1 rounded transition-colors ${
                               isRead
                                 ? 'text-green-500 hover:text-green-700'
-                                : 'text-stone-300 hover:text-green-500 dark:text-stone-600 dark:hover:text-green-500 opacity-0 group-hover:opacity-100'
+                                : 'text-muted hover:text-green-500 dark:text-stone-600 dark:hover:text-green-500 opacity-0 group-hover:opacity-100'
                             }`}
                           >
                             <Check size={14} />
@@ -355,7 +355,7 @@ export function LinksView({
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={e => e.stopPropagation()}
-                            className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 p-1"
+                            className="text-muted hover:text-stone-600 dark:hover:text-stone-300 p-1"
                             aria-label="Open link"
                           >
                             <ExternalLink size={14} />
@@ -364,7 +364,7 @@ export function LinksView({
                           <button
                             onClick={e => handleInlineDelete(link.id, e)}
                             title="Delete"
-                            className="text-stone-300 hover:text-red-400 dark:text-stone-600 dark:hover:text-red-400 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="text-muted hover:text-red-400 dark:text-stone-600 dark:hover:text-red-400 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                             aria-label="Delete"
                           >
                             <Trash2 size={13} />
@@ -372,7 +372,7 @@ export function LinksView({
                           {/* Edit */}
                           <button
                             onClick={() => openEdit(link)}
-                            className="text-stone-300 hover:text-stone-500 dark:text-stone-600 dark:hover:text-stone-400 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="text-muted hover:text-stone-500 dark:text-stone-600 dark:hover:text-stone-400 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                             aria-label="Edit"
                           >
                             <Pencil size={13} />
@@ -389,7 +389,7 @@ export function LinksView({
       </div>
 
       {filtered.length === 0 && (
-        <div className="text-center py-16 text-stone-400 dark:text-stone-500">
+        <div className="text-center py-16 text-muted">
           <p className="text-sm">
             {pillarFilter ? 'No links for this pillar.' : showRead ? 'No links saved yet.' : 'No unread links.'}
           </p>

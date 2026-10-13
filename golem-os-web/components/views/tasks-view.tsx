@@ -23,7 +23,7 @@ const STATUS_COLOR: Record<string, string> = {
 const PRIORITY_COLOR: Record<string, string> = {
   High:   'text-red-500',
   Medium: 'text-amber-500',
-  Low:    'text-stone-400',
+  Low:    'text-muted',
 }
 
 type Form = Partial<Omit<TaskRow, 'id' | 'user_id' | 'created_at' | 'updated_at'>>
@@ -191,7 +191,7 @@ export function TasksView({
         if (!areaItems?.length) return null
         return (
           <section key={area}>
-            <p className="text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500 mb-2">
+            <p className="text-xs font-bold uppercase tracking-widest text-muted mb-2">
               {area}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
@@ -219,15 +219,15 @@ export function TasksView({
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
                     {task.priority && (
-                      <span className={cn('text-xs font-semibold', PRIORITY_COLOR[task.priority] ?? 'text-stone-400')}>
+                      <span className={cn('text-xs font-semibold', PRIORITY_COLOR[task.priority] ?? 'text-muted')}>
                         {task.priority}
                       </span>
                     )}
                     {task.due_date && (
-                      <span className="text-xs text-stone-400">{task.due_date}</span>
+                      <span className="text-xs text-muted">{task.due_date}</span>
                     )}
                     {task.project_id && projectName[String(task.project_id)] && (
-                      <span className="text-xs text-stone-400 truncate">
+                      <span className="text-xs text-muted truncate">
                         {projectName[String(task.project_id)]}
                       </span>
                     )}
@@ -240,7 +240,7 @@ export function TasksView({
       })}
 
       {filtered.length === 0 && (
-        <div className="text-center py-16 text-stone-400 dark:text-stone-500">
+        <div className="text-center py-16 text-muted">
           <p className="text-sm">No tasks match the current filter.</p>
         </div>
       )}

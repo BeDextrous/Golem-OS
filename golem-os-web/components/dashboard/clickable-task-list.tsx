@@ -10,7 +10,7 @@ import type { TaskRow, GoalRow, ObjectiveRow } from '@/types/entities'
 const STATUSES   = ['To Do', 'Active', 'On Hold', 'Done']
 const PRIORITIES = ['High', 'Medium', 'Low']
 const PRIORITY_COLOR: Record<string, string> = {
-  High: 'text-red-500', Medium: 'text-amber-500', Low: 'text-stone-400',
+  High: 'text-red-500', Medium: 'text-amber-500', Low: 'text-muted',
 }
 const STATUS_COLOR: Record<string, string> = {
   'Active': '#7FA98A', 'To Do': '#6B6560', 'On Hold': '#5B5F8D', 'Done': '#A8A39A',
@@ -117,7 +117,7 @@ export function ClickableTaskList({ initialTasks, goals, objectives, dueBefore, 
             </p>
             <div className="flex items-center gap-2 shrink-0">
               {task.priority && (
-                <span className={cn('text-xs font-semibold hidden sm:inline', PRIORITY_COLOR[task.priority] ?? 'text-stone-400')}>
+                <span className={cn('text-xs font-semibold hidden sm:inline', PRIORITY_COLOR[task.priority] ?? 'text-muted')}>
                   {task.priority}
                 </span>
               )}
@@ -133,7 +133,7 @@ export function ClickableTaskList({ initialTasks, goals, objectives, dueBefore, 
                 </span>
               )}
               {task.due_date && (
-                <span className={`text-xs shrink-0 ${isOverdue ? 'text-red-500' : 'text-stone-400'}`}>
+                <span className={`text-xs shrink-0 ${isOverdue ? 'text-red-500' : 'text-muted'}`}>
                   {isOverdue ? `overdue ${task.due_date}` : task.due_date === todayStr ? 'today' : task.due_date}
                 </span>
               )}

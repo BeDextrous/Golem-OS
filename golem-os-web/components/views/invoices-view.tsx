@@ -124,9 +124,9 @@ export function InvoicesView({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-stone-900 dark:text-stone-50">Invoices</h1>
-          <p className="text-xs text-stone-400 mt-0.5">
+          <p className="text-xs text-muted mt-0.5">
             {totalOutstanding > 0 && <span className="text-amber-600 dark:text-amber-400">{fmtMoney(totalOutstanding)} outstanding · </span>}
-            {totalPaid > 0 && <span className="text-stone-500">{fmtMoney(totalPaid)} paid</span>}
+            {totalPaid > 0 && <span className="text-muted">{fmtMoney(totalPaid)} paid</span>}
           </p>
         </div>
         <Button onClick={openNew} size="sm">
@@ -137,7 +137,7 @@ export function InvoicesView({
       <div className="space-y-6">
         {byStatus.map(([status, invoices]) => (
           <section key={status}>
-            <p className="text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500 mb-2">
+            <p className="text-xs font-bold uppercase tracking-widest text-muted mb-2">
               {status}
             </p>
             <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-lg overflow-hidden">
@@ -159,10 +159,10 @@ export function InvoicesView({
                       <p className="text-sm font-medium text-stone-900 dark:text-stone-100">
                         {clientName(inv.client_id) ?? 'No client'}
                       </p>
-                      <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
+                      <p className="text-xs text-muted mt-0.5">
                         {inv.issued_date && <span>Issued {inv.issued_date}</span>}
                         {inv.due_date && <span className={`ml-2 ${isOverdue ? 'text-red-500' : ''}`}>· Due {inv.due_date}</span>}
-                        {inv.paid_date && <span className="ml-2 text-stone-400">· Paid {inv.paid_date}</span>}
+                        {inv.paid_date && <span className="ml-2 text-muted">· Paid {inv.paid_date}</span>}
                       </p>
                     </div>
                     <span className="text-sm font-semibold tabular-nums text-stone-700 dark:text-stone-300 shrink-0">
@@ -177,7 +177,7 @@ export function InvoicesView({
       </div>
 
       {items.length === 0 && (
-        <div className="text-center py-16 text-stone-400 dark:text-stone-500">
+        <div className="text-center py-16 text-muted">
           <p className="text-sm">No invoices yet.</p>
         </div>
       )}

@@ -12,8 +12,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen flex flex-col">
-      <GlobalNav />
-      <main className="flex-1">
+      <GlobalNav email={user.email ?? null} />
+      <main className="flex-1 pb-[calc(3.5rem+env(safe-area-inset-bottom))] sm:pb-0">
         {children}
       </main>
     </div>

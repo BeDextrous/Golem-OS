@@ -136,7 +136,7 @@ export function ReadingView({ initialItems }: { initialItems: ReadingRow[] }) {
               {item.book_title}
             </p>
             {item.author && (
-              <p className="text-xs text-stone-500 dark:text-stone-400 truncate">{item.author}</p>
+              <p className="text-xs text-muted truncate">{item.author}</p>
             )}
             {item.progress_pct != null && item.progress_pct > 0 && (
               <div className="mt-2">
@@ -149,7 +149,7 @@ export function ReadingView({ initialItems }: { initialItems: ReadingRow[] }) {
                     }}
                   />
                 </div>
-                <p className="text-xs text-stone-400 mt-0.5">{item.progress_pct}%</p>
+                <p className="text-xs text-muted mt-0.5">{item.progress_pct}%</p>
               </div>
             )}
           </button>
@@ -157,7 +157,7 @@ export function ReadingView({ initialItems }: { initialItems: ReadingRow[] }) {
       </div>
 
       {filtered.length === 0 && (
-        <div className="text-center py-16 text-stone-400 dark:text-stone-500">
+        <div className="text-center py-16 text-muted">
           <p className="text-sm">No books match the current filter.</p>
         </div>
       )}

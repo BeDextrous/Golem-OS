@@ -8,10 +8,14 @@
   --color-stone-50: #FAF3E8;
   --color-stone-100: #F1DCBA;
   --color-stone-200: #DCC9A8;
+  --color-stone-300: #B9ABA6;
   --color-stone-400: #8D8396;
+  --color-stone-500: #6F6677;
   --color-stone-600: #685F6E;
+  --color-stone-700: #4F4858;
   --color-stone-800: #3B3640;
   --color-stone-900: #2E2A3A;
+  --color-stone-950: #221F2B;
 
   /* Life pillar — sage (Matcha Cream family) */
   --color-life-50: #EDF2EA;
@@ -59,3 +63,8 @@
   --radius-xl: 16px;
   --radius-2xl: 20px;
 }
+
+/* Secondary text: >= 4.5:1 on cream, white and the dark surface (stone-400 was ~3.3:1) */
+:root { --muted: #6B6272; }
+.dark { --muted: #A99FB0; }
+@theme inline { --color-muted: var(--muted); }

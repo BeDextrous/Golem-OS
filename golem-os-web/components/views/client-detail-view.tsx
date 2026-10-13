@@ -135,14 +135,14 @@ export function ClientDetailView({
       <div>
         <Link
           href="/dextrous/clients"
-          className="inline-flex items-center gap-1 text-xs text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors mb-3"
+          className="inline-flex items-center gap-1 text-xs text-muted hover:text-stone-600 dark:hover:text-stone-300 transition-colors mb-3"
         >
           <ArrowLeft size={12} /> All clients
         </Link>
         <div className="flex items-start justify-between gap-3">
           <div>
             <h1 className="text-xl font-semibold text-stone-900 dark:text-stone-50">{current.name}</h1>
-            <p className="text-xs text-stone-400 mt-0.5">
+            <p className="text-xs text-muted mt-0.5">
               {current.company ?? '—'}
               {current.contract_value != null && (
                 <span className="ml-1">· {fmtMoney(current.contract_value, current.currency ?? 'USD')}</span>
@@ -161,7 +161,7 @@ export function ClientDetailView({
               <button onClick={handleSaveStatus} disabled={saving} className="p-1.5 rounded-md text-green-600 hover:bg-green-50 dark:hover:bg-green-950/40">
                 <Check size={14} />
               </button>
-              <button onClick={() => { setEditingStatus(false); setStatusDraft(current.status ?? 'Active') }} className="p-1.5 rounded-md text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800">
+              <button onClick={() => { setEditingStatus(false); setStatusDraft(current.status ?? 'Active') }} className="p-1.5 rounded-md text-muted hover:bg-stone-100 dark:hover:bg-stone-800">
                 <XIcon size={14} />
               </button>
             </div>
@@ -184,13 +184,13 @@ export function ClientDetailView({
         <div className="grid grid-cols-3 divide-x divide-stone-100 dark:divide-stone-800 border-b border-stone-100 dark:border-stone-800">
           <div className="px-4 py-3">
             <p className="text-lg font-semibold text-stone-900 dark:text-stone-50 tabular-nums">{outstanding.length}</p>
-            <p className="text-xs text-stone-400">outstanding</p>
+            <p className="text-xs text-muted">outstanding</p>
           </div>
           <div className="px-4 py-3">
             <p className={`text-lg font-semibold tabular-nums ${overdueInvoices.length > 0 ? 'text-red-500' : 'text-stone-900 dark:text-stone-50'}`}>
               {nextDeadline ? fmtDate(nextDeadline) : '—'}
             </p>
-            <p className="text-xs text-stone-400">
+            <p className="text-xs text-muted">
               {nextDeadline ? `next deadline · ${daysUntil(nextDeadline)}d` : 'no deadlines'}
             </p>
           </div>
@@ -198,16 +198,16 @@ export function ClientDetailView({
             <p className="text-lg font-semibold text-stone-900 dark:text-stone-50 tabular-nums">
               {unpaidInvoices.length > 0 ? fmtMoney(unpaidInvoices.reduce((s, i) => s + i.amount, 0)) : '$0'}
             </p>
-            <p className="text-xs text-stone-400">unpaid ({unpaidInvoices.length})</p>
+            <p className="text-xs text-muted">unpaid ({unpaidInvoices.length})</p>
           </div>
         </div>
 
         {/* Latest update note */}
         <div className="px-4 py-3 border-b border-stone-100 dark:border-stone-800">
           <div className="flex items-center justify-between mb-1.5">
-            <p className="text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500">Latest update</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-muted">Latest update</p>
             {!editingUpdate && (
-              <button onClick={() => setEditingUpdate(true)} className="text-stone-300 hover:text-stone-500">
+              <button onClick={() => setEditingUpdate(true)} className="text-muted hover:text-stone-500">
                 <Pencil size={11} />
               </button>
             )}
@@ -229,35 +229,35 @@ export function ClientDetailView({
             <>
               <p className="text-sm text-stone-700 dark:text-stone-300">{current.latest_update}</p>
               {current.latest_update_at && (
-                <p className="text-xs text-stone-400 mt-1">{fmtDate(current.latest_update_at.slice(0, 10))}</p>
+                <p className="text-xs text-muted mt-1">{fmtDate(current.latest_update_at.slice(0, 10))}</p>
               )}
             </>
           ) : (
-            <p className="text-sm text-stone-400 italic">No update yet — click the pencil to add one.</p>
+            <p className="text-sm text-muted italic">No update yet — click the pencil to add one.</p>
           )}
         </div>
 
         {/* Outstanding + recently done */}
         <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-stone-100 dark:divide-stone-800">
           <div className="px-4 py-3">
-            <p className="text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500 mb-2">Outstanding</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-muted mb-2">Outstanding</p>
             {outstanding.length === 0 ? (
-              <p className="text-xs text-stone-400">Nothing open.</p>
+              <p className="text-xs text-muted">Nothing open.</p>
             ) : (
               <ul className="space-y-1.5">
                 {outstanding.slice(0, 8).map(item => (
                   <li key={item.key} className="flex items-center justify-between gap-2 text-xs">
                     <span className="text-stone-700 dark:text-stone-300 truncate">{item.label}</span>
-                    {item.date && <span className="text-stone-400 shrink-0 tabular-nums">{fmtDate(item.date)}</span>}
+                    {item.date && <span className="text-muted shrink-0 tabular-nums">{fmtDate(item.date)}</span>}
                   </li>
                 ))}
               </ul>
             )}
           </div>
           <div className="px-4 py-3">
-            <p className="text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500 mb-2">Latest work done</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-muted mb-2">Latest work done</p>
             {recentDone.length === 0 ? (
-              <p className="text-xs text-stone-400">Nothing marked done yet.</p>
+              <p className="text-xs text-muted">Nothing marked done yet.</p>
             ) : (
               <ul className="space-y-1.5">
                 {recentDone.map(item => (
@@ -274,9 +274,9 @@ export function ClientDetailView({
       {/* ── Work product (Drive) ────────────────────────────────────── */}
       <section>
         <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500">Work Product</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-muted">Work Product</p>
           {current.drive_folder_id && !editingFolder && (
-            <button onClick={() => setEditingFolder(true)} className="text-xs text-stone-400 hover:text-stone-600 dark:hover:text-stone-300">
+            <button onClick={() => setEditingFolder(true)} className="text-xs text-muted hover:text-stone-600 dark:hover:text-stone-300">
               Change folder
             </button>
           )}
@@ -285,12 +285,12 @@ export function ClientDetailView({
         {editingFolder || !current.drive_folder_id ? (
           <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-lg p-4 space-y-3">
             <div className="flex items-start gap-3">
-              <FolderPlus size={18} className="text-stone-400 mt-0.5 shrink-0" />
+              <FolderPlus size={18} className="text-muted mt-0.5 shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-stone-700 dark:text-stone-300">
                   Paste the link to this client's Drive work-product folder
                 </p>
-                <p className="text-xs text-stone-400 mt-0.5">
+                <p className="text-xs text-muted mt-0.5">
                   e.g. My Drive/Projects/Dextrous/Clients/{current.name}/work-product
                 </p>
               </div>

@@ -11,11 +11,11 @@ function Section({ title, href, children }: {
   return (
     <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-lg overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-stone-100 dark:border-stone-800">
-        <p className="text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500">
+        <p className="text-xs font-bold uppercase tracking-widest text-muted">
           {title}
         </p>
         {href && (
-          <Link href={href} className="text-xs text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors">
+          <Link href={href} className="text-xs text-muted hover:text-stone-600 dark:hover:text-stone-300 transition-colors">
             View all →
           </Link>
         )}
@@ -27,7 +27,7 @@ function Section({ title, href, children }: {
 
 function EmptyRow({ label }: { label: string }) {
   return (
-    <div className="px-4 py-3 text-xs text-stone-400 dark:text-stone-500 italic">{label}</div>
+    <div className="px-4 py-3 text-xs text-muted italic">{label}</div>
   )
 }
 
@@ -73,7 +73,7 @@ export default async function HomePage() {
       {/* Greeting */}
       <div>
         <h1 className="text-2xl font-semibold text-stone-900 dark:text-stone-50">{greeting}</h1>
-        <p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">{dateLabel}</p>
+        <p className="text-sm text-muted mt-0.5">{dateLabel}</p>
       </div>
 
       {/* Today's tasks — clickable */}
@@ -90,7 +90,7 @@ export default async function HomePage() {
         )}
         {urgentTasks.length > 5 && (
           <div className="px-4 py-2 border-t border-stone-100 dark:border-stone-800">
-            <Link href="/work/tasks" className="text-xs text-stone-400 hover:text-stone-600">
+            <Link href="/work/tasks" className="text-xs text-muted hover:text-stone-600">
               +{urgentTasks.length - 5} more
             </Link>
           </div>
@@ -114,12 +114,12 @@ export default async function HomePage() {
                 {note.title ?? 'Untitled'}
               </p>
               {note.pillar && (
-                <span className="text-xs text-stone-400 dark:text-stone-500 shrink-0 capitalize">
+                <span className="text-xs text-muted shrink-0 capitalize">
                   {note.pillar}
                 </span>
               )}
               {note.updated_at && (
-                <span className="text-xs text-stone-300 dark:text-stone-600 shrink-0 hidden sm:inline">
+                <span className="text-xs text-muted shrink-0 hidden sm:inline">
                   {new Date(note.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                 </span>
               )}
@@ -135,7 +135,7 @@ export default async function HomePage() {
             <p className="text-2xl font-semibold text-stone-900 dark:text-stone-50 tabular-nums">
               {fmtMoney(monthTotal)}
             </p>
-            <p className="text-xs text-stone-400 mt-0.5">{monthEntries.length} entries this month</p>
+            <p className="text-xs text-muted mt-0.5">{monthEntries.length} entries this month</p>
           </div>
           {monthEntries.slice(0, 3).map((f, idx) => (
             <div
@@ -170,7 +170,7 @@ export default async function HomePage() {
                         style={{ width: `${book.progress_pct}%`, backgroundColor: '#7FA98A' }}
                       />
                     </div>
-                    <span className="text-xs text-stone-400 tabular-nums">{book.progress_pct}%</span>
+                    <span className="text-xs text-muted tabular-nums">{book.progress_pct}%</span>
                   </div>
                 )}
               </div>

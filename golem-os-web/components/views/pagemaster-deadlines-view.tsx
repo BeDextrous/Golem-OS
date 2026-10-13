@@ -54,7 +54,7 @@ export function PagemasterDeadlinesView({ initialDeadlines }: { initialDeadlines
   const grouped = useMemo(() => groupByClient(deadlines), [deadlines])
 
   if (deadlines.length === 0) {
-    return <p className="text-sm text-stone-400 dark:text-stone-500">No deadlines tracked yet.</p>
+    return <p className="text-sm text-muted">No deadlines tracked yet.</p>
   }
 
   return (
@@ -72,7 +72,7 @@ export function PagemasterDeadlinesView({ initialDeadlines }: { initialDeadlines
               className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-stone-50 dark:hover:bg-stone-800/50"
             >
               <p className="text-sm font-semibold text-stone-900 dark:text-stone-50">{client}</p>
-              <span className="text-xs text-stone-400 dark:text-stone-500 shrink-0 flex items-center gap-2">
+              <span className="text-xs text-muted shrink-0 flex items-center gap-2">
                 {reviewCount > 0 && (
                   <span
                     className="text-[10px] font-semibold px-1.5 py-0.5 rounded text-white"
@@ -103,7 +103,7 @@ export function PagemasterDeadlinesView({ initialDeadlines }: { initialDeadlines
                         </span>
                         <p className="text-sm font-medium text-stone-900 dark:text-stone-100 truncate">{d.title}</p>
                       </div>
-                      <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">{d.due_date}</p>
+                      <p className="text-xs text-muted mt-0.5">{d.due_date}</p>
                     </div>
                     {d.status === 'needs_review' && (
                       <div className="flex items-center gap-1.5 shrink-0">
@@ -117,7 +117,7 @@ export function PagemasterDeadlinesView({ initialDeadlines }: { initialDeadlines
                         <button
                           onClick={() => setStatus(d.id, 'waived')}
                           title="Dismiss"
-                          className="w-6 h-6 flex items-center justify-center rounded-md text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800"
+                          className="w-6 h-6 flex items-center justify-center rounded-md text-muted hover:bg-stone-100 dark:hover:bg-stone-800"
                         >
                           ✕
                         </button>

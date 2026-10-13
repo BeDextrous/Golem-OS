@@ -42,7 +42,7 @@ export function LeadsView({ initialLeads }: { initialLeads: LeadRow[] }) {
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
       <div>
         <h1 className="text-xl font-semibold text-stone-900 dark:text-stone-50">Leads</h1>
-        <p className="text-xs text-stone-400 mt-0.5">
+        <p className="text-xs text-muted mt-0.5">
           {items.filter(l => (l.status ?? 'New') === 'New').length} new · from bedextrous.com contact form
         </p>
       </div>
@@ -50,7 +50,7 @@ export function LeadsView({ initialLeads }: { initialLeads: LeadRow[] }) {
       <div className="space-y-6">
         {byStatus.map(([status, leads]) => (
           <section key={status}>
-            <p className="text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500 mb-2">
+            <p className="text-xs font-bold uppercase tracking-widest text-muted mb-2">
               {status}
             </p>
             <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-lg overflow-hidden">
@@ -68,14 +68,14 @@ export function LeadsView({ initialLeads }: { initialLeads: LeadRow[] }) {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-stone-900 dark:text-stone-100">
                       {lead.name}{' '}
-                      <span className="text-stone-400 font-normal">· {lead.email}</span>
+                      <span className="text-muted font-normal">· {lead.email}</span>
                     </p>
                     {lead.message && (
-                      <p className="text-xs text-stone-500 dark:text-stone-400 mt-1 line-clamp-3">
+                      <p className="text-xs text-muted mt-1 line-clamp-3">
                         {lead.message}
                       </p>
                     )}
-                    <p className="text-xs text-stone-400 dark:text-stone-500 mt-1">
+                    <p className="text-xs text-muted mt-1">
                       {fmtDate(lead.created_at)}
                     </p>
                   </div>
@@ -93,7 +93,7 @@ export function LeadsView({ initialLeads }: { initialLeads: LeadRow[] }) {
       </div>
 
       {items.length === 0 && (
-        <div className="text-center py-16 text-stone-400 dark:text-stone-500">
+        <div className="text-center py-16 text-muted">
           <p className="text-sm">No leads yet — submissions from the bedextrous.com contact form will show up here.</p>
         </div>
       )}

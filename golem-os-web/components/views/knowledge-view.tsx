@@ -112,7 +112,7 @@ export function KnowledgeView({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-stone-900 dark:text-stone-50">Knowledge</h1>
-          <p className="text-xs text-stone-400 mt-0.5">{items.length} items</p>
+          <p className="text-xs text-muted mt-0.5">{items.length} items</p>
         </div>
         <Button onClick={openNew} size="sm">
           <Plus size={14} /> Add Item
@@ -122,12 +122,12 @@ export function KnowledgeView({
       {/* Search + tag filter */}
       <div className="space-y-2">
         <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search knowledge base…"
-            className="w-full pl-8 pr-3 h-8 text-sm bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-md outline-none focus:ring-2 focus:ring-stone-300 dark:focus:ring-stone-600 text-stone-900 dark:text-stone-100 placeholder:text-stone-400"
+            className="w-full pl-8 pr-3 h-8 text-sm bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-md outline-none focus:ring-2 focus:ring-stone-300 dark:focus:ring-stone-600 text-stone-900 dark:text-stone-100 placeholder:text-muted"
           />
         </div>
         {allTags.length > 0 && (
@@ -139,7 +139,7 @@ export function KnowledgeView({
                 className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
                   tagFilter === tag
                     ? 'bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 border-transparent'
-                    : 'bg-white dark:bg-stone-900 text-stone-500 border-stone-200 dark:border-stone-700 hover:border-stone-400'
+                    : 'bg-white dark:bg-stone-900 text-muted border-stone-200 dark:border-stone-700 hover:border-stone-400'
                 }`}
               >
                 {tag}
@@ -171,14 +171,14 @@ export function KnowledgeView({
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={e => e.stopPropagation()}
-                        className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 flex-shrink-0"
+                        className="text-muted hover:text-stone-600 dark:hover:text-stone-300 flex-shrink-0"
                       >
                         <ExternalLink size={12} />
                       </a>
                     )}
                   </div>
                   {item.content && (
-                    <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 line-clamp-2">
+                    <p className="text-xs text-muted mt-0.5 line-clamp-2">
                       {item.content}
                     </p>
                   )}
@@ -187,7 +187,7 @@ export function KnowledgeView({
                       {item.tags.split(',').map(t => t.trim()).filter(Boolean).map(tag => (
                         <span
                           key={tag}
-                          className="px-1.5 py-0.5 text-xs bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 rounded"
+                          className="px-1.5 py-0.5 text-xs bg-stone-100 dark:bg-stone-800 text-muted rounded"
                         >
                           {tag}
                         </span>
@@ -197,11 +197,11 @@ export function KnowledgeView({
                 </div>
                 <div className="text-right shrink-0 ml-2">
                   {projectName(item.project_id) && (
-                    <p className="text-xs text-stone-400 dark:text-stone-500 truncate max-w-24">
+                    <p className="text-xs text-muted truncate max-w-24">
                       {projectName(item.project_id)}
                     </p>
                   )}
-                  <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
+                  <p className="text-xs text-muted mt-0.5">
                     {fmt(item.updated_at)}
                   </p>
                 </div>
@@ -212,7 +212,7 @@ export function KnowledgeView({
       )}
 
       {filtered.length === 0 && (
-        <div className="text-center py-16 text-stone-400 dark:text-stone-500">
+        <div className="text-center py-16 text-muted">
           <p className="text-sm">{search || tagFilter ? 'No items match.' : 'No knowledge items yet.'}</p>
         </div>
       )}

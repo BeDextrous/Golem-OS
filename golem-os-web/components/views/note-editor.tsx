@@ -87,17 +87,17 @@ export function NoteEditor({ note: initial }: { note: NoteRow }) {
       <div className="sticky top-12 z-10 flex items-center justify-between px-4 h-11 border-b border-stone-100 dark:border-stone-800 bg-white/90 dark:bg-stone-950/90 backdrop-blur-sm">
         <button
           onClick={() => router.push('/life/notes')}
-          className="flex items-center gap-1.5 text-sm text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-colors"
+          className="flex items-center gap-1.5 text-sm text-muted hover:text-stone-900 dark:hover:text-stone-100 transition-colors"
         >
           <ArrowLeft size={14} />
           Notes
         </button>
 
         <span className={`text-xs transition-colors ${
-          saveStatus === 'saving'  ? 'text-stone-400' :
+          saveStatus === 'saving'  ? 'text-muted' :
           saveStatus === 'error'   ? 'text-red-400' :
           saveStatus === 'unsaved' ? 'text-amber-500' :
-          'text-stone-300 dark:text-stone-600'
+          'text-muted'
         }`}>
           {saveStatus === 'saving'  ? 'Saving…' :
            saveStatus === 'error'   ? 'Error saving' :
@@ -112,13 +112,13 @@ export function NoteEditor({ note: initial }: { note: NoteRow }) {
           value={note.title ?? ''}
           onChange={e => upd('title', e.target.value || null)}
           placeholder="Untitled"
-          className="w-full text-2xl font-semibold text-stone-900 dark:text-stone-50 bg-transparent border-none outline-none placeholder:text-stone-300 dark:placeholder:text-stone-700"
+          className="w-full text-2xl font-semibold text-stone-900 dark:text-stone-50 bg-transparent border-none outline-none placeholder:text-muted"
         />
         <textarea
           value={note.content ?? ''}
           onChange={e => upd('content', e.target.value || null)}
           placeholder="Write something…"
-          className="flex-1 w-full min-h-[55vh] text-sm leading-relaxed text-stone-800 dark:text-stone-200 bg-transparent border-none outline-none resize-none placeholder:text-stone-300 dark:placeholder:text-stone-700"
+          className="flex-1 w-full min-h-[55vh] text-sm leading-relaxed text-stone-800 dark:text-stone-200 bg-transparent border-none outline-none resize-none placeholder:text-muted"
         />
       </div>
 
@@ -146,7 +146,7 @@ export function NoteEditor({ note: initial }: { note: NoteRow }) {
             value={note.tags ?? ''}
             onChange={e => upd('tags', e.target.value || null)}
             placeholder="tags, comma-separated"
-            className="flex-1 min-w-24 text-xs text-stone-500 dark:text-stone-400 bg-transparent border-none outline-none placeholder:text-stone-300 dark:placeholder:text-stone-600"
+            className="flex-1 min-w-24 text-xs text-muted bg-transparent border-none outline-none placeholder:text-muted"
           />
 
           <span className="flex-1" />
@@ -155,16 +155,16 @@ export function NoteEditor({ note: initial }: { note: NoteRow }) {
           {!showDelete ? (
             <button
               onClick={() => setShowDelete(true)}
-              className="text-stone-300 dark:text-stone-700 hover:text-red-400 transition-colors"
+              className="text-muted hover:text-red-400 transition-colors"
               title="Delete note"
             >
               <Trash2 size={13} />
             </button>
           ) : (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-stone-400">Delete?</span>
+              <span className="text-xs text-muted">Delete?</span>
               <button onClick={handleDelete} className="text-xs text-red-500 hover:text-red-700 font-medium">Yes</button>
-              <button onClick={() => setShowDelete(false)} className="text-xs text-stone-400 hover:text-stone-600">No</button>
+              <button onClick={() => setShowDelete(false)} className="text-xs text-muted hover:text-stone-600">No</button>
             </div>
           )}
         </div>

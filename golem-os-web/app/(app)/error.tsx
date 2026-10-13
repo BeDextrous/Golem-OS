@@ -11,7 +11,7 @@ export default function AppError({ error, reset }: { error: Error & { digest?: s
       <p className="text-sm text-stone-600 dark:text-stone-400">
         This page couldn&apos;t load its data. Your data is untouched.
       </p>
-      {error.digest && <p className="text-xs text-stone-500 font-mono">ref {error.digest}</p>}
+      {error.digest && <p className="text-xs text-muted font-mono">ref {error.digest}</p>}
       <Button onClick={reset}>Try again</Button>
     </div>
   )

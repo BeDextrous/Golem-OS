@@ -25,7 +25,7 @@ export function PillarNav({ pillar }: { pillar: Pillar }) {
                   'px-3 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors',
                   isActive
                     ? 'border-current'
-                    : 'text-stone-500 border-transparent hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-300'
+                    : 'text-muted border-transparent hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-300'
                 )}
                 style={isActive ? { color: config.color, borderBottomColor: config.color } : undefined}
               >

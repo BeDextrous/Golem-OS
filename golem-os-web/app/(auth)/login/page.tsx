@@ -1,7 +1,10 @@
 'use client'
+import { useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
-export default function LoginPage() {
+function LoginCard() {
+  const authFailed = useSearchParams().get('error') === 'auth_failed'
   const handleLogin = async () => {
     const supabase = createClient()
     await supabase.auth.signInWithOAuth({
@@ -23,6 +26,11 @@ export default function LoginPage() {
           <h1 className="text-2xl font-semibold text-stone-900 dark:text-stone-50">Golem OS</h1>
           <p className="text-sm text-stone-600 dark:text-stone-400 mt-1">Sign in to your life OS</p>
         </div>
+        {authFailed && (
+          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+            Sign-in didn&apos;t complete. Please try again.
+          </p>
+        )}
         <button
           onClick={handleLogin}
           className="flex items-center justify-center gap-3 w-full h-10 px-4 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-lg text-sm font-medium text-stone-900 dark:text-stone-50 hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors"
@@ -37,5 +45,13 @@ export default function LoginPage() {
         </button>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginCard />
+    </Suspense>
   )
 }

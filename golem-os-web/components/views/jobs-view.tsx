@@ -187,9 +187,9 @@ function AppCard({ app, onClick }: { app: JobAppRow; onClick: () => void }) {
       <p className="text-sm font-medium text-stone-900 dark:text-stone-100 line-clamp-1 leading-snug">
         {app.role || 'Role TBD'}
       </p>
-      <p className="text-xs text-stone-500 dark:text-stone-400 truncate mt-0.5">{app.company}</p>
+      <p className="text-xs text-muted truncate mt-0.5">{app.company}</p>
       {app.date_applied && (
-        <p className="text-xs text-stone-400 mt-1">{app.date_applied}</p>
+        <p className="text-xs text-muted mt-1">{app.date_applied}</p>
       )}
     </button>
   )
@@ -215,12 +215,12 @@ function AppDeckRow({ app, onClick, border }: { app: JobAppRow; onClick: () => v
         <p className="text-sm font-medium text-stone-900 dark:text-stone-100 truncate">
           {app.role || 'Role TBD'}
         </p>
-        <p className="text-xs text-stone-400 truncate">{app.company}</p>
+        <p className="text-xs text-muted truncate">{app.company}</p>
       </div>
       {app.date_applied && (
-        <span className="text-xs text-stone-400 tabular-nums shrink-0">{app.date_applied}</span>
+        <span className="text-xs text-muted tabular-nums shrink-0">{app.date_applied}</span>
       )}
-      {app.notes && <FileText size={12} className="text-stone-300 shrink-0" />}
+      {app.notes && <FileText size={12} className="text-muted shrink-0" />}
     </button>
   )
 }
@@ -406,7 +406,7 @@ export function JobsView({ initialApps, initialContacts, initialTargets }: Props
               'px-3.5 py-1.5 text-sm font-medium rounded-lg transition-colors',
               tab === t.key
                 ? 'bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900'
-                : 'text-stone-500 hover:text-stone-700 hover:bg-stone-100 dark:hover:bg-stone-800'
+                : 'text-muted hover:text-stone-700 hover:bg-stone-100 dark:hover:bg-stone-800'
             )}
           >
             {t.label}
@@ -437,7 +437,7 @@ export function JobsView({ initialApps, initialContacts, initialTargets }: Props
                       'px-2.5 py-1 text-xs font-medium rounded-md transition-colors',
                       appView === v
                         ? 'bg-stone-200 dark:bg-stone-700 text-stone-900 dark:text-stone-100'
-                        : 'text-stone-400 hover:text-stone-600 dark:hover:text-stone-400'
+                        : 'text-muted hover:text-stone-600 dark:hover:text-stone-400'
                     )}
                   >
                     {v === 'tiles' ? 'Tiles' : 'List'}
@@ -451,7 +451,7 @@ export function JobsView({ initialApps, initialContacts, initialTargets }: Props
           </div>
 
           {filteredApps.length === 0 && (
-            <div className="text-center py-16 text-stone-400 dark:text-stone-500">
+            <div className="text-center py-16 text-muted">
               <p className="text-sm">No applications match the current filter.</p>
             </div>
           )}
@@ -465,7 +465,7 @@ export function JobsView({ initialApps, initialContacts, initialTargets }: Props
                 if (!statusApps.length) return null
                 return (
                   <section key={status}>
-                    <p className="text-xs font-bold uppercase tracking-widest text-stone-400 mb-2">{status}</p>
+                    <p className="text-xs font-bold uppercase tracking-widest text-muted mb-2">{status}</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                       {statusApps.map(app => (
                         <AppCard key={app.id} app={app} onClick={() => openEditApp(app)} />
@@ -486,7 +486,7 @@ export function JobsView({ initialApps, initialContacts, initialTargets }: Props
                 if (!statusApps.length) return null
                 return (
                   <section key={status}>
-                    <p className="text-xs font-bold uppercase tracking-widest text-stone-400 mb-2">{status}</p>
+                    <p className="text-xs font-bold uppercase tracking-widest text-muted mb-2">{status}</p>
                     <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-lg overflow-hidden">
                       {statusApps.map((app, i) => (
                         <AppDeckRow key={app.id} app={app} onClick={() => openEditApp(app)} border={i > 0} />
@@ -516,22 +516,22 @@ export function JobsView({ initialApps, initialContacts, initialTargets }: Props
                 className="text-left bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-lg p-4 hover:border-stone-300 dark:hover:border-stone-700 transition-colors"
               >
                 <div className="flex items-center gap-2 mb-2">
-                  <User size={14} className="text-stone-400 shrink-0" />
+                  <User size={14} className="text-muted shrink-0" />
                 </div>
                 <p className="text-sm font-medium text-stone-900 dark:text-stone-100">{c.name}</p>
                 {(c.role || c.company) && (
-                  <p className="text-xs text-stone-500 mt-0.5 truncate">
+                  <p className="text-xs text-muted mt-0.5 truncate">
                     {[c.role, c.company].filter(Boolean).join(' · ')}
                   </p>
                 )}
                 {c.last_contact_date && (
-                  <p className="text-xs text-stone-400 mt-1">Last: {c.last_contact_date}</p>
+                  <p className="text-xs text-muted mt-1">Last: {c.last_contact_date}</p>
                 )}
               </button>
             ))}
           </div>
           {contacts.length === 0 && (
-            <div className="text-center py-16 text-stone-400">
+            <div className="text-center py-16 text-muted">
               <p className="text-sm">No contacts yet.</p>
             </div>
           )}
@@ -553,7 +553,7 @@ export function JobsView({ initialApps, initialContacts, initialTargets }: Props
             if (!group.length) return null
             return (
               <section key={priority ?? 'none'}>
-                <p className="text-xs font-bold uppercase tracking-widest text-stone-400 mb-2">
+                <p className="text-xs font-bold uppercase tracking-widest text-muted mb-2">
                   {priority ? `${priority} Priority` : 'Other'}
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -563,14 +563,14 @@ export function JobsView({ initialApps, initialContacts, initialTargets }: Props
                       onClick={() => openEditTarget(t)}
                       className="text-left bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-lg p-4 hover:border-stone-300 dark:hover:border-stone-700 transition-colors"
                     >
-                      <Building2 size={14} className="text-stone-400 mb-2" />
+                      <Building2 size={14} className="text-muted mb-2" />
                       <p className="text-sm font-medium text-stone-900 dark:text-stone-100">{t.company_name}</p>
-                      {t.industry && <p className="text-xs text-stone-400 mt-0.5">{t.industry}</p>}
+                      {t.industry && <p className="text-xs text-muted mt-0.5">{t.industry}</p>}
                       {t.website && (
                         <a
                           href={t.website} target="_blank" rel="noopener noreferrer"
                           onClick={e => e.stopPropagation()}
-                          className="inline-flex items-center gap-1 text-xs text-stone-400 hover:text-stone-600 mt-1"
+                          className="inline-flex items-center gap-1 text-xs text-muted hover:text-stone-600 mt-1"
                         >
                           <ExternalLink size={10} /> Website
                         </a>
@@ -582,7 +582,7 @@ export function JobsView({ initialApps, initialContacts, initialTargets }: Props
             )
           })}
           {targets.length === 0 && (
-            <div className="text-center py-16 text-stone-400">
+            <div className="text-center py-16 text-muted">
               <p className="text-sm">No target companies yet.</p>
             </div>
           )}

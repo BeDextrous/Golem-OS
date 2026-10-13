@@ -144,13 +144,13 @@ export function GmailWidget({
           <button
             onClick={() => fetchMessages()}
             title="Refresh"
-            className="p-1.5 rounded-md text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+            className="p-1.5 rounded-md text-muted hover:text-stone-600 dark:hover:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
           >
             <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
           </button>
           <button
             onClick={handleDisconnect}
-            className="text-xs text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 px-2 py-1 rounded-md hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+            className="text-xs text-muted hover:text-stone-600 dark:hover:text-stone-300 px-2 py-1 rounded-md hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
           >
             Sign out
           </button>
@@ -160,9 +160,9 @@ export function GmailWidget({
       {error && <GoogleWidgetError message={error} />}
 
       {loading && rows.length === 0 ? (
-        <div className="py-8 text-center text-xs text-stone-400">Loading inbox…</div>
+        <div className="py-8 text-center text-xs text-muted">Loading inbox…</div>
       ) : rows.length === 0 ? (
-        <div className="py-8 text-center text-xs text-stone-400">Inbox zero.</div>
+        <div className="py-8 text-center text-xs text-muted">Inbox zero.</div>
       ) : (
         <ul>
           {rows.map((row, idx) => (
@@ -180,13 +180,13 @@ export function GmailWidget({
                   <p className={`text-xs truncate ${row.unread ? 'font-semibold text-stone-900 dark:text-stone-100' : 'font-medium text-stone-800 dark:text-stone-200'}`}>
                     {row.from}
                   </p>
-                  <p className="text-xs text-stone-500 dark:text-stone-400 truncate mt-0.5">
+                  <p className="text-xs text-muted truncate mt-0.5">
                     {row.subject}
                   </p>
                 </div>
                 <ExternalLink
                   size={12}
-                  className="text-stone-300 dark:text-stone-600 group-hover:text-stone-400 dark:group-hover:text-stone-400 transition-colors shrink-0"
+                  className="text-muted group-hover:text-stone-400 dark:group-hover:text-stone-400 transition-colors shrink-0"
                 />
               </a>
             </li>

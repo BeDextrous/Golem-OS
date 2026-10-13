@@ -172,20 +172,20 @@ export function DriveWidget({
           <button
             onClick={openPicker}
             title="Open file picker"
-            className="p-1.5 rounded-md text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+            className="p-1.5 rounded-md text-muted hover:text-stone-600 dark:hover:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
           >
             <Upload size={13} />
           </button>
           <button
             onClick={() => fetchFiles(search || undefined)}
             title="Refresh"
-            className="p-1.5 rounded-md text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+            className="p-1.5 rounded-md text-muted hover:text-stone-600 dark:hover:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
           >
             <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
           </button>
           <button
             onClick={handleDisconnect}
-            className="text-xs text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 px-2 py-1 rounded-md hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+            className="text-xs text-muted hover:text-stone-600 dark:hover:text-stone-300 px-2 py-1 rounded-md hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
           >
             Sign out
           </button>
@@ -200,12 +200,12 @@ export function DriveWidget({
             className="flex gap-2"
           >
             <div className="relative flex-1">
-              <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
+              <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
               <input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder={folderId ? 'Search this folder…' : 'Search Drive…'}
-                className="w-full pl-7 pr-3 h-7 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-700 rounded-md outline-none focus:ring-1 focus:ring-blue-400 text-stone-900 dark:text-stone-100 placeholder:text-stone-400"
+                className="w-full pl-7 pr-3 h-7 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-700 rounded-md outline-none focus:ring-1 focus:ring-blue-400 text-stone-900 dark:text-stone-100 placeholder:text-muted"
               />
             </div>
             <button
@@ -222,9 +222,9 @@ export function DriveWidget({
       {error && <GoogleWidgetError message={error} />}
 
       {loading && files.length === 0 ? (
-        <div className="py-8 text-center text-xs text-stone-400">Loading files…</div>
+        <div className="py-8 text-center text-xs text-muted">Loading files…</div>
       ) : files.length === 0 ? (
-        <div className="py-8 text-center text-xs text-stone-400">
+        <div className="py-8 text-center text-xs text-muted">
           {search ? 'No files match.' : folderId ? 'No files in this folder yet.' : 'No recent files.'}
         </div>
       ) : (
@@ -246,13 +246,13 @@ export function DriveWidget({
                   <p className="text-xs font-medium text-stone-800 dark:text-stone-200 truncate">
                     {file.name}
                   </p>
-                  <p className="text-xs text-stone-400 mt-0.5">
+                  <p className="text-xs text-muted mt-0.5">
                     {relativeTime(file.modifiedTime)}
                   </p>
                 </div>
                 <ExternalLink
                   size={12}
-                  className="text-stone-300 dark:text-stone-600 group-hover:text-stone-400 dark:group-hover:text-stone-400 transition-colors shrink-0"
+                  className="text-muted group-hover:text-stone-400 dark:group-hover:text-stone-400 transition-colors shrink-0"
                 />
               </a>
             </li>

@@ -131,7 +131,7 @@ export function ProjectsView({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-stone-900 dark:text-stone-50">Projects</h1>
-          <p className="text-xs text-stone-400 mt-0.5">{items.length} projects</p>
+          <p className="text-xs text-muted mt-0.5">{items.length} projects</p>
         </div>
         <Button onClick={openNew} size="sm">
           <Plus size={14} /> New Project
@@ -148,7 +148,7 @@ export function ProjectsView({
               className={`px-3 py-1 text-xs rounded-full border transition-colors ${
                 pillarFilter === p
                   ? 'text-white border-transparent'
-                  : 'bg-white dark:bg-stone-900 text-stone-500 border-stone-200 dark:border-stone-700 hover:border-stone-400'
+                  : 'bg-white dark:bg-stone-900 text-muted border-stone-200 dark:border-stone-700 hover:border-stone-400'
               }`}
               style={pillarFilter === p
                 ? p
@@ -165,7 +165,7 @@ export function ProjectsView({
       <div className="space-y-6">
         {byStatus.map(([status, projects]) => (
           <section key={status}>
-            <p className="text-xs font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500 mb-2">
+            <p className="text-xs font-bold uppercase tracking-widest text-muted mb-2">
               {status}
             </p>
             <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-lg overflow-hidden">
@@ -186,7 +186,7 @@ export function ProjectsView({
                     <p className="text-sm font-medium text-stone-900 dark:text-stone-100 truncate">
                       {project.name}
                     </p>
-                    <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
+                    <p className="text-xs text-muted mt-0.5">
                       {project.project_type && <span>{project.project_type}</span>}
                       {project.project_type && (project.pillar || clientName(project.client_id)) && <span className="mx-1">·</span>}
                       {project.pillar && (
@@ -195,19 +195,19 @@ export function ProjectsView({
                         </span>
                       )}
                       {clientName(project.client_id) && (
-                        <span className="ml-1 text-stone-300 dark:text-stone-600">
+                        <span className="ml-1 text-muted">
                           · {clientName(project.client_id)}
                         </span>
                       )}
                     </p>
                     {project.description && (
-                      <p className="text-xs text-stone-500 dark:text-stone-400 mt-1 line-clamp-1">
+                      <p className="text-xs text-muted mt-1 line-clamp-1">
                         {project.description}
                       </p>
                     )}
                   </div>
                   {(project.start_date || project.end_date) && (
-                    <div className="text-xs text-stone-400 dark:text-stone-500 shrink-0 text-right">
+                    <div className="text-xs text-muted shrink-0 text-right">
                       {project.end_date && <p>Due {project.end_date}</p>}
                     </div>
                   )}
@@ -219,7 +219,7 @@ export function ProjectsView({
       </div>
 
       {filtered.length === 0 && (
-        <div className="text-center py-16 text-stone-400 dark:text-stone-500">
+        <div className="text-center py-16 text-muted">
           <p className="text-sm">No projects yet.</p>
         </div>
       )}
