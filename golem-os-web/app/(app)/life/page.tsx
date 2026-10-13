@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { thisMonthStr } from '@/lib/utils'
 import { getReading, getFinances, getNotes, getLinks, getGoals, getTasks, getObjectives } from '@/lib/queries'
 import { ClickableTaskList } from '@/components/dashboard/clickable-task-list'
 import { CalendarWidget } from '@/components/widgets/calendar-widget'
@@ -45,7 +46,7 @@ export default async function LifeOverviewPage() {
     getReading(), getFinances(), getNotes(), getLinks(), getGoals(), getTasks(), getObjectives(),
   ])
 
-  const thisMonth     = new Date().toISOString().slice(0, 7)
+  const thisMonth     = thisMonthStr()
   const monthFinances = finances.filter(f => f.entry_date?.startsWith(thisMonth))
   const monthTotal    = monthFinances.reduce((s, f) => s + (f.amount ?? 0), 0)
   const fmt = (n: number) =>

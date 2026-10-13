@@ -7,6 +7,7 @@ import { Button, Input, Select } from '@/components/ui'
 import { ItemDrawer } from '@/components/data/item-drawer'
 import type { LinkRow, NoteRow, TaskRow } from '@/types/entities'
 
+import { todayStr } from '@/lib/utils'
 const PILLAR_OPTS = [
   { value: 'life', label: 'Life' },
   { value: 'dextrous', label: 'Dextrous' },
@@ -20,7 +21,7 @@ type Form = Partial<Omit<LinkRow,
   'id' | 'user_id' | 'created_at' | 'updated_at'
 >>
 
-const today = () => new Date().toISOString().slice(0, 10)
+const today = () => todayStr()
 
 function displayTitle(l: LinkRow): string {
   if (l.title) return l.title

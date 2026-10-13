@@ -33,6 +33,11 @@ export function GlobalNav() {
   const handleSignOut = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
+    // Drop anything the service worker cached for this session
+    try {
+      if ('caches' in window) await Promise.all((await caches.keys()).map(k => caches.delete(k)))
+      sessionStorage.clear()
+    } catch { /* non-critical */ }
     router.push('/login')
   }
 
@@ -113,6 +118,7 @@ export function GlobalNav() {
               onClick={handleSignOut}
               className="w-8 h-8 rounded-full bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300 text-xs font-semibold flex items-center justify-center hover:bg-stone-300 dark:hover:bg-stone-600 transition-colors"
               title="Sign out"
+              aria-label="Sign out"
             >
               M
             </button>

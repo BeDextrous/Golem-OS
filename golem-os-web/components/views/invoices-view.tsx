@@ -7,6 +7,7 @@ import { Button, Input, Select, Textarea } from '@/components/ui'
 import { ItemDrawer } from '@/components/data/item-drawer'
 import type { InvoiceRow, ClientRow } from '@/types/entities'
 
+import { todayStr } from '@/lib/utils'
 const STATUSES = ['Draft', 'Sent', 'Paid', 'Overdue', 'Cancelled']
 const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD']
 const STATUS_COLOR: Record<string, string> = {
@@ -19,7 +20,7 @@ const STATUS_COLOR: Record<string, string> = {
 
 type Form = Partial<Omit<InvoiceRow, 'id' | 'user_id' | 'created_at' | 'updated_at'>>
 
-const today = () => new Date().toISOString().slice(0, 10)
+const today = () => todayStr()
 
 function fmtMoney(n: number, currency = 'USD') {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 0 }).format(n)
@@ -116,7 +117,7 @@ export function InvoicesView({
     [items]
   )
 
-  const todayStr = new Date().toISOString().slice(0, 10)
+  const todayStrValue = todayStr()
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
@@ -141,7 +142,7 @@ export function InvoicesView({
             </p>
             <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-lg overflow-hidden">
               {invoices.map((inv, idx) => {
-                const isOverdue = inv.status === 'Sent' && inv.due_date && inv.due_date < todayStr
+                const isOverdue = inv.status === 'Sent' && inv.due_date && inv.due_date < todayStrValue
                 return (
                   <button
                     key={inv.id}

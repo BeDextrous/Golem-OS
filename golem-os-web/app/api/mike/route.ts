@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest } from 'next/server'
+import { createServerSupabaseClient } from '@/lib/supabase/server'
 
 const client = new Anthropic()
 
@@ -21,25 +22,54 @@ Your style:
 
 You have context that the user runs Dextrous — a consultancy/freelance practice. You may reference their clients and projects when relevant.`
 
+const MODEL = process.env.MIKE_MODEL ?? 'claude-opus-4-5'
+const MAX_MESSAGES = 40
+const MAX_CHARS_PER_MESSAGE = 8000
+const RATE_LIMIT = 20          // requests
+const RATE_WINDOW_MS = 60_000  // per minute, per user (best-effort: per server instance)
+
+const hits = new Map<string, number[]>()
+
+function rateLimited(userId: string) {
+  const now = Date.now()
+  const recent = (hits.get(userId) ?? []).filter(t => now - t < RATE_WINDOW_MS)
+  recent.push(now)
+  hits.set(userId, recent)
+  return recent.length > RATE_LIMIT
+}
+
+const json = (body: unknown, status: number) =>
+  new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
+
+function parseMessages(input: unknown): Anthropic.MessageParam[] | null {
+  if (!Array.isArray(input) || input.length === 0 || input.length > MAX_MESSAGES) return null
+  const out: Anthropic.MessageParam[] = []
+  for (const m of input) {
+    if (!m || (m.role !== 'user' && m.role !== 'assistant')) return null
+    if (typeof m.content !== 'string' || m.content.length > MAX_CHARS_PER_MESSAGE) return null
+    out.push({ role: m.role, content: m.content })
+  }
+  // Conversation must start with and end on a user turn
+  if (out[0].role !== 'user' || out[out.length - 1].role !== 'user') return null
+  return out
+}
+
 export async function POST(req: NextRequest) {
+  const supabase = await createServerSupabaseClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return json({ error: 'Not authenticated' }, 401)
+
   if (!process.env.ANTHROPIC_API_KEY) {
-    return new Response(
-      JSON.stringify({ error: 'ANTHROPIC_API_KEY not configured' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    )
+    return json({ error: 'ANTHROPIC_API_KEY not configured' }, 500)
   }
 
-  let messages: Anthropic.MessageParam[]
+  if (rateLimited(user.id)) return json({ error: 'Too many requests, slow down a bit' }, 429)
+
+  let messages: Anthropic.MessageParam[] | null = null
   try {
-    const body = await req.json()
-    messages = body.messages
-    if (!Array.isArray(messages) || messages.length === 0) throw new Error()
-  } catch {
-    return new Response(JSON.stringify({ error: 'Invalid request body' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    })
-  }
+    messages = parseMessages((await req.json()).messages)
+  } catch { /* falls through to 400 */ }
+  if (!messages) return json({ error: 'Invalid request body' }, 400)
 
   const encoder = new TextEncoder()
 
@@ -47,7 +77,7 @@ export async function POST(req: NextRequest) {
     async start(controller) {
       try {
         const response = await client.messages.create({
-          model: 'claude-opus-4-5',
+          model: MODEL,
           max_tokens: 2048,
           system: [
             {

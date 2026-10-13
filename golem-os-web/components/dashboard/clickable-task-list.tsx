@@ -2,7 +2,7 @@
 import { useState, useMemo } from 'react'
 import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
-import { cn } from '@/lib/utils'
+import { cn, todayStr as getTodayStr } from '@/lib/utils'
 import { Input, Select } from '@/components/ui'
 import { ItemDrawer } from '@/components/data/item-drawer'
 import type { TaskRow, GoalRow, ObjectiveRow } from '@/types/entities'
@@ -71,7 +71,7 @@ export function ClickableTaskList({ initialTasks, goals, objectives, dueBefore, 
     return maxItems ? list.slice(0, maxItems) : list
   }, [tasks, dueBefore, maxItems])
 
-  const todayStr = new Date().toISOString().slice(0, 10)
+  const todayStr = getTodayStr()
 
   const objByGoal = useMemo(() => {
     const map = new Map<string, { id: number; title: string }[]>()

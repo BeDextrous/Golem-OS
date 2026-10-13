@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { getTasks, getFinances, getReading, getNotes, getGoals, getObjectives } from '@/lib/queries'
 import { ClickableTaskList } from '@/components/dashboard/clickable-task-list'
+import { todayStr as getTodayStr, thisMonthStr, hourInAppTz } from '@/lib/utils'
 
 function Section({ title, href, children }: {
   title: string
@@ -36,18 +37,18 @@ export default async function HomePage() {
   ])
 
   const today    = new Date()
-  const todayStr = today.toISOString().slice(0, 10)
-  const thisMonth = todayStr.slice(0, 7)
+  const todayStr = getTodayStr(today)
+  const thisMonth = thisMonthStr(today)
 
   const greeting = (() => {
-    const h = today.getHours()
+    const h = hourInAppTz(today)
     if (h < 12) return 'Good morning'
     if (h < 17) return 'Good afternoon'
     return 'Good evening'
   })()
 
   const dateLabel = today.toLocaleDateString('en-US', {
-    weekday: 'long', month: 'long', day: 'numeric',
+    weekday: 'long', month: 'long', day: 'numeric', timeZone: 'America/New_York',
   })
 
   // Tasks: overdue + due today, non-done

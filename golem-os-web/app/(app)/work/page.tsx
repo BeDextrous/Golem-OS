@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { getTasks, getGoals, getObjectives, getProjects, getClients } from '@/lib/queries'
+import { todayStr as getTodayStr } from '@/lib/utils'
 import { ClickableTaskList } from '@/components/dashboard/clickable-task-list'
 
 function StatCard({
@@ -44,7 +45,7 @@ export default async function WorkOverviewPage() {
 
   const workTasks      = tasks.filter(t => t.pillar === 'work')
   const activeTasks    = workTasks.filter(t => t.status === 'Active')
-  const todayStr       = new Date().toISOString().slice(0, 10)
+  const todayStr       = getTodayStr()
   const overdueTasks   = workTasks.filter(t => t.due_date && t.due_date < todayStr && t.status !== 'Done')
   const workGoals      = goals.filter(g => g.pillar === 'work' && g.status === 'Active')
   const allActiveGoals = goals.filter(g => g.status === 'Active')

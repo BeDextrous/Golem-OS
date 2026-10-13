@@ -7,7 +7,8 @@ import { Button, Input, Textarea } from '@/components/ui'
 import { ItemDrawer } from '@/components/data/item-drawer'
 import type { HealthRow } from '@/types/entities'
 
-const today = () => new Date().toISOString().slice(0, 10)
+import { todayStr } from '@/lib/utils'
+const today = () => todayStr()
 
 type Form = Partial<Omit<HealthRow, 'id' | 'user_id' | 'created_at' | 'updated_at'>>
 

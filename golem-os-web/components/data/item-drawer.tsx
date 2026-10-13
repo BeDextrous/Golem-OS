@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { X, Trash2 } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui'
 
@@ -11,6 +12,12 @@ interface ItemDrawerProps {
   onSave: () => Promise<void>
   onDelete?: () => Promise<void>
   children: React.ReactNode
+}
+
+function errorMessage(err: unknown, fallback: string) {
+  if (err instanceof Error) return err.message
+  if (err && typeof err === 'object' && 'message' in err) return String((err as { message: unknown }).message)
+  return fallback
 }
 
 export function ItemDrawer({ open, onClose, title, onSave, onDelete, children }: ItemDrawerProps) {
@@ -30,14 +37,18 @@ export function ItemDrawer({ open, onClose, title, onSave, onDelete, children }:
 
   const handleSave = async () => {
     setSaving(true)
-    try { await onSave() } finally { setSaving(false) }
+    try { await onSave() }
+    catch (err) { toast.error(errorMessage(err, 'Save failed')) }
+    finally { setSaving(false) }
   }
 
   const handleDelete = async () => {
     if (!onDelete) return
     if (!deleteStep) { setDeleteStep(true); return }
     setDeleting(true)
-    try { await onDelete() } finally { setDeleting(false); setDeleteStep(false) }
+    try { await onDelete() }
+    catch (err) { toast.error(errorMessage(err, 'Delete failed')) }
+    finally { setDeleting(false); setDeleteStep(false) }
   }
 
   return (

@@ -7,7 +7,8 @@ import { Button, Input, Select } from '@/components/ui'
 import { ItemDrawer } from '@/components/data/item-drawer'
 import type { FinanceRow } from '@/types/entities'
 
-const today = () => new Date().toISOString().slice(0, 10)
+import { todayStr } from '@/lib/utils'
+const today = () => todayStr()
 
 const PILLAR_OPTS = [
   { value: 'life',     label: 'Life' },
