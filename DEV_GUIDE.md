@@ -10,9 +10,10 @@ Golem OS is a full-stack Next.js 16 productivity app (tasks, goals,
 objectives, projects, clients, notes, links, finances, CRM, jobs pipeline)
 running at **golems.bedextrous.com**. The app is server-rendered via Vercel
 (using Next.js App Router with React Server Components). All persistent data
-lives in a Supabase project; server components call Supabase directly using
-the service-role-equivalent SSR client, while client components use the
-public anon client. Auth is Google OAuth via Supabase, with Row-Level
+lives in a Supabase project; server components and client components both
+use the public anon key (SSR client on the server, browser client in the
+browser), so Row-Level Security is the only thing standing between a request
+and the data. The service-role key is never used by the app. Auth is Google OAuth via Supabase, with Row-Level
 Security pinning every row to the signed-in user.
 
 The app is a Progressive Web App (PWA): it registers a service worker
@@ -25,8 +26,8 @@ It contains two AI-powered widgets inside the Dextrous pillar:
 - **Drive** — a Google Drive widget using OAuth2 + the Drive v3 API and the
   Google Picker
 
-The old static site (`web/`) and the legacy Google Apps Script files at the
-repo root are retired. The live app is `golem-os-web/`.
+The old static site and the legacy Google Apps Script files now live under
+`legacy/` (kept for reference, never deployed). The live app is `golem-os-web/`.
 
 ## 2. High-level data flow
 
@@ -103,13 +104,16 @@ golem-os/
 │   ├── lib/
 │   │   ├── queries.ts           Supabase server-side queries
 │   │   ├── supabase/            client.ts + server.ts SSR helpers
-│   │   └── utils.ts             cn() and misc
+│   │   ├── utils.ts             cn() + America/New_York date helpers (todayStr etc.)
+│   │   ├── use-crud-drawer.ts   List + edit-drawer state and Supabase writes
+│   │   ├── use-dialog.ts        Focus trap / Escape / focus restore for dialogs
+│   │   └── task-constants.ts    Task statuses, priorities, colours
 │   ├── types/
 │   │   ├── entities.ts          Derived row types from supabase.ts
 │   │   ├── pillar.ts            PILLARS config (subnav, colours)
 │   │   └── supabase.ts          Generated Supabase types
 │   ├── public/
-│   │   ├── sw.js                Service worker (stale-while-revalidate)
+│   │   ├── sw.js                Service worker (static assets only; never caches pages/data)
 │   │   ├── icon-192.png         PWA icon
 │   │   └── icon-512.png         PWA icon
 │   ├── instrumentation-client.ts  Service worker registration (Next.js 16 hook)
@@ -122,7 +126,7 @@ golem-os/
 │   ├── migrations/              Timestamped SQL applied via `supabase db push`
 │   └── migrate/                 One-shot Node data-fix scripts
 │
-├── web/                         ← RETIRED static app (do not edit)
+├── legacy/                      ← Retired Apps Script + static web app (reference only)
 ├── DEV_GUIDE.md                 This file
 ├── readme.md                    Project-level overview
 └── .gitignore
@@ -229,11 +233,14 @@ npm install          # first time
 npm run dev          # starts on http://localhost:3000
 ```
 
-TypeScript check before pushing:
+Checks before pushing (CI runs the same four on PRs and before every deploy):
 
 ```bash
 cd golem-os-web
-npx tsc --noEmit
+npm run lint
+npm run typecheck
+npm test
+npm run build   # needs NEXT_PUBLIC_SUPABASE_URL / _ANON_KEY set (any placeholder works)
 ```
 
 **Important:** This is Next.js 16.2.6 — a version with breaking changes vs
@@ -259,7 +266,8 @@ hydration.
 
 Mike is a streaming chat widget at `/pagemaster/mike`, backed by:
 - **API route:** `app/api/mike/route.ts` — server-side only, uses Anthropic SDK
-  with `claude-opus-4-5` and prompt caching on the system prompt
+  with `MIKE_MODEL` (default `claude-opus-4-5`) and prompt caching on the system prompt;
+  the route requires a signed-in user and is rate limited (20/min/user, per instance)
 - **Widget:** `components/widgets/mike-widget.tsx` — streaming UI with copy
   per message, conversation reset, and starter prompts
 
@@ -280,6 +288,6 @@ Requires `NEXT_PUBLIC_GOOGLE_CLIENT_ID` and `NEXT_PUBLIC_GOOGLE_API_KEY`.
 1. `git log` — everything that changes the system is a commit
 2. Vercel deploy log — build errors show here
 3. Supabase dashboard logs — RLS failures and constraint violations
-4. `npx tsc --noEmit` in `golem-os-web/` — catches type errors before they hit
+4. `npm run typecheck` in `golem-os-web/` — catches type errors before they hit
    production
 5. Browser console on the live site — runtime errors that didn't surface in TS

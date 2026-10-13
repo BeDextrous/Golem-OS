@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { getTasks, getFinances, getReading, getNotes, getGoals, getObjectives } from '@/lib/queries'
+import { getTasks, getFinances, getReading, getRecentNotes, getGoals, getObjectives } from '@/lib/queries'
 import { ClickableTaskList } from '@/components/dashboard/clickable-task-list'
 import { todayStr as getTodayStr, thisMonthStr, hourInAppTz } from '@/lib/utils'
 
@@ -32,13 +32,17 @@ function EmptyRow({ label }: { label: string }) {
 }
 
 export default async function HomePage() {
-  const [tasks, finances, reading, notes, goals, objectives] = await Promise.all([
-    getTasks(), getFinances(), getReading(), getNotes(), getGoals(), getObjectives(),
-  ])
-
-  const today    = new Date()
-  const todayStr = getTodayStr(today)
+  const today     = new Date()
+  const todayStr  = getTodayStr(today)
   const thisMonth = thisMonthStr(today)
+
+  const [urgentTasks, finances, currentReads, { notes: recentNotes, total: notesTotal }, goals, objectives] = await Promise.all([
+    getTasks({ dueBy: todayStr }),
+    getFinances({ month: thisMonth }),
+    getReading({ status: 'Reading' }),
+    getRecentNotes(5),
+    getGoals(), getObjectives(),
+  ])
 
   const greeting = (() => {
     const h = hourInAppTz(today)
@@ -51,22 +55,13 @@ export default async function HomePage() {
     weekday: 'long', month: 'long', day: 'numeric', timeZone: 'America/New_York',
   })
 
-  // Tasks: overdue + due today, non-done
-  const urgentTasks = tasks
-    .filter(t => t.due_date && t.due_date <= todayStr && t.status !== 'Done')
-    .sort((a, b) => (a.due_date ?? '').localeCompare(b.due_date ?? ''))
-
   // This month's finance summary
-  const monthEntries = finances.filter(f => f.entry_date?.startsWith(thisMonth))
+  const monthEntries = finances
   const monthTotal   = monthEntries.reduce((s, f) => s + (f.amount ?? 0), 0)
   const fmtMoney     = (n: number) =>
     `${n < 0 ? '-' : ''}$${Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2 })}`
 
-  // Currently reading
-  const currentReads = reading.filter(r => r.status === 'Reading')
 
-  // Recent notes
-  const recentNotes = notes.slice(0, 5)
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
@@ -98,7 +93,7 @@ export default async function HomePage() {
       </Section>
 
       {/* Recent notes */}
-      <Section title={`Notes · ${notes.length} total`} href="/life/notes">
+      <Section title={`Notes · ${notesTotal} total`} href="/life/notes">
         {recentNotes.length === 0 ? (
           <EmptyRow label="No notes yet." />
         ) : (

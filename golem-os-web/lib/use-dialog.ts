@@ -10,7 +10,7 @@ const FOCUSABLE =
  */
 export function useDialog(open: boolean, ref: RefObject<HTMLElement | null>, onClose: () => void) {
   const onCloseRef = useRef(onClose)
-  onCloseRef.current = onClose
+  useEffect(() => { onCloseRef.current = onClose })
 
   useEffect(() => {
     if (!open) return

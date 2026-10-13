@@ -22,9 +22,14 @@ export type KnowledgeMemoryItem = {
   document_title: string | null
 }
 
-export async function getTasks(): Promise<TaskRow[]> {
+export async function getTasks(opts: { pillar?: string; openOnly?: boolean; dueBy?: string } = {}): Promise<TaskRow[]> {
   const sb = await createServerSupabaseClient()
-  const { data, error } = await sb.from('tasks').select('*').order('created_at', { ascending: false })
+  let query = sb.from('tasks').select('*')
+  if (opts.pillar) query = query.eq('pillar', opts.pillar)
+  // Not Done, but keep rows with no status (matches the old client-side `status !== 'Done'`)
+  if (opts.openOnly || opts.dueBy) query = query.or('status.is.null,status.neq.Done')
+  if (opts.dueBy) query = query.lte('due_date', opts.dueBy).order('due_date', { ascending: true })
+  const { data, error } = await query.order('created_at', { ascending: false })
   if (error) throw error
   return data ?? []
 }
@@ -43,16 +48,26 @@ export async function getObjectives(): Promise<ObjectiveRow[]> {
   return data ?? []
 }
 
-export async function getReading(): Promise<ReadingRow[]> {
+export async function getReading(opts: { status?: string } = {}): Promise<ReadingRow[]> {
   const sb = await createServerSupabaseClient()
-  const { data, error } = await sb.from('reading').select('*').order('created_at', { ascending: false })
+  let query = sb.from('reading').select('*')
+  if (opts.status) query = query.eq('status', opts.status)
+  const { data, error } = await query.order('created_at', { ascending: false })
   if (error) throw error
   return data ?? []
 }
 
-export async function getFinances(): Promise<FinanceRow[]> {
+/** First day of the month after `ym` ('YYYY-MM'), for half-open month ranges that work in every month. */
+function nextMonthStart(ym: string): string {
+  const [y, m] = ym.split('-').map(Number)
+  return m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`
+}
+
+export async function getFinances(opts: { month?: string } = {}): Promise<FinanceRow[]> {
   const sb = await createServerSupabaseClient()
-  const { data, error } = await sb.from('finances').select('*').order('entry_date', { ascending: false })
+  let query = sb.from('finances').select('*')
+  if (opts.month) query = query.gte('entry_date', `${opts.month}-01`).lt('entry_date', nextMonthStart(opts.month))
+  const { data, error } = await query.order('entry_date', { ascending: false })
   if (error) throw error
   return data ?? []
 }
@@ -78,6 +93,18 @@ export async function getTargetCompanies(): Promise<TargetCoRow[]> {
   return data ?? []
 }
 
+/** Most recent notes plus the total count, without loading every note. */
+export async function getRecentNotes(limit: number): Promise<{ notes: NoteRow[]; total: number }> {
+  const sb = await createServerSupabaseClient()
+  const { data, error, count } = await sb
+    .from('notes')
+    .select('*', { count: 'exact' })
+    .order('updated_at', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+  return { notes: data ?? [], total: count ?? 0 }
+}
+
 export async function getNotes(): Promise<NoteRow[]> {
   const sb = await createServerSupabaseClient()
   const { data, error } = await sb.from('notes').select('*').order('updated_at', { ascending: false })
@@ -92,16 +119,20 @@ export async function getLinks(): Promise<LinkRow[]> {
   return data ?? []
 }
 
-export async function getProjects(): Promise<ProjectRow[]> {
+export async function getProjects(opts: { pillar?: string } = {}): Promise<ProjectRow[]> {
   const sb = await createServerSupabaseClient()
-  const { data, error } = await sb.from('projects').select('*').order('created_at', { ascending: false })
+  let query = sb.from('projects').select('*')
+  if (opts.pillar) query = query.eq('pillar', opts.pillar)
+  const { data, error } = await query.order('created_at', { ascending: false })
   if (error) throw error
   return data ?? []
 }
 
-export async function getClients(): Promise<ClientRow[]> {
+export async function getClients(opts: { status?: string } = {}): Promise<ClientRow[]> {
   const sb = await createServerSupabaseClient()
-  const { data, error } = await sb.from('clients').select('*').order('name', { ascending: true })
+  let query = sb.from('clients').select('*')
+  if (opts.status) query = query.eq('status', opts.status)
+  const { data, error } = await query.order('name', { ascending: true })
   if (error) throw error
   return data ?? []
 }

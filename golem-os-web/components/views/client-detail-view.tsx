@@ -288,7 +288,7 @@ export function ClientDetailView({
               <FolderPlus size={18} className="text-muted mt-0.5 shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-stone-700 dark:text-stone-300">
-                  Paste the link to this client's Drive work-product folder
+                  Paste the link to this client&apos;s Drive work-product folder
                 </p>
                 <p className="text-xs text-muted mt-0.5">
                   e.g. My Drive/Projects/Dextrous/Clients/{current.name}/work-product

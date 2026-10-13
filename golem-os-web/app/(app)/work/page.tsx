@@ -39,18 +39,18 @@ function StatCard({
 }
 
 export default async function WorkOverviewPage() {
-  const [tasks, goals, objectives, projects, clients] = await Promise.all([
-    getTasks(), getGoals(), getObjectives(), getProjects(), getClients(),
+  const [openTasks, goals, objectives, workProjectsAll, activeClients] = await Promise.all([
+    getTasks({ pillar: 'work', openOnly: true }), getGoals(), getObjectives(),
+    getProjects({ pillar: 'work' }), getClients({ status: 'Active' }),
   ])
 
-  const workTasks      = tasks.filter(t => t.pillar === 'work')
+  const workTasks      = openTasks
   const activeTasks    = workTasks.filter(t => t.status === 'Active')
   const todayStr       = getTodayStr()
   const overdueTasks   = workTasks.filter(t => t.due_date && t.due_date < todayStr && t.status !== 'Done')
   const workGoals      = goals.filter(g => g.pillar === 'work' && g.status === 'Active')
   const allActiveGoals = goals.filter(g => g.status === 'Active')
-  const workProjects   = projects.filter(p => p.pillar === 'work' && p.status === 'Active')
-  const activeClients  = clients.filter(c => c.status === 'Active')
+  const workProjects   = workProjectsAll.filter(p => p.status === 'Active')
   const dexClients     = activeClients.filter(c => c.workspace_group === 'dextrous')
   const standaloneClients = activeClients.filter(c => !c.workspace_group)
 
@@ -86,7 +86,7 @@ export default async function WorkOverviewPage() {
           href="/work/projects"
           stats={[
             { label: 'active', value: workProjects.length },
-            { label: 'total', value: projects.filter(p => p.pillar === 'work').length },
+            { label: 'total', value: workProjectsAll.length },
           ]}
           items={workProjects.slice(0, 3).map(p => p.name)}
         />

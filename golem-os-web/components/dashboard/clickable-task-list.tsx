@@ -1,20 +1,16 @@
 'use client'
-import { useState, useMemo } from 'react'
-import toast from 'react-hot-toast'
-import { createClient } from '@/lib/supabase/client'
+import { useMemo } from 'react'
+import { useCrudDrawer } from '@/lib/use-crud-drawer'
+import { TASK_STATUSES, TASK_PRIORITIES, TASK_STATUS_COLOR, TASK_PRIORITY_COLOR, groupObjectivesByGoal } from '@/lib/task-constants'
 import { cn, todayStr as getTodayStr } from '@/lib/utils'
 import { Input, Select } from '@/components/ui'
 import { ItemDrawer } from '@/components/data/item-drawer'
 import type { TaskRow, GoalRow, ObjectiveRow } from '@/types/entities'
 
-const STATUSES   = ['To Do', 'Active', 'On Hold', 'Done']
-const PRIORITIES = ['High', 'Medium', 'Low']
-const PRIORITY_COLOR: Record<string, string> = {
-  High: 'text-red-500', Medium: 'text-amber-500', Low: 'text-muted',
-}
-const STATUS_COLOR: Record<string, string> = {
-  'Active': '#7FA98A', 'To Do': '#6B6560', 'On Hold': '#5B5F8D', 'Done': '#A8A39A',
-}
+const STATUSES = TASK_STATUSES
+const PRIORITIES = TASK_PRIORITIES
+const PRIORITY_COLOR = TASK_PRIORITY_COLOR
+const STATUS_COLOR = TASK_STATUS_COLOR
 
 type TaskForm = Partial<Omit<TaskRow, 'id' | 'user_id' | 'created_at' | 'updated_at'>>
 
@@ -28,41 +24,21 @@ interface Props {
 }
 
 export function ClickableTaskList({ initialTasks, goals, objectives, dueBefore, maxItems }: Props) {
-  const [tasks,      setTasks]      = useState(initialTasks)
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const [editItem,   setEditItem]   = useState<TaskRow | null>(null)
-  const [form,       setForm]       = useState<TaskForm>({})
-
-  const upd = <K extends keyof TaskForm>(k: K, v: TaskForm[K]) =>
-    setForm(f => ({ ...f, [k]: v ?? null }))
-
-  const openEdit = (task: TaskRow) => {
-    setEditItem(task)
-    setForm({ name: task.name, status: task.status, priority: task.priority, area: task.area, due_date: task.due_date, objective_id: task.objective_id, pillar: task.pillar })
-    setDrawerOpen(true)
-  }
-
-  const handleSave = async () => {
-    if (!form.name?.trim()) { toast.error('Name is required'); return }
-    const sb = createClient()
-    if (editItem) {
-      const { error } = await sb.from('tasks').update(form).eq('id', editItem.id)
-      if (error) throw error
-      setTasks(prev => prev.map(t => t.id === editItem.id ? { ...t, ...form } : t))
-      toast.success('Task updated')
-    }
-    setDrawerOpen(false)
-  }
-
-  const handleDelete = async () => {
-    if (!editItem) return
-    const sb = createClient()
-    const { error } = await sb.from('tasks').delete().eq('id', editItem.id)
-    if (error) throw error
-    setTasks(prev => prev.filter(t => t.id !== editItem.id))
-    setDrawerOpen(false)
-    toast.success('Deleted')
-  }
+  const {
+    items: tasks, form, upd, drawerOpen, closeDrawer, editItem,
+    openEdit, save: handleSave, remove: handleDelete,
+  } = useCrudDrawer<TaskRow, TaskForm>({
+    table: 'tasks',
+    initialItems: initialTasks,
+    canCreate: false,
+    newForm: () => ({}),
+    toForm: task => ({
+      name: task.name, status: task.status, priority: task.priority, area: task.area,
+      due_date: task.due_date, objective_id: task.objective_id, pillar: task.pillar,
+    }),
+    validate: f => (f.name?.trim() ? null : 'Name is required'),
+    messages: { updated: 'Task updated', deleted: 'Deleted' },
+  })
 
   const displayed = useMemo(() => {
     let list = tasks
@@ -73,16 +49,7 @@ export function ClickableTaskList({ initialTasks, goals, objectives, dueBefore, 
 
   const todayStr = getTodayStr()
 
-  const objByGoal = useMemo(() => {
-    const map = new Map<string, { id: number; title: string }[]>()
-    objectives.forEach(o => {
-      const k = String(o.goal_id ?? 'unlinked')
-      const entry = map.get(k) ?? []
-      entry.push({ id: o.id, title: o.title || '' })
-      map.set(k, entry)
-    })
-    return map
-  }, [objectives])
+  const objByGoal = useMemo(() => groupObjectivesByGoal(objectives), [objectives])
 
   const goalTitle = useMemo(() =>
     Object.fromEntries(goals.map(g => [String(g.id), g.title ?? ''])),
@@ -144,7 +111,7 @@ export function ClickableTaskList({ initialTasks, goals, objectives, dueBefore, 
 
       <ItemDrawer
         open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
+        onClose={closeDrawer}
         title="Edit Task"
         onSave={handleSave}
         onDelete={editItem ? handleDelete : undefined}

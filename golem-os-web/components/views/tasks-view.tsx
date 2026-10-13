@@ -1,30 +1,21 @@
 'use client'
 import { useState, useEffect, useMemo } from 'react'
 import { Plus } from 'lucide-react'
-import toast from 'react-hot-toast'
-import { createClient } from '@/lib/supabase/client'
+import { useCrudDrawer } from '@/lib/use-crud-drawer'
+import { TASK_STATUSES, TASK_PRIORITIES, TASK_STATUS_COLOR, TASK_PRIORITY_COLOR, groupObjectivesByGoal } from '@/lib/task-constants'
 import { cn } from '@/lib/utils'
-import { Button, Input, Select, Badge } from '@/components/ui'
+import { Button, Input, Select } from '@/components/ui'
 import { StatusFilter, initStatuses, saveStatuses } from '@/components/data/status-filter'
 import { ItemDrawer } from '@/components/data/item-drawer'
 import type { TaskRow, GoalRow, ObjectiveRow, ProjectRow, ClientRow } from '@/types/entities'
 
-const STATUSES = ['To Do', 'Active', 'On Hold', 'Done']
-const PRIORITIES = ['High', 'Medium', 'Low']
+const STATUSES = TASK_STATUSES
+const PRIORITIES = TASK_PRIORITIES
+const STATUS_COLOR = TASK_STATUS_COLOR
+const PRIORITY_COLOR = TASK_PRIORITY_COLOR
 const FILTER_KEY = 'golem:filter:tasks'
 
-const STATUS_COLOR: Record<string, string> = {
-  'Active':  '#7FA98A',
-  'To Do':   '#6B6560',
-  'On Hold': '#5B5F8D',
-  'Done':    '#A8A39A',
-}
 
-const PRIORITY_COLOR: Record<string, string> = {
-  High:   'text-red-500',
-  Medium: 'text-amber-500',
-  Low:    'text-muted',
-}
 
 type Form = Partial<Omit<TaskRow, 'id' | 'user_id' | 'created_at' | 'updated_at'>>
 
@@ -42,28 +33,20 @@ export function TasksView({
   initialTasks, goals, objectives, defaultPillar,
   projects = [], clients = [], defaultProjectId,
 }: Props) {
-  const [items, setItems] = useState(initialTasks)
   const [activeStatuses, setActiveStatuses] = useState<string[]>([])
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const [editItem, setEditItem] = useState<TaskRow | null>(null)
-  const [form, setForm] = useState<Form>({})
 
   useEffect(() => {
     setActiveStatuses(initStatuses(FILTER_KEY, STATUSES, ['Done']))
   }, [])
 
-  const upd = <K extends keyof Form>(k: K, v: Form[K]) =>
-    setForm(f => ({ ...f, [k]: v ?? null }))
-
-  const openNew = () => {
-    setEditItem(null)
-    setForm({ status: 'To Do', pillar: defaultPillar ?? null, project_id: defaultProjectId ?? null })
-    setDrawerOpen(true)
-  }
-
-  const openEdit = (item: TaskRow) => {
-    setEditItem(item)
-    setForm({
+  const {
+    items, form, upd, drawerOpen, closeDrawer, editItem,
+    openNew, openEdit, save: handleSave, remove: handleDelete,
+  } = useCrudDrawer<TaskRow, Form>({
+    table: 'tasks',
+    initialItems: initialTasks,
+    newForm: () => ({ status: 'To Do', pillar: defaultPillar ?? null, project_id: defaultProjectId ?? null }),
+    toForm: item => ({
       name: item.name,
       status: item.status,
       priority: item.priority,
@@ -72,43 +55,10 @@ export function TasksView({
       objective_id: item.objective_id,
       pillar: item.pillar,
       project_id: item.project_id,
-    })
-    setDrawerOpen(true)
-  }
-
-  const handleSave = async () => {
-    if (!form.name?.trim()) { toast.error('Name is required'); return }
-    const sb = createClient()
-    const { data: { user } } = await sb.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
-
-    if (editItem) {
-      const { error } = await sb.from('tasks').update(form).eq('id', editItem.id)
-      if (error) throw error
-      setItems(prev => prev.map(t => t.id === editItem.id ? { ...t, ...form } : t))
-      toast.success('Task updated')
-    } else {
-      const { data, error } = await sb
-        .from('tasks')
-        .insert({ ...form, name: form.name!, user_id: user.id })
-        .select()
-        .single()
-      if (error) throw error
-      if (data) setItems(prev => [data, ...prev])
-      toast.success('Task created')
-    }
-    setDrawerOpen(false)
-  }
-
-  const handleDelete = async () => {
-    if (!editItem) return
-    const sb = createClient()
-    const { error } = await sb.from('tasks').delete().eq('id', editItem.id)
-    if (error) throw error
-    setItems(prev => prev.filter(t => t.id !== editItem.id))
-    setDrawerOpen(false)
-    toast.success('Task deleted')
-  }
+    }),
+    validate: f => (f.name?.trim() ? null : 'Name is required'),
+    messages: { created: 'Task created', updated: 'Task updated', deleted: 'Task deleted' },
+  })
 
   const filtered = useMemo(() =>
     items.filter(t => !t.status || activeStatuses.includes(t.status)),
@@ -133,16 +83,7 @@ export function TasksView({
     [items]
   )
 
-  const objByGoal = useMemo(() => {
-    const map = new Map<string, { id: number; title: string }[]>()
-    objectives.forEach(o => {
-      const k = String(o.goal_id ?? 'unlinked')
-      const entry = map.get(k) ?? []
-      entry.push({ id: o.id, title: o.title || '' })
-      map.set(k, entry)
-    })
-    return map
-  }, [objectives])
+  const objByGoal = useMemo(() => groupObjectivesByGoal(objectives), [objectives])
 
   const goalTitle = useMemo(() =>
     Object.fromEntries(goals.map(g => [String(g.id), g.title || ''])),
@@ -247,7 +188,7 @@ export function TasksView({
 
       <ItemDrawer
         open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
+        onClose={closeDrawer}
         title={editItem ? 'Edit Task' : 'New Task'}
         onSave={handleSave}
         onDelete={editItem ? handleDelete : undefined}
