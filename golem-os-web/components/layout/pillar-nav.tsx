@@ -9,7 +9,10 @@ export function PillarNav({ pillar }: { pillar: Pillar }) {
   const config = PILLARS[pillar]
 
   return (
-    <div className="border-b border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900">
+    <div
+      className="border-b border-t-2 border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900"
+      style={{ borderTopColor: config.color }}
+    >
       <div className="max-w-7xl mx-auto px-4">
         <nav className="flex items-center -mb-px overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
           {config.routes.subnav.map((item) => {

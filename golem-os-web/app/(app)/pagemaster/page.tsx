@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { PillarHeader } from '@/components/layout/pillar-header'
 import { getDeadlines, getClientsWithBilling, getKnowledge } from '@/lib/queries'
 import { PagemasterDashboardView } from '@/components/views/pagemaster-dashboard-view'
 
@@ -20,12 +21,7 @@ export default async function PagemasterOverviewPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold text-stone-900 dark:text-stone-50">Pagemaster</h1>
-        <p className="text-sm text-muted mt-0.5">
-          Always-on legal brain — knowledge, deadlines, and client work in one place
-        </p>
-      </div>
+      <PillarHeader pillar="pagemaster" subtitle="Always-on legal brain — knowledge, deadlines, and client work in one place" />
 
       <PagemasterDashboardView deadlines={deadlines} billingRows={billingRows} knowledge={knowledge} />
 

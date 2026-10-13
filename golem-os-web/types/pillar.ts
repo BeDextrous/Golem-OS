@@ -11,6 +11,10 @@ export type PillarConfig = {
   badge: string
   activePill: string
   hoverPill: string
+  /** Header band background (light + dark) */
+  tint: string
+  /** Header title colour (light + dark) */
+  headerText: string
   icon: string
   routes: {
     root: string
@@ -30,6 +34,8 @@ export const PILLARS = {
     badge: 'bg-life-100 text-life-800',
     activePill: 'bg-life-400 text-white',
     hoverPill: 'hover:bg-life-50 hover:text-life-800',
+    tint: 'bg-life-50 dark:bg-life-900/30',
+    headerText: 'text-life-800 dark:text-life-100',
     icon: 'Leaf',
     routes: {
       root: '/life',
@@ -58,6 +64,8 @@ export const PILLARS = {
     badge: 'bg-dextrous-100 text-dextrous-800',
     activePill: 'bg-dextrous-400 text-white',
     hoverPill: 'hover:bg-dextrous-50 hover:text-dextrous-800',
+    tint: 'bg-dextrous-50 dark:bg-dextrous-900/30',
+    headerText: 'text-dextrous-800 dark:text-dextrous-100',
     icon: 'Briefcase',
     routes: {
       root: '/dextrous',
@@ -88,6 +96,8 @@ export const PILLARS = {
     badge: 'bg-work-100 text-work-800',
     activePill: 'bg-work-400 text-white',
     hoverPill: 'hover:bg-work-50 hover:text-work-800',
+    tint: 'bg-work-50 dark:bg-work-900/30',
+    headerText: 'text-work-800 dark:text-work-100',
     icon: 'Flame',
     routes: {
       root: '/work',
@@ -111,6 +121,8 @@ export const PILLARS = {
     badge: 'bg-pagemaster-100 text-pagemaster-800',
     activePill: 'bg-pagemaster-400 text-white',
     hoverPill: 'hover:bg-pagemaster-50 hover:text-pagemaster-800',
+    tint: 'bg-pagemaster-50 dark:bg-pagemaster-900/30',
+    headerText: 'text-pagemaster-800 dark:text-pagemaster-100',
     icon: 'Scale',
     routes: {
       root: '/pagemaster',

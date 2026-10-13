@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { PillarHeader } from '@/components/layout/pillar-header'
 import { thisMonthStr } from '@/lib/utils'
 import { getReading, getFinances, getNotes, getLinks, getGoals, getTasks, getObjectives } from '@/lib/queries'
 import { ClickableTaskList } from '@/components/dashboard/clickable-task-list'
@@ -60,12 +61,7 @@ export default async function LifeOverviewPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold text-stone-900 dark:text-stone-50">Life</h1>
-        <p className="text-sm text-muted mt-0.5">
-          Health, finances, home, and relationships
-        </p>
-      </div>
+      <PillarHeader pillar="life" subtitle="Health, finances, home, and relationships" />
 
       {/* Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

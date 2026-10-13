@@ -1,5 +1,11 @@
 import Link from 'next/link'
-import { getTasks, getFinances, getReading, getRecentNotes, getGoals, getObjectives } from '@/lib/queries'
+import {
+  getTasks, getFinances, getReading, getRecentNotes, getGoals, getObjectives,
+  getDeadlines, getClientsWithBilling,
+} from '@/lib/queries'
+import { needsAttention } from '@/lib/pagemaster/billing-status'
+import { CalendarWidget } from '@/components/widgets/calendar-widget'
+import { GlanceTiles, PillarCards, type PillarSummary } from '@/components/dashboard/home-glance'
 import { ClickableTaskList } from '@/components/dashboard/clickable-task-list'
 import { todayStr as getTodayStr, thisMonthStr, hourInAppTz } from '@/lib/utils'
 
@@ -36,12 +42,13 @@ export default async function HomePage() {
   const todayStr  = getTodayStr(today)
   const thisMonth = thisMonthStr(today)
 
-  const [urgentTasks, finances, currentReads, { notes: recentNotes, total: notesTotal }, goals, objectives] = await Promise.all([
-    getTasks({ dueBy: todayStr }),
+  const [openTasks, finances, currentReads, { notes: recentNotes, total: notesTotal }, goals, objectives, deadlines, billingRows] = await Promise.all([
+    getTasks({ openOnly: true }),
     getFinances({ month: thisMonth }),
     getReading({ status: 'Reading' }),
     getRecentNotes(5),
     getGoals(), getObjectives(),
+    getDeadlines(), getClientsWithBilling(),
   ])
 
   const greeting = (() => {
@@ -55,6 +62,33 @@ export default async function HomePage() {
     weekday: 'long', month: 'long', day: 'numeric', timeZone: 'America/New_York',
   })
 
+  // Cross-pillar task rollup
+  const urgentTasks = openTasks
+    .filter(t => t.due_date && t.due_date <= todayStr)
+    .sort((a, b) => (a.due_date ?? '').localeCompare(b.due_date ?? ''))
+  const overdueCount  = urgentTasks.filter(t => (t.due_date ?? '') < todayStr).length
+  const dueTodayCount = urgentTasks.length - overdueCount
+
+  const taskStats = (pillar: string) => {
+    const mine = openTasks.filter(t => t.pillar === pillar)
+    return [
+      { label: 'Open tasks', value: mine.length },
+      { label: 'Overdue', value: mine.filter(t => t.due_date && t.due_date < todayStr).length, warn: true },
+    ]
+  }
+  const summaries: PillarSummary[] = [
+    { pillar: 'life', stats: [...taskStats('life'), { label: 'Reading now', value: currentReads.length }] },
+    { pillar: 'dextrous', stats: taskStats('dextrous') },
+    { pillar: 'work', stats: taskStats('work') },
+    {
+      pillar: 'pagemaster',
+      stats: [
+        { label: 'Deadlines to review', value: deadlines.filter(d => d.status === 'needs_review').length, warn: true },
+        { label: 'Billing needs action', value: billingRows.filter(needsAttention).length, warn: true },
+      ],
+    },
+  ]
+
   // This month's finance summary
   const monthEntries = finances
   const monthTotal   = monthEntries.reduce((s, f) => s + (f.amount ?? 0), 0)
@@ -64,13 +98,19 @@ export default async function HomePage() {
 
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+    <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
       {/* Greeting */}
       <div>
         <h1 className="text-2xl font-semibold text-stone-900 dark:text-stone-50">{greeting}</h1>
         <p className="text-sm text-muted mt-0.5">{dateLabel}</p>
       </div>
 
+      <GlanceTiles overdue={overdueCount} dueToday={dueTodayCount} open={openTasks.length} />
+
+      <PillarCards summaries={summaries} />
+
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
+      <div className="lg:col-span-3 space-y-6">
       {/* Today's tasks — clickable */}
       <Section title={`Today · ${urgentTasks.length} task${urgentTasks.length !== 1 ? 's' : ''}`} href="/work/tasks">
         {urgentTasks.length === 0 ? (
@@ -123,8 +163,12 @@ export default async function HomePage() {
         )}
       </Section>
 
-      {/* Bottom row: finances + reading */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      </div>
+
+      {/* Right column: calendar, finances, reading */}
+      <div className="lg:col-span-2 space-y-6">
+        <CalendarWidget connection="dextrous" compact />
+        <div className="space-y-6">
         <Section title={`Finances · ${thisMonth}`} href="/life/finances">
           <div className="px-4 py-3">
             <p className="text-2xl font-semibold text-stone-900 dark:text-stone-50 tabular-nums">
@@ -172,6 +216,8 @@ export default async function HomePage() {
             ))
           )}
         </Section>
+        </div>
+      </div>
       </div>
     </div>
   )

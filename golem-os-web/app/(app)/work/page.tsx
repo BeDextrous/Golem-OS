@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { PillarHeader } from '@/components/layout/pillar-header'
 import { getTasks, getGoals, getObjectives, getProjects, getClients } from '@/lib/queries'
 import { todayStr as getTodayStr } from '@/lib/utils'
 import { ClickableTaskList } from '@/components/dashboard/clickable-task-list'
@@ -56,10 +57,7 @@ export default async function WorkOverviewPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold text-stone-900 dark:text-stone-50">Work</h1>
-        <p className="text-sm text-muted mt-0.5">Projects, tasks, and goals</p>
-      </div>
+      <PillarHeader pillar="work" subtitle="Projects, tasks, and goals" />
 
       {/* Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
