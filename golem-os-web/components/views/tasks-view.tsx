@@ -1,6 +1,9 @@
 'use client'
 import { useState, useEffect, useMemo } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, LayoutGrid, List } from 'lucide-react'
+import toast from 'react-hot-toast'
+import { createClient } from '@/lib/supabase/client'
+import { TasksBoard } from './tasks-board'
 import { useCrudDrawer } from '@/lib/use-crud-drawer'
 import { TASK_STATUSES, TASK_PRIORITIES, TASK_STATUS_COLOR, TASK_PRIORITY_COLOR, groupObjectivesByGoal } from '@/lib/task-constants'
 import { cn } from '@/lib/utils'
@@ -14,6 +17,8 @@ const PRIORITIES = TASK_PRIORITIES
 const STATUS_COLOR = TASK_STATUS_COLOR
 const PRIORITY_COLOR = TASK_PRIORITY_COLOR
 const FILTER_KEY = 'golem:filter:tasks'
+const VIEW_KEY = 'golem:view:tasks'
+type ViewMode = 'list' | 'board'
 
 
 
@@ -34,13 +39,15 @@ export function TasksView({
   projects = [], clients = [], defaultProjectId,
 }: Props) {
   const [activeStatuses, setActiveStatuses] = useState<string[]>([])
+  const [view, setView] = useState<ViewMode>('list')
 
   useEffect(() => {
     setActiveStatuses(initStatuses(FILTER_KEY, STATUSES, ['Done']))
+    try { if (localStorage.getItem(VIEW_KEY) === 'board') setView('board') } catch { /* private mode */ }
   }, [])
 
   const {
-    items, form, upd, drawerOpen, closeDrawer, editItem,
+    items, setItems, form, upd, drawerOpen, closeDrawer, editItem,
     openNew, openEdit, save: handleSave, remove: handleDelete,
   } = useCrudDrawer<TaskRow, Form>({
     table: 'tasks',
@@ -59,6 +66,22 @@ export function TasksView({
     validate: f => (f.name?.trim() ? null : 'Name is required'),
     messages: { created: 'Task created', updated: 'Task updated', deleted: 'Task deleted' },
   })
+
+  const changeView = (next: ViewMode) => {
+    setView(next)
+    try { localStorage.setItem(VIEW_KEY, next) } catch { /* private mode */ }
+  }
+
+  // Optimistic status change from the board; revert and toast if the write fails
+  const moveTask = async (task: TaskRow, status: string | null) => {
+    const previous = task.status
+    setItems(prev => prev.map(t => t.id === task.id ? { ...t, status } : t))
+    const { error } = await createClient().from('tasks').update({ status }).eq('id', task.id)
+    if (error) {
+      setItems(prev => prev.map(t => t.id === task.id ? { ...t, status: previous } : t))
+      toast.error(`Couldn't move task: ${error.message}`)
+    }
+  }
 
   const filtered = useMemo(() =>
     items.filter(t => !t.status || activeStatuses.includes(t.status)),
@@ -115,9 +138,28 @@ export function TasksView({
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-5">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-stone-900 dark:text-stone-50">Tasks</h1>
-        <Button onClick={openNew} size="sm">
-          <Plus size={14} /> New Task
-        </Button>
+        <div className="flex items-center gap-2">
+          <div role="group" aria-label="View" className="inline-flex rounded-lg border border-stone-200 dark:border-stone-700 overflow-hidden">
+            {([['list', 'List', List], ['board', 'Board', LayoutGrid]] as const).map(([mode, label, Icon]) => (
+              <button
+                key={mode}
+                onClick={() => changeView(mode)}
+                aria-pressed={view === mode}
+                className={cn(
+                  'inline-flex items-center gap-1.5 px-2.5 h-8 pointer-coarse:h-11 text-xs font-medium transition-colors',
+                  view === mode
+                    ? 'bg-stone-800 text-white dark:bg-stone-200 dark:text-stone-900'
+                    : 'text-muted hover:bg-stone-100 dark:hover:bg-stone-800'
+                )}
+              >
+                <Icon size={13} aria-hidden="true" /> {label}
+              </button>
+            ))}
+          </div>
+          <Button onClick={openNew} size="sm">
+            <Plus size={14} /> New Task
+          </Button>
+        </div>
       </div>
 
       <StatusFilter
@@ -127,7 +169,17 @@ export function TasksView({
         colorMap={STATUS_COLOR}
       />
 
-      {areas.map(area => {
+      {view === 'board' && (
+        <TasksBoard
+          tasks={filtered}
+          statuses={STATUSES.filter(s => activeStatuses.includes(s))}
+          projectName={projectName}
+          onOpen={openEdit}
+          onMove={moveTask}
+        />
+      )}
+
+      {view === 'list' && areas.map(area => {
         const areaItems = byArea[area]
         if (!areaItems?.length) return null
         return (
@@ -180,7 +232,7 @@ export function TasksView({
         )
       })}
 
-      {filtered.length === 0 && (
+      {view === 'list' && filtered.length === 0 && (
         <div className="text-center py-16 text-muted">
           <p className="text-sm">No tasks match the current filter.</p>
         </div>
