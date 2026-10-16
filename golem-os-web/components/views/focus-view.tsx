@@ -27,7 +27,7 @@ type ViewMode = 'list' | 'board'
 const PILLAR_OPTS    = [
   { value: 'life',      label: 'Life',      color: '#7FA98A' },
   { value: 'dextrous',  label: 'Dextrous',  color: '#DA6B51' },
-  { value: 'work',      label: 'Work',      color: '#5B5F8D' },
+  { value: 'palette',   label: 'Palette Media', color: '#8E5A93' },
 ]
 const TYPE_COLORS: Record<ItemType, string> = {
   task:      '#5B5F8D',
@@ -56,7 +56,7 @@ const SORT_OPTIONS = [
 ]
 const PRIORITY_ORDER: Record<string, number> = { High: 0, Medium: 1, Low: 2 }
 const STATUS_ORDER: Record<string, number>   = { 'To Do': 0, Active: 1, 'On Hold': 2, Paused: 3, Done: 4, Archived: 5 }
-const PILLAR_ORDER: Record<string, number>   = { life: 0, work: 1, dextrous: 2 }
+const PILLAR_ORDER: Record<string, number>   = { life: 0, palette: 1, dextrous: 2 }
 
 // ── Normalised shape ──────────────────────────────────────────────────────────
 

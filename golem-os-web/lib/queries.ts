@@ -24,7 +24,7 @@ export type KnowledgeMemoryItem = {
 
 export async function getTasks(opts: { pillar?: string; openOnly?: boolean; dueBy?: string } = {}): Promise<TaskRow[]> {
   const sb = await createServerSupabaseClient()
-  let query = sb.from('tasks').select('*')
+  let query = sb.from('tasks').select('*').is('archived_at', null)
   if (opts.pillar) query = query.eq('pillar', opts.pillar)
   // Not Done, but keep rows with no status (matches the old client-side `status !== 'Done'`)
   if (opts.openOnly || opts.dueBy) query = query.or('status.is.null,status.neq.Done')
@@ -34,16 +34,20 @@ export async function getTasks(opts: { pillar?: string; openOnly?: boolean; dueB
   return data ?? []
 }
 
-export async function getGoals(): Promise<GoalRow[]> {
+export async function getGoals(opts: { pillar?: string } = {}): Promise<GoalRow[]> {
   const sb = await createServerSupabaseClient()
-  const { data, error } = await sb.from('goals').select('*').order('created_at', { ascending: false })
+  let query = sb.from('goals').select('*').is('archived_at', null)
+  if (opts.pillar) query = query.eq('pillar', opts.pillar)
+  const { data, error } = await query.order('created_at', { ascending: false })
   if (error) throw error
   return data ?? []
 }
 
-export async function getObjectives(): Promise<ObjectiveRow[]> {
+export async function getObjectives(opts: { pillar?: string } = {}): Promise<ObjectiveRow[]> {
   const sb = await createServerSupabaseClient()
-  const { data, error } = await sb.from('objectives').select('*').order('id', { ascending: true })
+  let query = sb.from('objectives').select('*').is('archived_at', null)
+  if (opts.pillar) query = query.eq('pillar', opts.pillar)
+  const { data, error } = await query.order('id', { ascending: true })
   if (error) throw error
   return data ?? []
 }
@@ -130,7 +134,7 @@ export async function getProjects(opts: { pillar?: string } = {}): Promise<Proje
 
 export async function getClients(opts: { status?: string } = {}): Promise<ClientRow[]> {
   const sb = await createServerSupabaseClient()
-  let query = sb.from('clients').select('*')
+  let query = sb.from('clients').select('*').is('archived_at', null)
   if (opts.status) query = query.eq('status', opts.status)
   const { data, error } = await query.order('name', { ascending: true })
   if (error) throw error
@@ -194,7 +198,7 @@ export async function getHealthEntries(): Promise<HealthRow[]> {
 
 export async function getInvoices(): Promise<InvoiceRow[]> {
   const sb = await createServerSupabaseClient()
-  const { data, error } = await sb.from('invoices').select('*').order('issued_date', { ascending: false })
+  const { data, error } = await sb.from('invoices').select('*').is('archived_at', null).order('issued_date', { ascending: false })
   if (error) throw error
   return data ?? []
 }
@@ -223,14 +227,14 @@ export async function getProjectsByClient(clientId: number): Promise<ProjectRow[
 export async function getTasksByProjectIds(projectIds: number[]): Promise<TaskRow[]> {
   if (projectIds.length === 0) return []
   const sb = await createServerSupabaseClient()
-  const { data, error } = await sb.from('tasks').select('*').in('project_id', projectIds)
+  const { data, error } = await sb.from('tasks').select('*').is('archived_at', null).in('project_id', projectIds)
   if (error) throw error
   return data ?? []
 }
 
 export async function getInvoicesByClient(clientId: number): Promise<InvoiceRow[]> {
   const sb = await createServerSupabaseClient()
-  const { data, error } = await sb.from('invoices').select('*').eq('client_id', clientId).order('due_date', { ascending: true })
+  const { data, error } = await sb.from('invoices').select('*').is('archived_at', null).eq('client_id', clientId).order('due_date', { ascending: true })
   if (error) throw error
   return data ?? []
 }
@@ -256,6 +260,7 @@ export async function getClientsWithBilling(): Promise<
   const { data: clients, error: clientsError } = await sb
     .from('clients')
     .select('*')
+    .is('archived_at', null)
     .neq('billing_type', 'none')
     .order('name', { ascending: true })
   if (clientsError) throw clientsError
@@ -267,6 +272,7 @@ export async function getClientsWithBilling(): Promise<
   const { data: invoices, error: invoicesError } = await sb
     .from('invoices')
     .select('*')
+    .is('archived_at', null)
     .eq('billing_period', period)
     .in('client_id', clientIds)
   if (invoicesError) throw invoicesError

@@ -12,7 +12,7 @@ const today = () => todayStr()
 const PILLAR_OPTS = [
   { value: 'life',     label: 'Life' },
   { value: 'dextrous', label: 'Dextrous' },
-  { value: 'work',     label: 'Work' },
+  { value: 'palette',  label: 'Palette Media' },
 ]
 
 type Form = Partial<Omit<FinanceRow, 'id' | 'user_id' | 'created_at' | 'updated_at'>>

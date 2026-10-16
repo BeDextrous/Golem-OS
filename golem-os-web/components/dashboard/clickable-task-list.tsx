@@ -139,7 +139,7 @@ export function ClickableTaskList({ initialTasks, goals, objectives, dueBefore, 
           options={[
             { value: 'life', label: 'Life' },
             { value: 'dextrous', label: 'Dextrous' },
-            { value: 'work', label: 'Work' },
+            { value: 'palette', label: 'Palette Media' },
           ]}
         />
       </ItemDrawer>

@@ -2,7 +2,8 @@ import { z } from 'zod'
 import { TASK_PRIORITIES, TASK_STATUSES } from '@/lib/task-constants'
 
 // Mirrors the CHECK constraints in supabase/schema.sql; the database stays the backstop.
-const PILLARS = ['life', 'dextrous', 'work'] as const
+// 'work' was retired (archived rows keep it in the database); Palette Media replaces it
+const PILLARS = ['life', 'dextrous', 'palette'] as const
 
 /** Selects send '' for "None"; treat blank as null so it reads as "no value". */
 const blankToNull = (v: unknown) => (typeof v === 'string' && v.trim() === '' ? null : v)
@@ -45,6 +46,7 @@ const longText = z.preprocess(blankToNull, z.string().max(200_000, 'Too long').n
 const enumOf = <T extends readonly [string, ...string[]]>(values: T) => optionalEnum(values)
 
 export const taskSchema = z.strictObject({
+  archived_at: optionalTimestamp,
   name: z.string().trim().min(1, 'Name is required').max(500, 'Name is too long'),
   status: optionalEnum(TASK_STATUSES as unknown as readonly [string, ...string[]]),
   priority: optionalEnum(TASK_PRIORITIES as unknown as readonly [string, ...string[]]),
@@ -64,9 +66,10 @@ export const financeSchema = z.strictObject({
   pillar: optionalEnum(PILLARS),
 })
 
-const PILLARS_4 = ['life', 'dextrous', 'work', 'pagemaster'] as const
+const PILLARS_4 = ['life', 'dextrous', 'palette', 'pagemaster'] as const
 
 export const goalSchema = z.strictObject({
+  archived_at: optionalTimestamp,
   title: requiredText('Title', 300),
   area: optionalText(100),
   notes: longText,
@@ -75,6 +78,7 @@ export const goalSchema = z.strictObject({
 })
 
 export const objectiveSchema = z.strictObject({
+  archived_at: optionalTimestamp,
   title: requiredText('Title', 300),
   goal_id: optionalId,
   pillar: enumOf(PILLARS),
@@ -142,6 +146,7 @@ export const projectSchema = z.strictObject({
 })
 
 export const clientSchema = z.strictObject({
+  archived_at: optionalTimestamp,
   name: requiredText('Name', 300),
   company: optionalText(300),
   status: enumOf(['Prospect', 'Active', 'Paused', 'Closed']),
@@ -170,6 +175,7 @@ export const knowledgeSchema = z.strictObject({
 })
 
 export const invoiceSchema = z.strictObject({
+  archived_at: optionalTimestamp,
   amount: z.preprocess(
     v => (typeof v === 'string' && v.trim() !== '' ? Number(v) : v),
     z.number({ error: 'Amount must be a number' }).finite().min(-1e11).max(1e11)

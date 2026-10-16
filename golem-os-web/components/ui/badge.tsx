@@ -12,7 +12,7 @@ const variants: Record<string, string> = {
   outline: 'border border-stone-300 text-stone-700 dark:border-stone-700 dark:text-stone-300',
   life: PILLARS.life.badge,
   dextrous: PILLARS.dextrous.badge,
-  work: PILLARS.work.badge,
+  palette: PILLARS.palette.badge,
 }
 
 export function Badge({ className, variant = 'default', children, ...props }: BadgeProps) {
