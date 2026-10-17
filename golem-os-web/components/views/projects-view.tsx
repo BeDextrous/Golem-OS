@@ -12,11 +12,11 @@ const STATUSES = ['Planning', 'Active', 'On Hold', 'Done', 'Archived']
 const PILLAR_OPTS = [
   { value: 'life', label: 'Life' },
   { value: 'dextrous', label: 'Dextrous' },
-  { value: 'work', label: 'Work' },
+  { value: 'palette', label: 'Palette Media' },
   { value: 'pagemaster', label: 'Pagemaster' },
 ]
 const PILLAR_COLORS: Record<string, string> = {
-  life: '#7FA98A', dextrous: '#DA6B51', work: '#5B5F8D', pagemaster: '#3C6E71',
+  life: '#7FA98A', dextrous: '#DA6B51', palette: '#8E5A93', pagemaster: '#3C6E71',
 }
 const STATUS_COLOR: Record<string, string> = {
   'Active':   '#7FA98A',
@@ -52,7 +52,7 @@ export function ProjectsView({
     setEditItem(null)
     setForm({
       status: 'Planning',
-      pillar: pillarFilter ?? 'work',
+      pillar: pillarFilter ?? 'palette',
       project_type: defaultClientId ? 'client' : undefined,
       client_id: defaultClientId,
     })
@@ -135,7 +135,7 @@ export function ProjectsView({
       {/* Pillar filter — only show when not locked to one pillar */}
       {!defaultPillar && (
         <div className="flex gap-1">
-          {([null, 'life', 'dextrous', 'work'] as const).map(p => (
+          {([null, 'life', 'dextrous', 'palette'] as const).map(p => (
             <button
               key={p ?? 'all'}
               onClick={() => setPillarFilter(p)}

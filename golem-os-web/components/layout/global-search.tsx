@@ -43,10 +43,10 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
     const pat = `%${q}%`
 
     const [tasks, notes, reading, goals, links, jobs, knowledge, finances] = await Promise.all([
-      sb.from('tasks').select('id,name,status,area').ilike('name', pat).limit(4),
+      sb.from('tasks').select('id,name,status,area').is('archived_at', null).ilike('name', pat).limit(4),
       sb.from('notes').select('id,title,pillar').or(`title.ilike.${pat},content.ilike.${pat}`).limit(4),
       sb.from('reading').select('id,book_title,author,status').ilike('book_title', pat).limit(3),
-      sb.from('goals').select('id,title,status').ilike('title', pat).limit(3),
+      sb.from('goals').select('id,title,status').is('archived_at', null).ilike('title', pat).limit(3),
       sb.from('links').select('id,title,url,website').or(`title.ilike.${pat},url.ilike.${pat}`).limit(3),
       sb.from('job_applications').select('id,role,company,status').or(`role.ilike.${pat},company.ilike.${pat}`).limit(3),
       sb.from('knowledge_items').select('id,title,tags').or(`title.ilike.${pat},content.ilike.${pat}`).limit(3),
@@ -58,7 +58,7 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
     tasks.data?.forEach(t => out.push({
       type: 'Task', title: t.name,
       subtitle: [t.status, t.area].filter(Boolean).join(' · '),
-      href: '/work/tasks',
+      href: '/focus',
     }))
     notes.data?.forEach(n => out.push({
       type: 'Note', title: n.title ?? 'Untitled',
@@ -73,7 +73,7 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
     goals.data?.forEach(g => out.push({
       type: 'Goal', title: g.title,
       subtitle: g.status ?? undefined,
-      href: '/work/goals',
+      href: '/focus',
     }))
     links.data?.forEach(l => {
       let title = l.title ?? l.url

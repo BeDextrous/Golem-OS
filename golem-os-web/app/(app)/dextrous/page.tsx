@@ -103,7 +103,7 @@ export default async function DextrousOverviewPage() {
         />
         <StatCard
           title="Goals"
-          href="/work/goals"
+          href="/focus"
           stats={[{ label: 'active', value: dexGoals.length }]}
           items={dexGoals.slice(0, 3).map(g => g.title)}
         />

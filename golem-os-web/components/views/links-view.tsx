@@ -12,10 +12,10 @@ import { todayStr } from '@/lib/utils'
 const PILLAR_OPTS = [
   { value: 'life', label: 'Life' },
   { value: 'dextrous', label: 'Dextrous' },
-  { value: 'work', label: 'Work' },
+  { value: 'palette', label: 'Palette Media' },
 ]
 const PILLAR_COLORS: Record<string, string> = {
-  life: '#7FA98A', dextrous: '#DA6B51', work: '#5B5F8D',
+  life: '#7FA98A', dextrous: '#DA6B51', palette: '#8E5A93',
 }
 
 type Form = Partial<Omit<LinkRow,
@@ -217,7 +217,7 @@ export function LinksView({
 
       {/* Pillar filter */}
       <div className="flex gap-1">
-        {([null, 'life', 'dextrous', 'work'] as const).map(p => (
+        {([null, 'life', 'dextrous', 'palette'] as const).map(p => (
           <button
             key={p ?? 'all'}
             onClick={() => setPillarFilter(p)}

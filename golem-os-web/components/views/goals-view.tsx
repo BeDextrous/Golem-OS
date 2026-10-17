@@ -12,10 +12,10 @@ const GOAL_STATUSES = ['Active', 'Paused', 'Done', 'Archived']
 const PILLAR_OPTS = [
   { value: 'life', label: 'Life' },
   { value: 'dextrous', label: 'Dextrous' },
-  { value: 'work', label: 'Work' },
+  { value: 'palette', label: 'Palette Media' },
 ]
 const PILLAR_COLORS: Record<string, string> = {
-  life: '#7FA98A', dextrous: '#DA6B51', work: '#5B5F8D',
+  life: '#7FA98A', dextrous: '#DA6B51', palette: '#8E5A93',
 }
 
 type GoalForm = Partial<Omit<GoalRow, 'id' | 'user_id' | 'created_at' | 'updated_at'>>
@@ -24,9 +24,12 @@ type ObjForm  = Partial<Omit<ObjectiveRow, 'id' | 'user_id' | 'created_at' | 'up
 export function GoalsView({
   initialGoals,
   initialObjectives,
+  defaultPillar,
 }: {
   initialGoals: GoalRow[]
   initialObjectives: ObjectiveRow[]
+  /** Pre-selects the pillar on new goals and objectives (used by pillar-scoped pages). */
+  defaultPillar?: string
 }) {
   const [goals, setGoals]           = useState(initialGoals)
   const [objectives, setObjectives] = useState(initialObjectives)
@@ -51,7 +54,7 @@ export function GoalsView({
 
   const openNewGoal = () => {
     setEditGoal(null)
-    setGoalForm({ status: 'Active', pillar: pillarFilter ?? undefined })
+    setGoalForm({ status: 'Active', pillar: pillarFilter ?? defaultPillar })
     setGoalOpen(true)
   }
   const openEditGoal = (g: GoalRow) => {
@@ -68,7 +71,7 @@ export function GoalsView({
   const openNewObj = (goalId: number) => {
     setEditObj(null)
     setObjGoalId(goalId)
-    setObjForm({ goal_id: goalId })
+    setObjForm({ goal_id: goalId, pillar: defaultPillar })
     setObjOpen(true)
   }
   const openEditObj = (o: ObjectiveRow) => {
@@ -182,7 +185,7 @@ export function GoalsView({
 
       {/* Pillar filter */}
       <div className="flex gap-1">
-        {([null, 'life', 'dextrous', 'work'] as const).map(p => (
+        {([null, 'life', 'dextrous', 'palette'] as const).map(p => (
           <button
             key={p ?? 'all'}
             onClick={() => setPillarFilter(p)}

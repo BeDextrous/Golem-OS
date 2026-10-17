@@ -4,6 +4,14 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: __dirname,
   },
+  async redirects() {
+    return [
+      // The Work pillar was replaced by Palette Media; Work > Clients has no equivalent
+      { source: '/work/clients/:path*', destination: '/palette', permanent: false },
+      { source: '/work', destination: '/palette', permanent: false },
+      { source: '/work/:path*', destination: '/palette/:path*', permanent: false },
+    ]
+  },
   async headers() {
     return [
       {
