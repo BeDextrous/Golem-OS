@@ -50,7 +50,7 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
       sb.from('links').select('id,title,url,website').or(`title.ilike.${pat},url.ilike.${pat}`).limit(3),
       sb.from('job_applications').select('id,role,company,status').or(`role.ilike.${pat},company.ilike.${pat}`).limit(3),
       sb.from('knowledge_items').select('id,title,tags').or(`title.ilike.${pat},content.ilike.${pat}`).limit(3),
-      sb.from('finances').select('id,label,amount,category').ilike('label', pat).limit(3),
+      sb.from('finances').select('id,label,amount,category').is('archived_at', null).ilike('label', pat).limit(3),
     ])
 
     const out: Result[] = []

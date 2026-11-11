@@ -144,6 +144,8 @@ describe('new-table specifics', () => {
   it('archived_at can be set or cleared on archivable tables', () => {
     expect(TABLE_SCHEMAS.tasks.partial().safeParse({ archived_at: '2026-10-16T12:00:00.000Z' }).success).toBe(true)
     expect(TABLE_SCHEMAS.clients.partial().safeParse({ archived_at: null }).success).toBe(true)
+    expect(TABLE_SCHEMAS.crm.partial().safeParse({ archived_at: '2026-10-16T12:00:00.000Z' }).success).toBe(true)
+    expect(TABLE_SCHEMAS.finances.partial().safeParse({ archived_at: null }).success).toBe(true)
     expect(TABLE_SCHEMAS.notes.safeParse({ archived_at: '2026-10-16T12:00:00.000Z' }).success).toBe(false) // notes are not archivable
   })
   it('project pillar allows pagemaster, task pillar does not', () => {
