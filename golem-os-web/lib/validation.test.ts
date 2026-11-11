@@ -3,7 +3,7 @@ import { TABLE_SCHEMAS, financeSchema, firstIssue, isCrudTable, taskSchema, type
 
 describe('taskSchema', () => {
   it('accepts a normal task and trims the name', () => {
-    const r = taskSchema.safeParse({ name: '  Call Assaf ', status: 'Active', priority: 'High', pillar: 'work', due_date: '2026-10-14' })
+    const r = taskSchema.safeParse({ name: '  Call Assaf ', status: 'Active', priority: 'High', pillar: 'palette', due_date: '2026-10-14' })
     expect(r.success && r.data.name).toBe('Call Assaf')
   })
 
@@ -75,7 +75,7 @@ describe('isCrudTable', () => {
 
 // One realistic payload per table, shaped like what the forms send
 const VALID: Record<CrudTable, Record<string, unknown>> = {
-  tasks: { name: 'Task', status: 'To Do', priority: 'High', pillar: 'work', due_date: '2026-10-14', project_id: 3 },
+  tasks: { name: 'Task', status: 'To Do', priority: 'High', pillar: 'palette', due_date: '2026-10-14', project_id: 3 },
   finances: { label: 'Rent', amount: -2000, entry_date: '2026-10-01', category: 'Housing', pillar: 'life' },
   goals: { title: 'Ship Pagemaster', status: 'Active', pillar: 'dextrous', area: 'Product', notes: 'x' },
   objectives: { title: 'Beta', goal_id: 2, current_value: '3', target_value: 10, metric_unit: 'clients', deadline: '2026-12-31' },
@@ -88,7 +88,7 @@ const VALID: Record<CrudTable, Record<string, unknown>> = {
   knowledge_items: { title: 'Clause bank', tags: 'nda', source_url: 'https://example.com', project_id: 1 },
   invoices: { amount: 1200, status: 'Draft', billing_period: '2026-10', client_id: 4, due_date: '2026-11-01' },
   job_applications: { company: 'Acme', role: 'GC', status: 'Applied', remote_type: 'Hybrid', job_url: 'https://jobs.example.com/1' },
-  crm: { name: 'Pat', email: 'pat@example.com', linkedin_url: 'https://linkedin.com/in/pat', pillar: 'work' },
+  crm: { name: 'Pat', email: 'pat@example.com', linkedin_url: 'https://linkedin.com/in/pat', pillar: 'palette' },
   target_companies: { company_name: 'Acme', priority: 'High', website: 'https://acme.com' },
   dextrous_leads: { name: 'Lee', email: 'lee@example.com', status: 'New' },
   deadlines: { title: 'File answer', due_date: '2026-11-03', status: 'needs_review' },
@@ -133,6 +133,18 @@ describe('new-table specifics', () => {
   it('reading progress is 0-100 and numeric strings are coerced', () => {
     expect(TABLE_SCHEMAS.reading.safeParse({ book_title: 'x', progress_pct: 101 }).success).toBe(false)
     expect(TABLE_SCHEMAS.reading.safeParse({ book_title: 'x', progress_pct: '50' }).success).toBe(true)
+  })
+  it('Palette Media replaces Work: palette is valid, work is no longer writable', () => {
+    expect(TABLE_SCHEMAS.tasks.safeParse({ name: 'x', pillar: 'palette' }).success).toBe(true)
+    expect(TABLE_SCHEMAS.goals.safeParse({ title: 'x', pillar: 'palette' }).success).toBe(true)
+    expect(TABLE_SCHEMAS.projects.safeParse({ name: 'x', pillar: 'palette' }).success).toBe(true)
+    expect(TABLE_SCHEMAS.tasks.safeParse({ name: 'x', pillar: 'work' }).success).toBe(false)
+    expect(TABLE_SCHEMAS.projects.safeParse({ name: 'x', pillar: 'work' }).success).toBe(false)
+  })
+  it('archived_at can be set or cleared on archivable tables', () => {
+    expect(TABLE_SCHEMAS.tasks.partial().safeParse({ archived_at: '2026-10-16T12:00:00.000Z' }).success).toBe(true)
+    expect(TABLE_SCHEMAS.clients.partial().safeParse({ archived_at: null }).success).toBe(true)
+    expect(TABLE_SCHEMAS.notes.safeParse({ archived_at: '2026-10-16T12:00:00.000Z' }).success).toBe(false) // notes are not archivable
   })
   it('project pillar allows pagemaster, task pillar does not', () => {
     expect(TABLE_SCHEMAS.projects.safeParse({ name: 'x', pillar: 'pagemaster' }).success).toBe(true)

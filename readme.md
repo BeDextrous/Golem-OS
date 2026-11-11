@@ -2,7 +2,7 @@
 
 A personal productivity system: tasks, goals, projects, clients, notes, links,
 finances, reading, jobs and a Pagemaster legal-docs pipeline, split into four
-"pillars" (Life, Dextrous, Work, Pagemaster) plus a cross-pillar Focus view.
+"pillars" (Life, Dextrous, Palette Media, Pagemaster) plus a cross-pillar Focus view.
 Runs at [golems.bedextrous.com](https://golems.bedextrous.com).
 
 ## Stack

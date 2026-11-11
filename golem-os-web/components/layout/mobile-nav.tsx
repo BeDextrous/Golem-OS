@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Home, Target } from 'lucide-react'
-import { PILLARS } from '@/types/pillar'
+import { PILLARS, type PillarConfig } from '@/types/pillar'
 import { cn } from '@/lib/utils'
 import { PillarIcon } from './pillar-icon'
 
@@ -11,7 +11,7 @@ export function MobileNav() {
   const items = [
     { href: '/', label: 'Home', icon: <Home size={18} aria-hidden="true" />, color: undefined as string | undefined, active: pathname === '/' },
     ...Object.values(PILLARS).map(p => ({
-      href: p.routes.root, label: p.label, icon: <PillarIcon name={p.icon} size={18} />, color: p.color,
+      href: p.routes.root, label: (p as PillarConfig).shortLabel ?? p.label, icon: <PillarIcon name={p.icon} size={18} />, color: p.color,
       active: pathname.startsWith(p.routes.root),
     })),
     { href: '/focus', label: 'Focus', icon: <Target size={18} aria-hidden="true" />, color: undefined, active: pathname.startsWith('/focus') },

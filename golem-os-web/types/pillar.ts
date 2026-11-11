@@ -1,8 +1,10 @@
-export type Pillar = 'life' | 'dextrous' | 'work' | 'pagemaster'
+export type Pillar = 'life' | 'dextrous' | 'palette' | 'pagemaster'
 
 export type PillarConfig = {
   id: Pillar
   label: string
+  /** Shorter label for the cramped mobile tab bar */
+  shortLabel?: string
   color: string
   bg: string
   text: string
@@ -85,28 +87,28 @@ export const PILLARS = {
       ],
     },
   },
-  work: {
-    id: 'work' as const,
-    label: 'Work',
-    color: '#5B5F8D',
-    bg: 'bg-work-50',
-    text: 'text-work-800',
-    accent: 'text-work-400',
-    border: 'border-work-400',
-    badge: 'bg-work-100 text-work-800',
-    activePill: 'bg-work-400 text-white',
-    hoverPill: 'hover:bg-work-50 hover:text-work-800',
-    tint: 'bg-work-50 dark:bg-work-900/30',
-    headerText: 'text-work-800 dark:text-work-100',
-    icon: 'Flame',
+  palette: {
+    id: 'palette' as const,
+    label: 'Palette Media',
+    shortLabel: 'Palette',
+    color: '#8E5A93',
+    bg: 'bg-palette-50',
+    text: 'text-palette-800',
+    accent: 'text-palette-400',
+    border: 'border-palette-400',
+    badge: 'bg-palette-100 text-palette-800',
+    activePill: 'bg-palette-400 text-white',
+    hoverPill: 'hover:bg-palette-50 hover:text-palette-800',
+    tint: 'bg-palette-50 dark:bg-palette-900/30',
+    headerText: 'text-palette-800 dark:text-palette-100',
+    icon: 'Palette',
     routes: {
-      root: '/work',
+      root: '/palette',
       subnav: [
-        { label: 'Overview', href: '/work' },
-        { label: 'Tasks', href: '/work/tasks' },
-        { label: 'Goals', href: '/work/goals' },
-        { label: 'Projects', href: '/work/projects' },
-        { label: 'Clients', href: '/work/clients' },
+        { label: 'Overview', href: '/palette' },
+        { label: 'Tasks', href: '/palette/tasks' },
+        { label: 'Goals', href: '/palette/goals' },
+        { label: 'Projects', href: '/palette/projects' },
       ],
     },
   },

@@ -35,14 +35,14 @@
   --color-dextrous-800: #8A3624;
   --color-dextrous-900: #5C2317;
 
-  /* Work pillar — dusk blue (Kyoto Dusk family) */
-  --color-work-50: #E7E8F0;
-  --color-work-100: #C5C8DE;
-  --color-work-200: #A3A8CB;
-  --color-work-400: #5B5F8D;
-  --color-work-600: #454870;
-  --color-work-800: #313353;
-  --color-work-900: #1F2037;
+  /* Palette Media pillar: plum */
+  --color-palette-50: #F3E9F3;
+  --color-palette-100: #E0C8E1;
+  --color-palette-200: #C9A3CB;
+  --color-palette-400: #8E5A93;
+  --color-palette-600: #6E4373;
+  --color-palette-800: #4B2D4F;
+  --color-palette-900: #331E36;
 
   /* Pagemaster pillar — deep teal */
   --color-pagemaster-50: #E9F1F1;

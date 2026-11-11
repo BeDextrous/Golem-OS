@@ -94,7 +94,7 @@ export default async function LifeOverviewPage() {
         />
         <StatCard
           title="Goals"
-          href="/work/goals"
+          href="/focus"
           stats={[
             { label: 'active', value: lifeGoals.length },
             { label: 'total', value: goals.filter(g => g.pillar === 'life').length },

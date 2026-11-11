@@ -291,7 +291,7 @@ export function TasksView({
           options={[
             { value: 'life', label: 'Life' },
             { value: 'dextrous', label: 'Dextrous' },
-            { value: 'work', label: 'Work' },
+            { value: 'palette', label: 'Palette Media' },
           ]}
         />
         {projects.length > 0 && (

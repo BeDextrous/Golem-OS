@@ -37,6 +37,7 @@ export type Database = {
           updated_at: string
           user_id: string
           workspace_group: string | null
+          archived_at: string | null
         }
         Insert: {
           billing_type?: string
@@ -60,6 +61,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           workspace_group?: string | null
+          archived_at?: string | null
         }
         Update: {
           billing_type?: string
@@ -83,6 +85,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           workspace_group?: string | null
+          archived_at?: string | null
         }
         Relationships: [
           {
@@ -316,6 +319,7 @@ export type Database = {
           title: string
           updated_at: string
           user_id: string
+          archived_at: string | null
         }
         Insert: {
           area?: string | null
@@ -327,6 +331,7 @@ export type Database = {
           title: string
           updated_at?: string
           user_id: string
+          archived_at?: string | null
         }
         Update: {
           area?: string | null
@@ -338,6 +343,7 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+          archived_at?: string | null
         }
         Relationships: []
       }
@@ -452,6 +458,7 @@ export type Database = {
           wave_invoice_id: string | null
           wave_synced_at: string | null
           wave_view_url: string | null
+          archived_at: string | null
         }
         Insert: {
           amount: number
@@ -470,6 +477,7 @@ export type Database = {
           wave_invoice_id?: string | null
           wave_synced_at?: string | null
           wave_view_url?: string | null
+          archived_at?: string | null
         }
         Update: {
           amount?: number
@@ -488,6 +496,7 @@ export type Database = {
           wave_invoice_id?: string | null
           wave_synced_at?: string | null
           wave_view_url?: string | null
+          archived_at?: string | null
         }
         Relationships: [
           {
@@ -876,6 +885,7 @@ export type Database = {
           title: string
           updated_at: string
           user_id: string
+          archived_at: string | null
         }
         Insert: {
           created_at?: string
@@ -889,6 +899,7 @@ export type Database = {
           title: string
           updated_at?: string
           user_id: string
+          archived_at?: string | null
         }
         Update: {
           created_at?: string
@@ -902,6 +913,7 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+          archived_at?: string | null
         }
         Relationships: [
           {
@@ -1056,6 +1068,7 @@ export type Database = {
           status: string | null
           updated_at: string
           user_id: string
+          archived_at: string | null
         }
         Insert: {
           area?: string | null
@@ -1071,6 +1084,7 @@ export type Database = {
           status?: string | null
           updated_at?: string
           user_id: string
+          archived_at?: string | null
         }
         Update: {
           area?: string | null
@@ -1086,6 +1100,7 @@ export type Database = {
           status?: string | null
           updated_at?: string
           user_id?: string
+          archived_at?: string | null
         }
         Relationships: [
           {

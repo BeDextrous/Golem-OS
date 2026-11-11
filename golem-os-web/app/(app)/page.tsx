@@ -79,7 +79,7 @@ export default async function HomePage() {
   const summaries: PillarSummary[] = [
     { pillar: 'life', stats: [...taskStats('life'), { label: 'Reading now', value: currentReads.length }] },
     { pillar: 'dextrous', stats: taskStats('dextrous') },
-    { pillar: 'work', stats: taskStats('work') },
+    { pillar: 'palette', stats: taskStats('palette') },
     {
       pillar: 'pagemaster',
       stats: [
@@ -112,7 +112,7 @@ export default async function HomePage() {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
       <div className="lg:col-span-3 space-y-6">
       {/* Today's tasks — clickable */}
-      <Section title={`Today · ${urgentTasks.length} task${urgentTasks.length !== 1 ? 's' : ''}`} href="/work/tasks">
+      <Section title={`Today · ${urgentTasks.length} task${urgentTasks.length !== 1 ? 's' : ''}`} href="/focus">
         {urgentTasks.length === 0 ? (
           <EmptyRow label="No tasks due — enjoy the day." />
         ) : (
@@ -125,7 +125,7 @@ export default async function HomePage() {
         )}
         {urgentTasks.length > 5 && (
           <div className="px-4 py-2 border-t border-stone-100 dark:border-stone-800">
-            <Link href="/work/tasks" className="text-xs text-muted hover:text-stone-600">
+            <Link href="/focus" className="text-xs text-muted hover:text-stone-600">
               +{urgentTasks.length - 5} more
             </Link>
           </div>

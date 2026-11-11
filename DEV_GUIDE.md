@@ -88,7 +88,7 @@ golem-os/
 │   │   │   ├── page.tsx         Main dashboard
 │   │   │   ├── life/            Life pillar (tasks, health, notes, etc.)
 │   │   │   ├── dextrous/        Dextrous pillar (clients, projects, mike, drive)
-│   │   │   ├── work/            Work pillar
+│   │   │   ├── palette/         Palette Media pillar (day job; replaced Work)
 │   │   │   └── focus/           Cross-pillar task/goal/objective view
 │   │   ├── (auth)/              Login page
 │   │   ├── api/mike/            Streaming Anthropic API route (server-side)
@@ -283,6 +283,17 @@ Setup (once):
 If the consent screen is "Internal", only bedextrous.com accounts can connect; the Life
 (personal Gmail) connection needs the screen set to External (or a different client).
 Apps in "Testing" publishing status expire refresh tokens after 7 days.
+
+## 8d. Palette Media pillar and archiving
+
+Palette Media (`/palette`, pillar value `palette`, plum) replaced the Work pillar. `/work/*` redirects to
+`/palette/*`. Work's data was archived, not deleted: `tasks`, `goals`, `objectives`, `clients` and `invoices`
+have an `archived_at` column, every list query in `lib/queries.ts` (and global search) filters
+`archived_at is null`, and the old rows keep `pillar = 'work'`, which stays valid in the CHECK constraints
+only for them. The app no longer writes `work`.
+
+Restore archived rows with SQL, e.g. `update tasks set archived_at = null where pillar = 'work'` (the
+Casa Boca client was also set to Closed with billing off; revert those fields too).
 
 ## 9. Running locally
 
