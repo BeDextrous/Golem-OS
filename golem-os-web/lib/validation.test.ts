@@ -3,8 +3,8 @@ import { TABLE_SCHEMAS, financeSchema, firstIssue, isCrudTable, taskSchema, type
 
 describe('taskSchema', () => {
   it('accepts a normal task and trims the name', () => {
-    const r = taskSchema.safeParse({ name: '  Call Assaf ', status: 'Active', priority: 'High', pillar: 'palette', due_date: '2026-10-14' })
-    expect(r.success && r.data.name).toBe('Call Assaf')
+    const r = taskSchema.safeParse({ name: '  Call the vendor ', status: 'Active', priority: 'High', pillar: 'palette', due_date: '2026-10-14' })
+    expect(r.success && r.data.name).toBe('Call the vendor')
   })
 
   it('requires a name', () => {
@@ -144,6 +144,8 @@ describe('new-table specifics', () => {
   it('archived_at can be set or cleared on archivable tables', () => {
     expect(TABLE_SCHEMAS.tasks.partial().safeParse({ archived_at: '2026-10-16T12:00:00.000Z' }).success).toBe(true)
     expect(TABLE_SCHEMAS.clients.partial().safeParse({ archived_at: null }).success).toBe(true)
+    expect(TABLE_SCHEMAS.crm.partial().safeParse({ archived_at: '2026-10-16T12:00:00.000Z' }).success).toBe(true)
+    expect(TABLE_SCHEMAS.finances.partial().safeParse({ archived_at: null }).success).toBe(true)
     expect(TABLE_SCHEMAS.notes.safeParse({ archived_at: '2026-10-16T12:00:00.000Z' }).success).toBe(false) // notes are not archivable
   })
   it('project pillar allows pagemaster, task pillar does not', () => {

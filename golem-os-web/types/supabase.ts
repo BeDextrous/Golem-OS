@@ -112,6 +112,7 @@ export type Database = {
           tags: string | null
           updated_at: string
           user_id: string
+          archived_at: string | null
         }
         Insert: {
           company?: string | null
@@ -127,6 +128,7 @@ export type Database = {
           tags?: string | null
           updated_at?: string
           user_id: string
+          archived_at?: string | null
         }
         Update: {
           company?: string | null
@@ -142,6 +144,7 @@ export type Database = {
           tags?: string | null
           updated_at?: string
           user_id?: string
+          archived_at?: string | null
         }
         Relationships: []
       }
@@ -283,6 +286,7 @@ export type Database = {
           pillar: string | null
           updated_at: string
           user_id: string
+          archived_at: string | null
         }
         Insert: {
           amount: number
@@ -294,6 +298,7 @@ export type Database = {
           pillar?: string | null
           updated_at?: string
           user_id: string
+          archived_at?: string | null
         }
         Update: {
           amount?: number
@@ -305,6 +310,7 @@ export type Database = {
           pillar?: string | null
           updated_at?: string
           user_id?: string
+          archived_at?: string | null
         }
         Relationships: []
       }
@@ -632,6 +638,7 @@ export type Database = {
           id: number
           legal_document_id: number | null
           user_id: string
+          archived_at: string | null
         }
         Insert: {
           client_id?: number | null
@@ -641,6 +648,7 @@ export type Database = {
           id?: number
           legal_document_id?: number | null
           user_id: string
+          archived_at?: string | null
         }
         Update: {
           client_id?: number | null
@@ -650,6 +658,7 @@ export type Database = {
           id?: number
           legal_document_id?: number | null
           user_id?: string
+          archived_at?: string | null
         }
         Relationships: [
           {

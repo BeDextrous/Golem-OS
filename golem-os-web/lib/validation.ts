@@ -59,6 +59,7 @@ export const taskSchema = z.strictObject({
 })
 
 export const financeSchema = z.strictObject({
+  archived_at: optionalTimestamp,
   label: z.string().trim().min(1, 'Label is required').max(200, 'Label is too long'),
   category: optionalText(100),
   amount: z.number({ error: 'Amount must be a number' }).finite().min(-1e11).max(1e11),
@@ -211,6 +212,7 @@ export const jobApplicationSchema = z.strictObject({
 })
 
 export const crmSchema = z.strictObject({
+  archived_at: optionalTimestamp,
   name: requiredText('Name', 300),
   company: optionalText(300),
   role: optionalText(300),

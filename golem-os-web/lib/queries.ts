@@ -69,7 +69,7 @@ function nextMonthStart(ym: string): string {
 
 export async function getFinances(opts: { month?: string } = {}): Promise<FinanceRow[]> {
   const sb = await createServerSupabaseClient()
-  let query = sb.from('finances').select('*')
+  let query = sb.from('finances').select('*').is('archived_at', null)
   if (opts.month) query = query.gte('entry_date', `${opts.month}-01`).lt('entry_date', nextMonthStart(opts.month))
   const { data, error } = await query.order('entry_date', { ascending: false })
   if (error) throw error
@@ -78,7 +78,7 @@ export async function getFinances(opts: { month?: string } = {}): Promise<Financ
 
 export async function getCRM(): Promise<CRMRow[]> {
   const sb = await createServerSupabaseClient()
-  const { data, error } = await sb.from('crm').select('*').order('name', { ascending: true })
+  const { data, error } = await sb.from('crm').select('*').is('archived_at', null).order('name', { ascending: true })
   if (error) throw error
   return data ?? []
 }
@@ -158,6 +158,7 @@ export async function getKnowledgeMemory(): Promise<KnowledgeMemoryItem[]> {
     sb
       .from('knowledge_memory')
       .select('id, content, client_id, legal_document_id, created_at')
+      .is('archived_at', null)
       .order('created_at', { ascending: false }),
     sb.from('clients').select('id, name'),
     sb.from('legal_documents').select('id, title'),
@@ -175,7 +176,7 @@ export async function getKnowledgeMemory(): Promise<KnowledgeMemoryItem[]> {
 
 export async function getLifeFinances(): Promise<FinanceRow[]> {
   const sb = await createServerSupabaseClient()
-  const { data, error } = await sb.from('finances').select('*')
+  const { data, error } = await sb.from('finances').select('*').is('archived_at', null)
     .or('pillar.eq.life,pillar.is.null')
     .order('entry_date', { ascending: false })
   if (error) throw error
