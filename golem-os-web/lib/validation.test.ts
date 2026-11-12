@@ -3,8 +3,8 @@ import { TABLE_SCHEMAS, financeSchema, firstIssue, isCrudTable, taskSchema, type
 
 describe('taskSchema', () => {
   it('accepts a normal task and trims the name', () => {
-    const r = taskSchema.safeParse({ name: '  Call Assaf ', status: 'Active', priority: 'High', pillar: 'palette', due_date: '2026-10-14' })
-    expect(r.success && r.data.name).toBe('Call Assaf')
+    const r = taskSchema.safeParse({ name: '  Call the vendor ', status: 'Active', priority: 'High', pillar: 'palette', due_date: '2026-10-14' })
+    expect(r.success && r.data.name).toBe('Call the vendor')
   })
 
   it('requires a name', () => {

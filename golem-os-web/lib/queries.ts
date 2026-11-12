@@ -158,6 +158,7 @@ export async function getKnowledgeMemory(): Promise<KnowledgeMemoryItem[]> {
     sb
       .from('knowledge_memory')
       .select('id, content, client_id, legal_document_id, created_at')
+      .is('archived_at', null)
       .order('created_at', { ascending: false }),
     sb.from('clients').select('id, name'),
     sb.from('legal_documents').select('id, title'),

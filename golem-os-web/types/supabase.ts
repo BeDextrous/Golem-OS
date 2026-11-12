@@ -638,6 +638,7 @@ export type Database = {
           id: number
           legal_document_id: number | null
           user_id: string
+          archived_at: string | null
         }
         Insert: {
           client_id?: number | null
@@ -647,6 +648,7 @@ export type Database = {
           id?: number
           legal_document_id?: number | null
           user_id: string
+          archived_at?: string | null
         }
         Update: {
           client_id?: number | null
@@ -656,6 +658,7 @@ export type Database = {
           id?: number
           legal_document_id?: number | null
           user_id?: string
+          archived_at?: string | null
         }
         Relationships: [
           {
